@@ -28,3 +28,12 @@ def create_host(host: HostCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(db_host)
     return db_host
+
+from fastapi.responses import HTMLResponse
+import os
+
+@app.get("/wizard", response_class=HTMLResponse)
+def read_wizard():
+    file_path = os.path.join(os.path.dirname(__file__), "templates", "wizard.html")
+    with open(file_path, "r") as f:
+        return f.read()
