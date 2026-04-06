@@ -11,6 +11,34 @@
     <!-- Material Symbols -->
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
     <!-- Tailwind CSS -->
+    document.getElementById("search-btn").addEventListener("click", () => {
+        const address = document.getElementById("address-search").value;
+        if (!address) return;
+        
+        fetch("/api/eligibility/search", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({address: address})
+        })
+        .then(r => r.json())
+        .then(data => {
+            const panel = document.getElementById("search-results");
+            const badge = document.getElementById("search-status-badge");
+            
+            document.getElementById("search-address").innerText = data.address;
+            document.getElementById("search-reason").innerText = data.reason;
+            
+            badge.innerText = data.status;
+            if (data.status === "Eligible") {
+                badge.className = "px-3 py-1 text-xs font-black uppercase rounded-full bg-green-500/20 text-green-400";
+            } else {
+                badge.className = "px-3 py-1 text-xs font-black uppercase rounded-full bg-stark-red/20 text-stark-red";
+            }
+            
+            panel.classList.remove("hidden");
+        });
+    });
+
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script id="tailwind-config">
         tailwind.config = {
@@ -44,6 +72,34 @@
                 },
             },
         }
+    document.getElementById("search-btn").addEventListener("click", () => {
+        const address = document.getElementById("address-search").value;
+        if (!address) return;
+        
+        fetch("/api/eligibility/search", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({address: address})
+        })
+        .then(r => r.json())
+        .then(data => {
+            const panel = document.getElementById("search-results");
+            const badge = document.getElementById("search-status-badge");
+            
+            document.getElementById("search-address").innerText = data.address;
+            document.getElementById("search-reason").innerText = data.reason;
+            
+            badge.innerText = data.status;
+            if (data.status === "Eligible") {
+                badge.className = "px-3 py-1 text-xs font-black uppercase rounded-full bg-green-500/20 text-green-400";
+            } else {
+                badge.className = "px-3 py-1 text-xs font-black uppercase rounded-full bg-stark-red/20 text-stark-red";
+            }
+            
+            panel.classList.remove("hidden");
+        });
+    });
+
     </script>
     <style>
         .material-symbols-outlined {
@@ -113,7 +169,8 @@
         <div class="flex items-center gap-4 flex-1">
             <div class="relative w-full max-w-md">
                 <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-lg">search</span>
-                <input class="w-full bg-stark-gray border-none rounded-sm pl-10 pr-4 py-2 text-sm focus:ring-1 focus:ring-stark-red transition-all text-stark-light" placeholder="Search systems..." type="text"/>
+                <input id="address-search" class="w-full bg-stark-gray border-none rounded-sm pl-10 pr-4 py-2 text-sm focus:ring-1 focus:ring-stark-red transition-all text-stark-light" placeholder="Search address for eligibility..." type="text"/>
+                <button id="search-btn" class="absolute right-2 top-1/2 -translate-y-1/2 text-xs bg-stark-red text-white px-2 py-1 rounded">Search</button>
             </div>
         </div>
         <div class="flex items-center gap-6">
@@ -293,6 +350,34 @@
         }
 
         document.addEventListener('DOMContentLoaded', fetchProperties);
+    document.getElementById("search-btn").addEventListener("click", () => {
+        const address = document.getElementById("address-search").value;
+        if (!address) return;
+        
+        fetch("/api/eligibility/search", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({address: address})
+        })
+        .then(r => r.json())
+        .then(data => {
+            const panel = document.getElementById("search-results");
+            const badge = document.getElementById("search-status-badge");
+            
+            document.getElementById("search-address").innerText = data.address;
+            document.getElementById("search-reason").innerText = data.reason;
+            
+            badge.innerText = data.status;
+            if (data.status === "Eligible") {
+                badge.className = "px-3 py-1 text-xs font-black uppercase rounded-full bg-green-500/20 text-green-400";
+            } else {
+                badge.className = "px-3 py-1 text-xs font-black uppercase rounded-full bg-stark-red/20 text-stark-red";
+            }
+            
+            panel.classList.remove("hidden");
+        });
+    });
+
     </script>
 <script>
   fetch("/api/dashboard/stats")
@@ -301,6 +386,34 @@
         document.querySelector("h3.text-4xl.font-black.text-white.tracking-tighter.italic").innerText = data.compliance_score;
         document.querySelector("h3.text-3xl.font-black.text-white.tracking-tighter").innerText = data.active_alerts;
     });
+    document.getElementById("search-btn").addEventListener("click", () => {
+        const address = document.getElementById("address-search").value;
+        if (!address) return;
+        
+        fetch("/api/eligibility/search", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({address: address})
+        })
+        .then(r => r.json())
+        .then(data => {
+            const panel = document.getElementById("search-results");
+            const badge = document.getElementById("search-status-badge");
+            
+            document.getElementById("search-address").innerText = data.address;
+            document.getElementById("search-reason").innerText = data.reason;
+            
+            badge.innerText = data.status;
+            if (data.status === "Eligible") {
+                badge.className = "px-3 py-1 text-xs font-black uppercase rounded-full bg-green-500/20 text-green-400";
+            } else {
+                badge.className = "px-3 py-1 text-xs font-black uppercase rounded-full bg-stark-red/20 text-stark-red";
+            }
+            
+            panel.classList.remove("hidden");
+        });
+    });
+
 </script>
 
 </body>

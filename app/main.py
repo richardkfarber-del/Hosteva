@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from app.database import engine, Base
-from app.routers import zoning, compliance, hosts, properties, notifications, dashboard_api
+from app.routers import zoning, compliance, hosts, properties, notifications, dashboard_api, eligibility
+app.include_router(eligibility.router)
 import os
 
 # Create tables
