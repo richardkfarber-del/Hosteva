@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="manifest" href="/static/manifest.json">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hosteva - Add Property Wizard</title>
@@ -39,5 +40,12 @@
             <a href="/dashboard" class="block text-center bg-primary-teal text-white px-6 py-3 rounded-md font-bold shadow hover:bg-opacity-90 transition w-full">Verify & Generate Checklist</a>
         </div>
     </div>
+    <script>
+        if ("serviceWorker" in navigator) {
+            navigator.serviceWorker.register("/sw.js")
+            .then(reg => console.log("SW registered"))
+            .catch(err => console.log("SW registration failed", err));
+        }
+    </script>
 </body>
 </html>

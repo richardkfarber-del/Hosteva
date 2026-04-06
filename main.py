@@ -3,10 +3,15 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from database import engine, Base, get_db
 import models
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import HTMLResponse, FileResponse
+import os
 
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="Hosteva MVP JSON API", version="1.0.0")
+app = FastAPI(title="Hosteva MVP PWA API", version="1.0.0")
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 class HostCreate(BaseModel):
     full_name: str
@@ -29,11 +34,13 @@ def create_host(host: HostCreate, db: Session = Depends(get_db)):
     db.refresh(db_host)
     return db_host
 
-from fastapi.responses import HTMLResponse
-import os
-
 @app.get("/wizard", response_class=HTMLResponse)
 def read_wizard():
     file_path = os.path.join(os.path.dirname(__file__), "templates", "wizard.html")
     with open(file_path, "r") as f:
         return f.read()
+
+@app.get("/sw.js")
+def read_sw():
+    file_path = os.path.join(os.path.dirname(__file__), "static", "sw.js")
+    return FileResponse(file_path, media_type="application/javascript")
