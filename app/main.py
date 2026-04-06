@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from app.database import engine, Base
-from app.routers import zoning, compliance, hosts, properties
+from app.routers import zoning, compliance, hosts, properties, notifications
 import os
 
 # Create tables
@@ -21,6 +21,7 @@ app.include_router(zoning.router)
 app.include_router(compliance.router)
 app.include_router(hosts.router)
 app.include_router(properties.router)
+app.include_router(notifications.router)
 
 # Task 5: Serve landing.html as the root URL
 @app.get("/", include_in_schema=False)
