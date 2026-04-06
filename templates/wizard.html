@@ -124,11 +124,6 @@
                 <h2 class="font-headline font-bold text-xl tracking-[-0.02em] text-primary">Compliance Wizard</h2>
             </div>
             <div class="flex items-center gap-6">
-                <div class="flex items-center gap-3 pl-4 border-l border-outline-variant/30">
-                    <div class="text-right">
-                        <p class="text-sm font-bold text-primary leading-none">Tony Stark</p>
-                        <p class="text-[10px] font-medium text-on-surface-variant uppercase tracking-tighter">Lead Engineer</p>
-                    </div>
                 </div>
             </div>
         </header>
@@ -155,8 +150,17 @@
                     </div>
 
                     <div>
-                        <label class="block text-sm font-bold text-primary uppercase tracking-widest mb-2">Actual Values (JSON)</label>
-                        <textarea id="actual_values" name="actual_values" rows="4" class="w-full p-3 bg-surface-container border-none focus:ring-2 focus:ring-[#52aecd] rounded-lg font-mono text-sm">{"MAX_HEIGHT": 30.0, "MIN_LOT_SIZE": 12000.0}</textarea>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-bold text-primary uppercase tracking-widest mb-2">Max Height (ft)</label>
+                                <input type="number" id="max_height" class="w-full p-3 bg-surface-container border-none focus:ring-2 focus:ring-[#52aecd] rounded-lg font-medium" placeholder="30.0">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-primary uppercase tracking-widest mb-2">Min Lot Size (sq ft)</label>
+                                <input type="number" id="min_lot_size" class="w-full p-3 bg-surface-container border-none focus:ring-2 focus:ring-[#52aecd] rounded-lg font-medium" placeholder="12000.0">
+                            </div>
+                        </div>
+                        <input type="hidden" id="actual_values" name="actual_values" value='{"MAX_HEIGHT": 30.0, "MIN_LOT_SIZE": 12000.0}'>
                     </div>
 
                     <button type="submit" class="w-full py-4 bg-[#52aecd] text-white font-black uppercase tracking-widest angular-cut-small shadow-lg shadow-[#52aecd]/20 hover:bg-[#39b2c2] transition-colors">
