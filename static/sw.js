@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hosteva-v1';
+const CACHE_NAME = 'hosteva-v2';
 const urlsToCache = [
   '/',
   '/wizard',
@@ -14,7 +14,7 @@ self.addEventListener('install', event => {
 
 self.addEventListener('fetch', event => {
   event.respondWith(
-    caches.match(event.request)
-      .then(response => response || fetch(event.request))
+    fetch(event.request)
+      .catch(() => caches.match(event.request))
   );
 });
