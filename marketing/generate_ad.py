@@ -4,114 +4,88 @@ import os
 import sys
 import requests
 import time
-import base64
-import random
 
-
-def generate_dummy_video(output_path: str, size_mb: int = 5) -> str:
-    size_bytes = size_mb * 1024 * 1024
-    with open(output_path, "wb") as f:
-        f.write(os.urandom(size_bytes))
-    print(f"Dummy video created at: {output_path} ({size_mb}MB)")
-    return output_path
-
-
-def generate_video_with_sdk(prompt: str, output_path: str) -> str:
-    try:
-        from google import genai
-        api_key = os.getenv("GEMINI_API_KEY")
-        if not api_key:
-            raise ValueError("GEMINI_API_KEY not set")
-
-        client = genai.Client(api_key=api_key)
-        response = client.models.generate_video(
-            model="veo-3.1-generate",
-            prompt=prompt,
-            output_dir=".",
-            filename=output_path,
-        )
-        print(f"Video generated via SDK: {output_path}")
-        return output_path
-    except Exception as e:
-        print(f"SDK generation failed: {e}")
-        raise
-
-
-def generate_video_rest_api(prompt: str, output_path: str, poll_interval: int = 10) -> str:
+def generate_video_rest(prompt: str, output_path: str = "output.mp4", poll_interval: int = 10):
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
         raise ValueError("GEMINI_API_KEY environment variable not set")
 
     base_url = "https://generativelanguage.googleapis.com/v1beta"
+    model_name = "veo-3.1-fast-generate-preview"
+    init_url = f"{base_url}/models/{model_name}:predictLongRunning?key={api_key}"
 
     operation_payload = {
-        "contents": [{
-            "role": "user",
-            "parts": [{
-                "text": prompt
-            }]
-        }]
+        "instances": [
+            {
+                "prompt": prompt
+            }
+        ],
+        "parameters": {
+            "aspectRatio": "16:9",
+            "resolution": "720p",
+            "durationSeconds": 8
+        }
     }
 
-    init_url = f"{base_url}/models/veo-3.1-generate:submitOperation?key={api_key}"
+    print(f"Submitting Veo 3.1 Fast video generation job...")
     response = requests.post(init_url, json=operation_payload, timeout=60)
-    response.raise_for_status()
+    
+    if response.status_code != 200:
+        print(f"API Error: {response.status_code} - {response.text}")
+        response.raise_for_status()
+        
     operation_data = response.json()
-
     operation_name = operation_data.get("name")
+    
     if not operation_name:
         raise ValueError(f"No operation name returned: {operation_data}")
 
-    print(f"Operation started: {operation_name}")
+    print(f"Operation started successfully: {operation_name}")
+    print(f"Polling for completion (this may take 1-3 minutes)...")
 
     while True:
-        check_url = f"{base_url}/operations/{operation_name}?key={api_key}"
+        check_url = f"{base_url}/{operation_name}?key={api_key}"
         status_response = requests.get(check_url, timeout=60)
         status_response.raise_for_status()
         status_data = status_response.json()
 
         done = status_data.get("done", False)
         if done:
+            if "error" in status_data:
+                raise RuntimeError(f"Operation failed: {status_data['error']}")
+            print("Operation complete!")
             break
 
-        if "error" in status_data:
-            raise RuntimeError(f"Operation failed: {status_data['error']}")
-
-        print(f"Operation in progress...")
+        print(f"Still processing...")
         time.sleep(poll_interval)
 
-    if "response" not in status_data:
-        raise ValueError(f"Operation completed but no response: {status_data}")
+    # Extract the generated video URI from the nested response
+    response_data = status_data.get("response", {})
+    generate_video_response = response_data.get("generateVideoResponse", {})
+    generated_samples = generate_video_response.get("generatedSamples", [])
+    
+    if not generated_samples:
+        raise ValueError(f"No generated samples found in the response: {status_data}")
+        
+    video_uri = generated_samples[0].get("video", {}).get("uri")
+    
+    if not video_uri:
+         raise ValueError(f"No video URI found in the sample: {generated_samples[0]}")
 
-    video_base64 = status_data["response"].get("bytesBase64Encoded", "")
-    if not video_base64:
-        raise ValueError("No video data in response")
-
-    video_data = base64.b64decode(video_base64)
-
-    with open(output_path, "wb") as f:
-        f.write(video_data)
-
-    print(f"Video saved to: {output_path}")
-    return output_path
-
-
-def generate_video(prompt: str, output_path: str = "output.mp4", poll_interval: int = 10) -> str:
-    try:
-        print("Attempting SDK generation...")
-        return generate_video_with_sdk(prompt, output_path)
-    except Exception as sdk_error:
-        print(f"SDK approach failed: {sdk_error}")
-
-    try:
-        print("Attempting REST API generation...")
-        return generate_video_rest_api(prompt, output_path, poll_interval)
-    except Exception as api_error:
-        print(f"REST API failed: {api_error}")
-
-    print("Falling back to dummy video generation...")
-    return generate_dummy_video(output_path)
-
+    print(f"Video ready at URI: {video_uri}")
+    print("Downloading video asset...")
+    
+    # We must append the API key to the download URL to authenticate the media fetch
+    download_url = f"{video_uri}&key={api_key}" if "?" in video_uri else f"{video_uri}?key={api_key}"
+    
+    vid_resp = requests.get(download_url)
+    if vid_resp.status_code == 200:
+        with open(output_path, "wb") as f:
+            f.write(vid_resp.content)
+        print(f"Video successfully downloaded to: {output_path}")
+        return output_path
+    else:
+        raise RuntimeError(f"Failed to download from URI: {vid_resp.status_code} - {vid_resp.text}")
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
@@ -121,4 +95,4 @@ if __name__ == "__main__":
     prompt = sys.argv[1]
     output_path = sys.argv[2] if len(sys.argv) > 2 else "generated_ad.mp4"
 
-    generate_video(prompt, output_path)
+    generate_video_rest(prompt, output_path)
