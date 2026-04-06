@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from app.database import engine, Base
-from app.routers import zoning, compliance, hosts
+from app.routers import zoning, compliance, hosts, properties
 import os
 
 # Create tables
@@ -20,6 +20,7 @@ app = FastAPI(
 app.include_router(zoning.router)
 app.include_router(compliance.router)
 app.include_router(hosts.router)
+app.include_router(properties.router)
 
 # Task 5: Serve landing.html as the root URL
 @app.get("/", include_in_schema=False)
@@ -30,3 +31,7 @@ def read_root():
 @app.get("/wizard", include_in_schema=False)
 def read_wizard():
     return FileResponse("templates/wizard.html")
+
+@app.get('/dashboard', include_in_schema=False)
+def read_dashboard():
+    return FileResponse('templates/dashboard.html')
