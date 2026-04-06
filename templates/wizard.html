@@ -1,68 +1,239 @@
 <!DOCTYPE html>
-<html>
+<html class="light" lang="en">
 <head>
-    <title>Compliance Wizard</title>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Compliance Wizard | Hosteva</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+          tailwind.config = {
+            darkMode: "class",
+            theme: {
+              extend: {
+                "colors": {
+                        "surface-tint": "#006780",
+                        "surface-container-low": "#f3f3f3",
+                        "primary": "#002733",
+                        "primary-fixed-dim": "#79d2f2",
+                        "on-tertiary-container": "#39b2c2",
+                        "inverse-primary": "#79d2f2",
+                        "on-background": "#1a1c1c",
+                        "on-primary": "#ffffff",
+                        "surface-container": "#eeeeee",
+                        "secondary-container": "#b4d1fe",
+                        "on-tertiary-fixed": "#001f24",
+                        "on-secondary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-container": "#003f4f",
+                        "surface-container-highest": "#e2e2e2",
+                        "on-secondary-container": "#3c5980",
+                        "primary-fixed": "#b8eaff",
+                        "on-error-container": "#93000a",
+                        "secondary": "#436087",
+                        "on-secondary-fixed-variant": "#2a486e",
+                        "error": "#ba1a1a",
+                        "on-surface": "#1a1c1c",
+                        "on-tertiary-fixed-variant": "#004f57",
+                        "surface-dim": "#dadada",
+                        "outline-variant": "#c3c6cf",
+                        "tertiary-fixed": "#95f1ff",
+                        "tertiary": "#00282e",
+                        "background": "#f9f9f9",
+                        "on-primary-fixed": "#001f28",
+                        "surface": "#f9f9f9",
+                        "surface-bright": "#f9f9f9",
+                        "on-error": "#ffffff",
+                        "secondary-fixed": "#d4e3ff",
+                        "inverse-surface": "#2f3131",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-fixed-variant": "#004d61",
+                        "on-surface-variant": "#43474e",
+                        "on-secondary-fixed": "#001c39",
+                        "inverse-on-surface": "#f1f1f1",
+                        "tertiary-container": "#004047",
+                        "secondary-fixed-dim": "#abc8f5",
+                        "tertiary-fixed-dim": "#65d6e7",
+                        "surface-variant": "#e2e2e2",
+                        "outline": "#74777f",
+                        "on-primary-container": "#52aecd",
+                        "surface-container-high": "#e8e8e8"
+                },
+                "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                },
+                "fontFamily": {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                }
+              },
+            },
+          }
+        </script>
+    <style>
+            .material-symbols-outlined {
+                font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            }
+            .angular-cut {
+                clip-path: polygon(0% 0%, 85% 0%, 100% 30%, 100% 100%, 0% 100%);
+            }
+            .angular-cut-small {
+                clip-path: polygon(0% 0%, 92% 0%, 100% 40%, 100% 100%, 0% 100%);
+            }
+            body { font-family: 'Inter', sans-serif; }
+        </style>
 </head>
-<body>
-    <h1>Compliance Wizard</h1>
-    <form id="wizardForm">
-        <label>Property ID:</label>
-        <input type="text" id="property_id" name="property_id"><br>
-        <label>Zoning District:</label>
-        <select id="zoning_district_id" name="zoning_district_id"></select><br>
-        <label>Land Use Type:</label>
-        <select id="proposed_land_use_id" name="proposed_land_use_id"></select><br>
-        <label>Values (JSON):</label>
-        <textarea id="actual_values" name="actual_values">{"MAX_HEIGHT": 30.0, "MIN_LOT_SIZE": 12000.0}</textarea><br>
-        <button type="submit">Check Compliance</button>
-    </form>
-    <div id="result"></div>
+<body class="bg-surface text-on-surface">
+    <!-- SideNavBar -->
+    <aside class="w-[240px] h-screen fixed left-0 top-0 bg-[#002733] flex flex-col py-8 px-4 gap-2 z-50">
+        <div class="mb-8 px-2">
+            <h1 class="text-2xl font-black tracking-[-0.02em] text-white">Hosteva</h1>
+            <p class="text-[#52aecd] text-xs font-medium uppercase tracking-widest opacity-80 mt-1">Stark Industries</p>
+        </div>
+        <nav class="flex flex-col gap-1">
+            <a class="flex items-center gap-3 py-3 px-4 text-[#e2e2e2] opacity-80 hover:bg-[#52aecd]/20 hover:opacity-100 transition-all font-medium" href="/">
+                <span class="material-symbols-outlined">home</span>
+                <span>Home</span>
+            </a>
+            <a class="flex items-center gap-3 py-3 px-4 bg-[#52aecd] text-white angular-cut translate-x-1 duration-300 font-medium" href="/wizard">
+                <span class="material-symbols-outlined">gavel</span>
+                <span>Compliance</span>
+            </a>
+            <a class="flex items-center gap-3 py-3 px-4 text-[#e2e2e2] opacity-80 hover:bg-[#52aecd]/20 hover:opacity-100 transition-all font-medium" href="#">
+                <span class="material-symbols-outlined">analytics</span>
+                <span>Analytics</span>
+            </a>
+            <a class="flex items-center gap-3 py-3 px-4 text-[#e2e2e2] opacity-80 hover:bg-[#52aecd]/20 hover:opacity-100 transition-all font-medium" href="#">
+                <span class="material-symbols-outlined">settings</span>
+                <span>Settings</span>
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content Canvas -->
+    <main class="ml-[240px] min-h-screen bg-background">
+        <!-- TopAppBar -->
+        <header class="fixed top-0 left-[240px] right-0 h-16 bg-white/85 backdrop-blur-md z-40 flex justify-between items-center px-8 shadow-[0_4px_12px_rgba(0,39,51,0.08)]">
+            <div class="flex items-center gap-4">
+                <h2 class="font-headline font-bold text-xl tracking-[-0.02em] text-primary">Compliance Wizard</h2>
+            </div>
+            <div class="flex items-center gap-6">
+                <div class="flex items-center gap-3 pl-4 border-l border-outline-variant/30">
+                    <div class="text-right">
+                        <p class="text-sm font-bold text-primary leading-none">Tony Stark</p>
+                        <p class="text-[10px] font-medium text-on-surface-variant uppercase tracking-tighter">Lead Engineer</p>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="pt-24 pb-12 px-8 max-w-4xl mx-auto">
+            <div class="bg-white p-8 shadow-xl angular-cut border border-outline-variant/10">
+                <h3 class="text-2xl font-black text-primary mb-6 tracking-tight">Check Property Compliance</h3>
+                
+                <form id="wizardForm" class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-bold text-primary uppercase tracking-widest mb-2">Property ID</label>
+                        <input type="text" id="property_id" name="property_id" class="w-full p-3 bg-surface-container border-none focus:ring-2 focus:ring-[#52aecd] rounded-lg font-medium" placeholder="Enter ID (e.g. PROP-123)">
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-bold text-primary uppercase tracking-widest mb-2">Zoning District</label>
+                            <select id="zoning_district_id" name="zoning_district_id" class="w-full p-3 bg-surface-container border-none focus:ring-2 focus:ring-[#52aecd] rounded-lg font-medium"></select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-primary uppercase tracking-widest mb-2">Land Use Type</label>
+                            <select id="proposed_land_use_id" name="proposed_land_use_id" class="w-full p-3 bg-surface-container border-none focus:ring-2 focus:ring-[#52aecd] rounded-lg font-medium"></select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-bold text-primary uppercase tracking-widest mb-2">Actual Values (JSON)</label>
+                        <textarea id="actual_values" name="actual_values" rows="4" class="w-full p-3 bg-surface-container border-none focus:ring-2 focus:ring-[#52aecd] rounded-lg font-mono text-sm">{"MAX_HEIGHT": 30.0, "MIN_LOT_SIZE": 12000.0}</textarea>
+                    </div>
+
+                    <button type="submit" class="w-full py-4 bg-[#52aecd] text-white font-black uppercase tracking-widest angular-cut-small shadow-lg shadow-[#52aecd]/20 hover:bg-[#39b2c2] transition-colors">
+                        Check Compliance
+                    </button>
+                </form>
+
+                <div id="result" class="mt-12 hidden">
+                    <h4 class="text-lg font-bold text-primary mb-4">Compliance Result</h4>
+                    <pre id="resultOutput" class="p-6 bg-[#002733] text-[#95f1ff] rounded-xl overflow-x-auto font-mono text-sm border border-white/10 shadow-2xl"></pre>
+                </div>
+            </div>
+        </div>
+    </main>
+
     <script>
+        const API_KEY = 'stark-secret-key-2026';
+
         document.getElementById('wizardForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const payload = {
-                property_id: document.getElementById('property_id').value,
-                zoning_district_id: document.getElementById('zoning_district_id').value,
-                proposed_land_use_id: document.getElementById('proposed_land_use_id').value,
-                actual_values: JSON.parse(document.getElementById('actual_values').value)
-            };
-            const response = await fetch('/api/compliance/check', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-API-Key': 'stark-secret-key-2026'
-                },
-                body: JSON.stringify(payload)
-            });
-            const result = await response.json();
-            document.getElementById('result').innerText = JSON.stringify(result, null, 2);
+            const resultDiv = document.getElementById('result');
+            const resultOutput = document.getElementById('resultOutput');
+            
+            resultDiv.classList.remove('hidden');
+            resultOutput.innerText = 'Analyzing compliance...';
+
+            try {
+                const payload = {
+                    property_id: document.getElementById('property_id').value,
+                    zoning_district_id: document.getElementById('zoning_district_id').value,
+                    proposed_land_use_id: document.getElementById('proposed_land_use_id').value,
+                    actual_values: JSON.parse(document.getElementById('actual_values').value)
+                };
+                
+                const response = await fetch('/api/compliance/check', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-API-Key': API_KEY
+                    },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                resultOutput.innerText = JSON.stringify(result, null, 2);
+            } catch (err) {
+                resultOutput.innerText = 'Error: ' + err.message;
+            }
         });
         
-        // Initial fetch for dropdowns
         async function fetchOptions() {
-            const zdResponse = await fetch('/api/zoning/districts', {
-                headers: { 'X-API-Key': 'stark-secret-key-2026' }
-            });
-            const zds = await zdResponse.json();
-            const zdSelect = document.getElementById('zoning_district_id');
-            zds.forEach(zd => {
-                const opt = document.createElement('option');
-                opt.value = zd.id;
-                opt.text = zd.name;
-                zdSelect.add(opt);
-            });
-            
-            const lutResponse = await fetch('/api/zoning/land-use-types', {
-                headers: { 'X-API-Key': 'stark-secret-key-2026' }
-            });
-            const luts = await lutResponse.json();
-            const lutSelect = document.getElementById('proposed_land_use_id');
-            luts.forEach(lut => {
-                const opt = document.createElement('option');
-                opt.value = lut.id;
-                opt.text = lut.name;
-                lutSelect.add(opt);
-            });
+            try {
+                const [zdRes, lutRes] = await Promise.all([
+                    fetch('/api/zoning/districts', { headers: { 'X-API-Key': API_KEY } }),
+                    fetch('/api/zoning/land-use-types', { headers: { 'X-API-Key': API_KEY } })
+                ]);
+                
+                const zds = await zdRes.json();
+                const luts = await lutRes.json();
+                
+                const zdSelect = document.getElementById('zoning_district_id');
+                zds.forEach(zd => {
+                    const opt = document.createElement('option');
+                    opt.value = zd.id;
+                    opt.text = zd.name;
+                    zdSelect.add(opt);
+                });
+                
+                const lutSelect = document.getElementById('proposed_land_use_id');
+                luts.forEach(lut => {
+                    const opt = document.createElement('option');
+                    opt.value = lut.id;
+                    opt.text = lut.name;
+                    lutSelect.add(opt);
+                });
+            } catch (err) {
+                console.error('Failed to load options:', err);
+            }
         }
         fetchOptions();
     </script>
