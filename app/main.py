@@ -1,8 +1,12 @@
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
+from fastapi.templating import Jinja2Templates
+from fastapi.requests import Request
 from app.database import engine, Base
 from app.routers import zoning, compliance, hosts, properties, notifications, dashboard_api, eligibility
 import os
+
+templates = Jinja2Templates(directory="templates")
 
 # Create tables
 Base.metadata.create_all(bind=engine)
@@ -36,5 +40,5 @@ def read_wizard():
     return FileResponse("templates/wizard.html")
 
 @app.get('/dashboard', include_in_schema=False)
-def read_dashboard():
-    return FileResponse('templates/dashboard.html')
+def read_dashboard(request: Request):
+    return templates.TemplateResponse("dashboard.html", {"request": request, "google_maps_api_key": os.getenv("GOOGLE_MAPS_API_KEY")})
