@@ -1,26 +1,25 @@
-from fastapi import FastAPI
-from fastapi.responses import FileResponse
+from fastapi import FastAPI, Request
+from fastapi.responses import FileResponse, PlainTextResponse
 from fastapi.templating import Jinja2Templates
-from fastapi.requests import Request
 from app.database import engine, Base
 from app.routers import zoning, compliance, hosts, properties, notifications, dashboard_api, eligibility
-from app.models.property import Property
 import os
+import traceback
 
 templates = Jinja2Templates(directory="templates")
-
-# Create tables
 Base.metadata.create_all(bind=engine)
 
-# Disable docs in production-like environment if needed
 SHOW_DOCS = os.getenv("SHOW_DOCS", "True").lower() == "true"
 
 app = FastAPI(
     title="Hosteva Zoning and Compliance Engine",
-    description="FastAPI Backend for Zoning and Compliance Engines.",
     docs_url="/docs" if SHOW_DOCS else None,
     redoc_url="/redoc" if SHOW_DOCS else None
 )
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    return PlainTextResponse(str(traceback.format_exc()), status_code=500)
 
 app.include_router(zoning.router)
 app.include_router(compliance.router)
@@ -30,12 +29,10 @@ app.include_router(notifications.router)
 app.include_router(dashboard_api.router)
 app.include_router(eligibility.router)
 
-# Task 5: Serve landing.html as the root URL
 @app.get("/", include_in_schema=False)
 def read_root():
     return FileResponse("templates/landing.html")
 
-# Task 4: Serve wizard.html
 @app.get("/wizard", include_in_schema=False)
 def read_wizard():
     return FileResponse("templates/wizard.html")
