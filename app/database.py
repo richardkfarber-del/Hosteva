@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 import os
 
 def is_wsl():
@@ -15,10 +16,14 @@ def get_database_url():
 SQLALCHEMY_DATABASE_URL = get_database_url()
 
 connect_args = {}
+pool_args = {}
 if SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
     connect_args = {"check_same_thread": False}
+    # This is critical for in-memory SQLite to persist across threads
+    if ":memory:" in SQLALCHEMY_DATABASE_URL:
+        pool_args["poolclass"] = StaticPool
 
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args=connect_args)
+engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args=connect_args, **pool_args)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
