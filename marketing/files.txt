@@ -1,0 +1,6 @@
+file 'hosteva_ad_clip1.mp4'
+file 'hosteva_ad_clip2.mp4'
+file 'hosteva_ad_clip3.mp4'
+file 'hosteva_ad_clip4.mp4'
+file 'hosteva_ad_clip5.mp4'
+file 'hosteva_ad_clip6.mp4'
