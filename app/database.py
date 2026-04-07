@@ -10,6 +10,9 @@ def is_wsl():
 def get_database_url():
     url = os.environ.get("DATABASE_URL")
     if url and not is_wsl():
+        # Fix for SQLAlchemy 1.4+ which removed support for the 'postgres://' scheme
+        if url.startswith("postgres://"):
+            url = url.replace("postgres://", "postgresql://", 1)
         return url
     return "sqlite:///:memory:"
 
