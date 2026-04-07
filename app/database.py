@@ -2,9 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import os
-import tempfile
 
-# Force entirely in-memory DB for local compilation and testing to avoid WSL IO errors
 SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///:memory:")
 
 engine = create_engine(
