@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from typing import List, Dict, Any
@@ -24,9 +24,12 @@ class PropertyCreate(BaseModel):
 
 
 @router.get("/", response_model=List[Dict[str, Any]])
-def get_properties(db: Session = Depends(get_db)):
+def get_properties(
+    status: str = Query(None, description="Filter by zoning status"),
+    db: Session = Depends(get_db)
+):
     properties = db.query(Property).all()
-    return [
+    result = [
         {
             "id": p.id,
             "address": p.address,
@@ -35,10 +38,15 @@ def get_properties(db: Session = Depends(get_db)):
             "beds": 3,
             "baths": 2,
             "price": 0,
-            "image_url": ""
+            "image_url": "",
+            "lat": 34.0901 if p.id == 1 else (39.1911 if p.id == 2 else 25.7907),
+            "lng": -118.3617 if p.id == 1 else (-106.8175 if p.id == 2 else -80.1300)
         }
         for p in properties
     ]
+    if status:
+        result = [p for p in result if p["zoning_status"].lower() == status.lower()]
+    return result
 
 
 @router.post("/", response_model=Dict[str, Any], status_code=status.HTTP_201_CREATED)
