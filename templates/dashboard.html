@@ -93,6 +93,51 @@
         </div>
     </header>
 
+    <div id="add-property-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center">
+        <div class="bg-white rounded-sm shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gray-50">
+                <h3 class="text-xl font-bold text-gray-900 uppercase italic">Add Property</h3>
+                <button onclick="closeAddPropertyModal()" class="text-gray-500 hover:text-gray-700 transition-colors">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <form id="add-property-form" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Address</label>
+                    <input type="text" name="address" required class="w-full px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-teal-600 focus:border-transparent text-gray-800">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">City</label>
+                        <input type="text" name="city" required class="w-full px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-teal-600 focus:border-transparent text-gray-800">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">State</label>
+                        <input type="text" name="state" required class="w-full px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-teal-600 focus:border-transparent text-gray-800">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">ZIP Code</label>
+                        <input type="text" name="zip_code" class="w-full px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-teal-600 focus:border-transparent text-gray-800">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Property Type</label>
+                        <input type="text" name="property_type" placeholder="e.g., Single Family" class="w-full px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-teal-600 focus:border-transparent text-gray-800">
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" name="hoa_status" id="hoa_status" class="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-600">
+                    <label for="hoa_status" class="text-sm font-bold text-gray-700">HOA Property</label>
+                </div>
+                <div class="flex justify-end gap-3 pt-4">
+                    <button type="button" onclick="closeAddPropertyModal()" class="px-6 py-2 bg-gray-100 text-gray-900 font-bold rounded-sm hover:bg-gray-200 transition-colors">Cancel</button>
+                    <button type="submit" class="px-6 py-2 bg-teal-600 text-gray-900 font-bold rounded-sm hover:opacity-90 transition-opacity">Add Property</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <main class="ml-64 p-10">
         <div id="search-results" class="hidden mb-8 p-6 bg-gray-100 border-gray-200 rounded-sm">
             <div class="flex items-center gap-4 mb-4">
@@ -114,7 +159,7 @@
                         <span class="material-symbols-outlined text-sm">filter_list</span>
                         Filter
                     </button>
-                    <button class="px-6 py-2 bg-teal-600 text-gray-900 font-bold rounded-sm hover:opacity-90 transition-opacity flex items-center gap-2 shadow-lg shadow-teal-600/20 uppercase italic tracking-widest">
+                    <button onclick="openAddPropertyModal()" class="px-6 py-2 bg-teal-600 text-gray-900 font-bold rounded-sm hover:opacity-90 transition-opacity flex items-center gap-2 shadow-lg shadow-teal-600/20 uppercase italic tracking-widest">
                         <span class="material-symbols-outlined text-sm">add</span>
                         Onboard
                     </button>
@@ -224,6 +269,45 @@
             })
             .finally(() => setLoading(false));
         }
+
+        function openAddPropertyModal() {
+            document.getElementById('add-property-modal').classList.remove('hidden');
+        }
+
+        function closeAddPropertyModal() {
+            document.getElementById('add-property-modal').classList.add('hidden');
+            document.getElementById('add-property-form').reset();
+        }
+
+        document.getElementById('add-property-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const form = e.target;
+            const formData = new FormData(form);
+            const data = {
+                address: formData.get('address'),
+                city: formData.get('city'),
+                state: formData.get('state'),
+                zip_code: formData.get('zip_code'),
+                property_type: formData.get('property_type'),
+                hoa_status: formData.get('hoa_status') === 'on'
+            };
+            try {
+                const response = await fetch('/api/properties/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                if (response.ok) {
+                    closeAddPropertyModal();
+                    fetchProperties();
+                } else {
+                    alert('Failed to add property. Please try again.');
+                }
+            } catch (err) {
+                console.error('Error adding property:', err);
+                alert('Failed to add property. Please try again.');
+            }
+        });
 
         document.getElementById('address-search').addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
