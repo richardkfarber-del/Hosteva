@@ -4,78 +4,40 @@
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>Compliance Wizard | Hosteva</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <script id="tailwind-config">
-          tailwind.config = {
-            darkMode: "class",
-            theme: {
-              extend: {
-                "colors": {
-                        "surface-tint": "#006780",
-                        "surface-container-low": "#f3f3f3",
-                        "primary": "#002733",
-                        "primary-fixed-dim": "#79d2f2",
-                        "on-tertiary-container": "#39b2c2",
-                        "inverse-primary": "#79d2f2",
-                        "on-background": "#1a1c1c",
-                        "on-primary": "#ffffff",
-                        "surface-container": "#eeeeee",
-                        "secondary-container": "#b4d1fe",
-                        "on-tertiary-fixed": "#001f24",
-                        "on-secondary": "#ffffff",
-                        "error-container": "#ffdad6",
-                        "surface-container-lowest": "#ffffff",
-                        "primary-container": "#003f4f",
-                        "surface-container-highest": "#e2e2e2",
-                        "on-secondary-container": "#3c5980",
-                        "primary-fixed": "#b8eaff",
-                        "on-error-container": "#93000a",
-                        "secondary": "#436087",
-                        "on-secondary-fixed-variant": "#2a486e",
-                        "error": "#ba1a1a",
-                        "on-surface": "#1a1c1c",
-                        "on-tertiary-fixed-variant": "#004f57",
-                        "surface-dim": "#dadada",
-                        "outline-variant": "#c3c6cf",
-                        "tertiary-fixed": "#95f1ff",
-                        "tertiary": "#00282e",
-                        "background": "#f9f9f9",
-                        "on-primary-fixed": "#001f28",
-                        "surface": "#f9f9f9",
-                        "surface-bright": "#f9f9f9",
-                        "on-error": "#ffffff",
-                        "secondary-fixed": "#d4e3ff",
-                        "inverse-surface": "#2f3131",
-                        "on-tertiary": "#ffffff",
-                        "on-primary-fixed-variant": "#004d61",
-                        "on-surface-variant": "#43474e",
-                        "on-secondary-fixed": "#001c39",
-                        "inverse-on-surface": "#f1f1f1",
-                        "tertiary-container": "#004047",
-                        "secondary-fixed-dim": "#abc8f5",
-                        "tertiary-fixed-dim": "#65d6e7",
-                        "surface-variant": "#e2e2e2",
-                        "outline": "#74777f",
-                        "on-primary-container": "#52aecd",
-                        "surface-container-high": "#e8e8e8"
-                },
-                "borderRadius": {
-                        "DEFAULT": "0.125rem",
-                        "lg": "0.25rem",
-                        "xl": "0.5rem",
-                        "full": "0.75rem"
-                },
-                "fontFamily": {
-                        "headline": ["Inter"],
-                        "body": ["Inter"],
-                        "label": ["Inter"]
-                }
-              },
-            },
-          }
-        </script>
+
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        'surface': '#f8f9ff',
+        'surface-container-low': '#eff4ff',
+        'surface-container-lowest': '#ffffff',
+        'surface-container-high': '#dce9ff',
+        'primary': '#006576',
+        'primary-container': '#1c7f92',
+        'on-surface': '#001c37',
+        'outline-variant': '#bec8cc',
+        'tertiary-fixed': '#75fbbf'
+      },
+      fontFamily: {
+        'display': ['Manrope', 'sans-serif'],
+        'headline': ['Manrope', 'sans-serif'],
+        'body': ['Inter', 'sans-serif']
+      },
+      boxShadow: {
+        'ambient': '0 20px 40px rgba(0, 28, 55, 0.08)',
+        'ambient-light': '0 20px 40px rgba(0, 28, 55, 0.04)'
+      }
+    }
+  }
+}
+</script>
+
+    
     <style>
             .material-symbols-outlined {
                 font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
@@ -119,7 +81,7 @@
     <!-- Main Content Canvas -->
     <main class="ml-[240px] min-h-screen bg-background">
         <!-- TopAppBar -->
-        <header class="fixed top-0 left-[240px] right-0 h-16 bg-white/85 backdrop-blur-md z-40 flex justify-between items-center px-8 shadow-[0_4px_12px_rgba(0,39,51,0.08)]">
+        <header class="fixed top-0 left-[240px] right-0 h-16 bg-surface-container-lowest/85 backdrop-blur-md z-40 flex justify-between items-center px-8 shadow-[0_4px_12px_rgba(0,39,51,0.08)]">
             <div class="flex items-center gap-4">
                 <h2 class="font-headline font-bold text-xl tracking-[-0.02em] text-primary">Compliance Wizard</h2>
             </div>
@@ -129,23 +91,23 @@
         </header>
 
         <div class="pt-24 pb-12 px-8 max-w-4xl mx-auto">
-            <div class="bg-white p-8 shadow-xl angular-cut border border-outline-variant/10">
+            <div class="bg-surface-container-lowest p-8 shadow-xl angular-cut  -outline-variant/10">
                 <h3 class="text-2xl font-black text-primary mb-6 tracking-tight">Check Property Compliance</h3>
                 
                 <form id="wizardForm" class="space-y-6">
                     <div>
                         <label class="block text-sm font-bold text-primary uppercase tracking-widest mb-2">Property ID</label>
-                        <input type="text" id="property_id" name="property_id" class="w-full p-3 bg-surface-container border-none focus:ring-2 focus:ring-[#52aecd] rounded-lg font-medium" placeholder="Enter ID (e.g. PROP-123)">
+                        <input type="text" id="property_id" name="property_id" class="w-full p-3 bg-surface-container -none focus:ring-2 focus:ring-[#52aecd] rounded-[8px] font-medium" placeholder="Enter ID (e.g. PROP-123)">
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label class="block text-sm font-bold text-primary uppercase tracking-widest mb-2">Zoning District</label>
-                            <select id="zoning_district_id" name="zoning_district_id" class="w-full p-3 bg-surface-container border-none focus:ring-2 focus:ring-[#52aecd] rounded-lg font-medium"></select>
+                            <select id="zoning_district_id" name="zoning_district_id" class="w-full p-3 bg-surface-container -none focus:ring-2 focus:ring-[#52aecd] rounded-[8px] font-medium"></select>
                         </div>
                         <div>
                             <label class="block text-sm font-bold text-primary uppercase tracking-widest mb-2">Land Use Type</label>
-                            <select id="proposed_land_use_id" name="proposed_land_use_id" class="w-full p-3 bg-surface-container border-none focus:ring-2 focus:ring-[#52aecd] rounded-lg font-medium"></select>
+                            <select id="proposed_land_use_id" name="proposed_land_use_id" class="w-full p-3 bg-surface-container -none focus:ring-2 focus:ring-[#52aecd] rounded-[8px] font-medium"></select>
                         </div>
                     </div>
 
@@ -153,24 +115,24 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-bold text-primary uppercase tracking-widest mb-2">Max Height (ft)</label>
-                                <input type="number" id="max_height" class="w-full p-3 bg-surface-container border-none focus:ring-2 focus:ring-[#52aecd] rounded-lg font-medium" placeholder="30.0">
+                                <input type="number" id="max_height" class="w-full p-3 bg-surface-container -none focus:ring-2 focus:ring-[#52aecd] rounded-[8px] font-medium" placeholder="30.0">
                             </div>
                             <div>
                                 <label class="block text-sm font-bold text-primary uppercase tracking-widest mb-2">Min Lot Size (sq ft)</label>
-                                <input type="number" id="min_lot_size" class="w-full p-3 bg-surface-container border-none focus:ring-2 focus:ring-[#52aecd] rounded-lg font-medium" placeholder="12000.0">
+                                <input type="number" id="min_lot_size" class="w-full p-3 bg-surface-container -none focus:ring-2 focus:ring-[#52aecd] rounded-[8px] font-medium" placeholder="12000.0">
                             </div>
                         </div>
                         <input type="hidden" id="actual_values" name="actual_values" value='{"MAX_HEIGHT": 30.0, "MIN_LOT_SIZE": 12000.0}'>
                     </div>
 
-                    <button type="submit" class="w-full py-4 bg-[#52aecd] text-white font-black uppercase tracking-widest angular-cut-small shadow-lg shadow-[#52aecd]/20 hover:bg-[#39b2c2] transition-colors">
+                    <button type="submit" class="w-full py-4 bg-[#52aecd] text-white font-black uppercase tracking-widest angular-cut-small shadow-ambient shadow-[#52aecd]/20 hover:bg-[#39b2c2] transition-colors">
                         Check Compliance
                     </button>
                 </form>
 
                 <div id="result" class="mt-12 hidden">
                     <h4 class="text-lg font-bold text-primary mb-4">Compliance Result</h4>
-                    <pre id="resultOutput" class="p-6 bg-[#002733] text-[#95f1ff] rounded-xl overflow-x-auto font-mono text-sm border border-white/10 shadow-2xl"></pre>
+                    <pre id="resultOutput" class="p-6 bg-[#002733] text-[#95f1ff] rounded-xl overflow-x-auto font-mono text-sm  -white/10 shadow-2xl"></pre>
                 </div>
             </div>
         </div>

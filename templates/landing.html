@@ -7,10 +7,40 @@
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com" rel="preconnect"/>
     <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
     <!-- Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        'surface': '#f8f9ff',
+        'surface-container-low': '#eff4ff',
+        'surface-container-lowest': '#ffffff',
+        'surface-container-high': '#dce9ff',
+        'primary': '#006576',
+        'primary-container': '#1c7f92',
+        'on-surface': '#001c37',
+        'outline-variant': '#bec8cc',
+        'tertiary-fixed': '#75fbbf'
+      },
+      fontFamily: {
+        'display': ['Manrope', 'sans-serif'],
+        'headline': ['Manrope', 'sans-serif'],
+        'body': ['Inter', 'sans-serif']
+      },
+      boxShadow: {
+        'ambient': '0 20px 40px rgba(0, 28, 55, 0.08)',
+        'ambient-light': '0 20px 40px rgba(0, 28, 55, 0.04)'
+      }
+    }
+  }
+}
+</script>
+
 
     <style>
             .material-symbols-outlined {
@@ -31,19 +61,19 @@
         </style>
 </head>
 <body class="bg-surface font-body text-on-surface selection:bg-primary-fixed selection:text-on-primary-fixed">
-    <nav class="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-xl shadow-sm">
+    <nav class="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-xl shadow-ambient-light">
         <div class="flex items-center justify-between px-6 py-4 max-w-7xl mx-auto">
             <div class="flex items-center gap-2">
-                <span class="material-symbols-outlined text-teal-600" style="font-size: 28px;">shield_with_house</span>
-                <span class="text-2xl font-extrabold tracking-tighter text-slate-900 font-headline">Hosteva</span>
+                <span class="material-symbols-outlined text-primary" style="font-size: 28px;">shield_with_house</span>
+                <span class="text-2xl font-extrabold tracking-tighter text-on-surface font-headline tracking-tight font-headline">Hosteva</span>
             </div>
             <div class="hidden md:flex items-center gap-8">
-                <a class="text-teal-700 font-semibold border-b-2 border-teal-600 py-1" href="/">Home</a>
-                <a class="text-slate-600 font-medium hover:text-teal-600 transition-all duration-300" href="/wizard">Compliance Wizard</a>
-                <a class="text-slate-600 font-medium hover:text-teal-600 transition-all duration-300" href="/wizard">Insights</a>
-                <a class="text-slate-600 font-medium hover:text-teal-600 transition-all duration-300" href="/wizard">Support</a>
+                <a class="text-primary font-semibold -b-2  py-1" href="/">Home</a>
+                <a class="text-slate-600 font-medium hover:text-primary transition-all duration-300" href="/wizard">Compliance Wizard</a>
+                <a class="text-slate-600 font-medium hover:text-primary transition-all duration-300" href="/wizard">Insights</a>
+                <a class="text-slate-600 font-medium hover:text-primary transition-all duration-300" href="/wizard">Support</a>
             </div>
-            <a href="/wizard" class="bg-primary text-on-primary px-5 py-2.5 rounded-lg font-semibold tracking-tight scale-95 active:scale-90 transition-transform primary-gradient shadow-lg shadow-primary/20">
+            <a href="/wizard" class="bg-primary text-on-primary px-5 py-2.5 rounded-[8px] font-semibold tracking-tight scale-95 active:scale-90 transition-transform primary-gradient shadow-ambient shadow-primary/20">
                 Get Started
             </a>
         </div>
@@ -52,22 +82,22 @@
         <section class="relative px-6 py-20 md:py-32 max-w-7xl mx-auto overflow-hidden">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
                 <div class="relative z-10">
-                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-100 text-teal-700 font-label text-xs font-bold uppercase tracking-wider mb-6">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-100 text-primary font-label text-xs font-bold uppercase tracking-wider mb-6">
                         <span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">shield_with_house</span>
                         Hosteva Intelligence
                     </div>
                     <h1 class="font-headline text-5xl md:text-7xl font-extrabold text-on-surface leading-[1.1] tracking-tight mb-8">
-                        Maximize Your <span class="text-primary italic">Hosting Potential</span> with AI.
+                        Simplify Your <span class="text-primary italic">STR Compliance</span> Journey.
                     </h1>
                     <p class="text-lg text-on-surface-variant max-w-lg mb-10 leading-relaxed">
-                        The elite digital concierge for property owners. Hosteva uses advanced predictive analytics to optimize your revenue, guest experience, and operational efficiency.
+                        The ultimate permit readiness tool for property owners. Hosteva automatically audits your address for state and local regulations to ensure 100% compliance.
                     </p>
                     <div class="p-2 bg-surface-container-lowest rounded-xl shadow-xl shadow-on-surface/5 flex flex-col md:flex-row gap-2 max-w-xl outline outline-1 outline-outline-variant/15">
                         <div class="flex-grow flex items-center px-4 gap-3">
                             <span class="material-symbols-outlined text-outline">location_on</span>
-                            <input class="w-full bg-transparent border-none focus:ring-0 text-on-surface font-medium placeholder:text-outline" placeholder="Enter property address..." type="text"/>
+                            <input class="w-full bg-transparent -none focus:ring-0 text-on-surface font-medium placeholder:text-outline" placeholder="Enter property address..." type="text"/>
                         </div>
-                        <a href="/wizard" class="primary-gradient text-on-primary px-8 py-4 rounded-lg font-bold text-sm whitespace-nowrap transition-transform active:scale-95 text-center">
+                        <a href="/wizard" class="primary-gradient text-on-primary px-8 py-4 rounded-[8px] font-bold text-sm whitespace-nowrap transition-transform active:scale-95 text-center">
                             Check Compliance
                         </a>
                     </div>
@@ -75,15 +105,15 @@
                 <div class="relative">
                     <div class="absolute -top-20 -right-20 w-96 h-96 bg-primary-fixed-dim/30 rounded-full blur-[100px]"></div>
                     <div class="absolute -bottom-20 -left-20 w-72 h-72 bg-tertiary-fixed/20 rounded-full blur-[80px]"></div>
-                    <div class="relative bg-surface-container-lowest rounded-3xl p-4 shadow-2xl overflow-hidden border border-outline-variant/15 aspect-[4/3] group">
+                    <div class="relative bg-surface-container-lowest rounded-3xl p-4 shadow-2xl overflow-hidden  -outline-variant/15 aspect-[4/3] group">
                         <img class="w-full h-full object-cover rounded-2xl group-hover:scale-105 transition-transform duration-700" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAyb5k_3HBFypz-Y0tSd47_ioIOUUQvSqs2yNmN8eXN-J76wQxPm5YbPd1Zl9t16kRnV5LnV569ZqH7GV6XYq9W3y_yi5DjLBR_3xEN_Hd6PvlIkZ1nYMe2Jm7PbEL1O7VYxOAh6-2OTy7CHCgjwnmKss8eZi16MGYdFjPnr11q420QJ10lUgnWZ3rbtsOdkgs41XdE_u331yTKhn9JsbOOj7_oQ-OVVRlkA4O9hQqHWJCZ5QHXLwPAY7BBnRU43zXmDAFOyS4KmNk"/>
-                        <div class="absolute bottom-8 right-8 left-8 bg-surface-container-lowest/90 backdrop-blur-md p-6 rounded-xl border-l-[3px] border-tertiary-fixed shadow-2xl flex items-center gap-4">
+                        <div class="absolute bottom-8 right-8 left-8 bg-surface-container-lowest/90 backdrop-blur-md p-6 rounded-xl -[3px] border-tertiary-fixed shadow-2xl flex items-center gap-4">
                             <div class="w-12 h-12 rounded-full bg-tertiary-container/10 flex items-center justify-center text-tertiary">
-                                <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">insights</span>
+                                <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">fact_check</span>
                             </div>
                             <div>
-                                <p class="text-xs font-bold text-tertiary uppercase tracking-widest mb-1">AI Recommendation</p>
-                                <p class="text-sm font-semibold text-on-surface">Dynamic pricing increase of 12% recommended for upcoming holiday weekend.</p>
+                                <p class="text-xs font-bold text-tertiary uppercase tracking-widest mb-1">Compliance Audit</p>
+                                <p class="text-sm font-semibold text-on-surface">Address is eligible. Florida DBPR and local BTR readiness confirmed.</p>
                             </div>
                         </div>
                     </div>
@@ -97,23 +127,23 @@
                     <p class="text-on-surface-variant max-w-2xl mx-auto">Enterprise-grade solutions simplified for the independent host.</p>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="md:col-span-2 bg-surface-container-lowest p-8 rounded-2xl shadow-sm flex flex-col justify-between group overflow-hidden relative">
+                    <div class="md:col-span-2 bg-surface-container-lowest p-8 rounded-2xl shadow-ambient-light flex flex-col justify-between group overflow-hidden relative">
                         <div class="absolute top-0 right-0 w-64 h-64 primary-gradient opacity-5 rounded-full -mr-20 -mt-20 group-hover:opacity-10 transition-opacity"></div>
                         <div>
-                            <span class="material-symbols-outlined text-primary text-4xl mb-6">finance_mode</span>
-                            <h3 class="font-headline text-2xl font-bold mb-4">Revenue Optimization Engine</h3>
-                            <p class="text-on-surface-variant max-w-md leading-relaxed">Our AI analyzes over 200 market factors daily to ensure your property is always priced perfectly for maximum occupancy and profit.</p>
+                            <span class="material-symbols-outlined text-primary text-4xl mb-6">rule</span>
+                            <h3 class="font-headline text-2xl font-bold mb-4">Address Eligibility Audit</h3>
+                            <p class="text-on-surface-variant max-w-md leading-relaxed">Instantly verify your property against state and county regulations. Get a comprehensive pass/fail checklist before you list.</p>
                         </div>
                         <div class="mt-8 flex gap-4">
-                            <span class="px-3 py-1 bg-surface-container text-primary font-bold text-[10px] rounded-full uppercase tracking-tighter">Real-time Data</span>
-                            <span class="px-3 py-1 bg-surface-container text-primary font-bold text-[10px] rounded-full uppercase tracking-tighter">Predictive Analytics</span>
+                            <span class="px-3 py-1 bg-surface-container text-primary font-bold text-[10px] rounded-full uppercase tracking-tighter">DBPR Rules</span>
+                            <span class="px-3 py-1 bg-surface-container text-primary font-bold text-[10px] rounded-full uppercase tracking-tighter">Local Ordinances</span>
                         </div>
                     </div>
-                    <div class="bg-primary-container p-8 rounded-2xl shadow-sm text-on-primary-container flex flex-col justify-between">
+                    <div class="bg-primary-container p-8 rounded-2xl shadow-ambient-light text-on-primary-container flex flex-col justify-between">
                         <div>
-                            <span class="material-symbols-outlined text-3xl mb-6">verified_user</span>
-                            <h3 class="font-headline text-2xl font-bold mb-4">Smart Screening</h3>
-                            <p class="opacity-90 leading-relaxed text-sm">Automated guest verification and risk assessment to protect your asset and peace of mind.</p>
+                            <span class="material-symbols-outlined text-3xl mb-6">folder_special</span>
+                            <h3 class="font-headline text-2xl font-bold mb-4">License Vault</h3>
+                            <p class="opacity-90 leading-relaxed text-sm">Securely store and track all required compliance forms, BTRs, and state licenses with auto-expiration alerts.</p>
                         </div>
                         <a class="inline-flex items-center gap-2 font-bold text-sm mt-8 group" href="/wizard">
                             Learn More <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
@@ -123,19 +153,19 @@
             </div>
         </section>
     </main>
-    <footer class="bg-slate-50 w-full border-t border-slate-200">
+    <footer class="bg-surface-container-low w-full -t ">
         <div class="flex flex-col md:flex-row justify-between items-center px-8 py-12 gap-6 max-w-7xl mx-auto">
             <div class="flex flex-col items-center md:items-start gap-4">
                 <div class="flex items-center gap-2">
-                    <span class="material-symbols-outlined text-teal-600">shield_with_house</span>
-                    <span class="text-lg font-bold text-slate-900 font-headline">Hosteva AI</span>
+                    <span class="material-symbols-outlined text-primary">shield_with_house</span>
+                    <span class="text-lg font-bold text-on-surface font-headline tracking-tight font-headline">Hosteva AI</span>
                 </div>
                 <p class="font-inter text-xs tracking-wide uppercase text-slate-500">© 2026 Hosteva AI. Hosteva Intelligence.</p>
             </div>
             <div class="flex flex-wrap justify-center gap-8">
-                <a class="font-inter text-xs tracking-wide uppercase text-slate-500 hover:text-slate-900 hover:underline transition-all" href="/wizard">Privacy Policy</a>
-                <a class="font-inter text-xs tracking-wide uppercase text-slate-500 hover:text-slate-900 hover:underline transition-all" href="/wizard">Terms of Service</a>
-                <a class="font-inter text-xs tracking-wide uppercase text-slate-500 hover:text-slate-900 hover:underline transition-all" href="/wizard">Contact Support</a>
+                <a class="font-inter text-xs tracking-wide uppercase text-slate-500 hover:text-on-surface font-headline tracking-tight hover:underline transition-all" href="/wizard">Privacy Policy</a>
+                <a class="font-inter text-xs tracking-wide uppercase text-slate-500 hover:text-on-surface font-headline tracking-tight hover:underline transition-all" href="/wizard">Terms of Service</a>
+                <a class="font-inter text-xs tracking-wide uppercase text-slate-500 hover:text-on-surface font-headline tracking-tight hover:underline transition-all" href="/wizard">Contact Support</a>
             </div>
         </div>
     </footer>
