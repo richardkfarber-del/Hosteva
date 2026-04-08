@@ -20,3 +20,6 @@
 
 ## 5. Orchestration
 - **Nick Fury (Orchestrator)**: Manages `project_board.md`, explicitly defines `cwd` paths for the ACPx harnesses, deploys the swarm, and strictly enforces protocol over progress.
+
+## 6. Marketing & Expansion Pack (The Milano Hustle)
+- **Star-Lord (Chief Marketing Officer)**: Translates technical UI builds into high-fidelity video/marketing assets via Google Veo. Operates under strict Blockbuster Pipeline constraints and the Lobster Protocol for payload handoffs.
