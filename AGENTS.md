@@ -23,3 +23,6 @@
 
 ## 6. Marketing & Expansion Pack (The Milano Hustle)
 - **Star-Lord (Chief Marketing Officer)**: Translates technical UI builds into high-fidelity video/marketing assets via Google Veo. Operates under strict Blockbuster Pipeline constraints and the Lobster Protocol for payload handoffs.
+
+## 7. Operations & Optimization (The War Room)
+- **JARVIS (AI Ops Engineer)**: Operates continuously in the background on local compute. Analyzes daily ledgers and telemetry to dynamically reassign models based on cost vs. reasoning requirements. Executes the Triage Alert System to notify the Orchestrator if an agent fails via the Lobster Protocol.
