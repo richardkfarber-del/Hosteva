@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>Compliance Wizard | Hosteva</title>
+    <title>Eligibility Wizard | Hosteva</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
@@ -36,172 +36,158 @@ tailwind.config = {
   }
 }
 </script>
-
-    
     <style>
-            .material-symbols-outlined {
-                font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-            }
-            .angular-cut {
-                clip-path: polygon(0% 0%, 85% 0%, 100% 30%, 100% 100%, 0% 100%);
-            }
-            .angular-cut-small {
-                clip-path: polygon(0% 0%, 92% 0%, 100% 40%, 100% 100%, 0% 100%);
-            }
-            body { font-family: 'Inter', sans-serif; }
-        </style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: 0 20px 40px rgba(0, 28, 55, 0.08);
+        }
+        
+        .glass-sidebar {
+            background: rgba(0, 39, 51, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: none;
+        }
+        
+        .primary-gradient {
+            background: linear-gradient(135deg, #006576 0%, #1c7f92 100%);
+        }
+
+        .insight-prism {
+            border-left: 3px solid #75fbbf;
+        }
+        
+        /* Focus state for input */
+        .glass-input:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(0, 101, 118, 0.3); /* primary dim */
+            background-color: #ffffff; /* surface bright */
+        }
+    </style>
 </head>
 <body class="bg-surface text-on-surface">
     <!-- SideNavBar -->
-    <aside class="w-[240px] h-screen fixed left-0 top-0 bg-[#002733] flex flex-col py-8 px-4 gap-2 z-50">
+    <aside class="w-[240px] h-screen fixed left-0 top-0 glass-sidebar flex flex-col py-8 px-4 gap-2 z-50">
         <div class="mb-8 px-2">
-            <h1 class="text-2xl font-black tracking-[-0.02em] text-white">Hosteva</h1>
-            <p class="text-[#52aecd] text-xs font-medium uppercase tracking-widest opacity-80 mt-1">Stark Industries</p>
+            <h1 class="text-2xl font-black tracking-[-0.02em] text-white font-display">Hosteva</h1>
+            <p class="text-[#52aecd] text-xs font-medium uppercase tracking-widest opacity-80 mt-1 font-body">Stark Industries</p>
         </div>
         <nav class="flex flex-col gap-1">
-            <a class="flex items-center gap-3 py-3 px-4 text-[#e2e2e2] opacity-80 hover:bg-[#52aecd]/20 hover:opacity-100 transition-all font-medium" href="/">
+            <a class="flex items-center gap-3 py-3 px-4 text-[#e2e2e2] opacity-80 hover:bg-[#52aecd]/20 hover:opacity-100 transition-all font-medium rounded-lg" href="/">
                 <span class="material-symbols-outlined">home</span>
                 <span>Home</span>
             </a>
-            <a class="flex items-center gap-3 py-3 px-4 bg-[#52aecd] text-white angular-cut translate-x-1 duration-300 font-medium" href="/wizard">
+            <a class="flex items-center gap-3 py-3 px-4 bg-[#52aecd] text-white duration-300 font-medium rounded-lg shadow-ambient" href="/wizard">
                 <span class="material-symbols-outlined">gavel</span>
                 <span>Compliance</span>
-            </a>
-            <a class="flex items-center gap-3 py-3 px-4 text-[#e2e2e2] opacity-80 hover:bg-[#52aecd]/20 hover:opacity-100 transition-all font-medium" href="#">
-                <span class="material-symbols-outlined">analytics</span>
-                <span>Analytics</span>
-            </a>
-            <a class="flex items-center gap-3 py-3 px-4 text-[#e2e2e2] opacity-80 hover:bg-[#52aecd]/20 hover:opacity-100 transition-all font-medium" href="#">
-                <span class="material-symbols-outlined">settings</span>
-                <span>Settings</span>
             </a>
         </nav>
     </aside>
 
     <!-- Main Content Canvas -->
-    <main class="ml-[240px] min-h-screen bg-background">
+    <main class="ml-[240px] min-h-screen">
         <!-- TopAppBar -->
-        <header class="fixed top-0 left-[240px] right-0 h-16 bg-surface-container-lowest/85 backdrop-blur-md z-40 flex justify-between items-center px-8 shadow-[0_4px_12px_rgba(0,39,51,0.08)]">
+        <header class="fixed top-0 left-[240px] right-0 h-16 glass-panel z-40 flex justify-between items-center px-8">
             <div class="flex items-center gap-4">
-                <h2 class="font-headline font-bold text-xl tracking-[-0.02em] text-primary">Compliance Wizard</h2>
-            </div>
-            <div class="flex items-center gap-6">
-                </div>
+                <h2 class="font-headline font-bold text-xl tracking-[-0.02em] text-primary">Permit Readiness Audit</h2>
             </div>
         </header>
 
         <div class="pt-24 pb-12 px-8 max-w-4xl mx-auto">
-            <div class="bg-surface-container-lowest p-8 shadow-xl angular-cut  -outline-variant/10">
-                <h3 class="text-2xl font-black text-primary mb-6 tracking-tight">Check Property Compliance</h3>
+            <!-- Digital Concierge -->
+            <div class="mb-8 glass-panel p-6 rounded-[16px] flex items-center gap-4">
+                <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">assistant</span>
+                </div>
+                <div>
+                    <h3 class="font-headline font-bold text-primary text-lg">Your Digital Concierge</h3>
+                    <p class="text-on-surface opacity-70 text-sm">I'll guide you through the permit readiness audit. Enter your address to begin.</p>
+                </div>
+            </div>
+            
+            <div class="glass-panel p-10 rounded-[16px]">
+                <h3 class="text-3xl font-display font-black text-primary mb-2 tracking-tight">Eligibility Wizard</h3>
+                <p class="text-on-surface opacity-80 mb-8 font-body">Enter your property address below to receive an instant Permit Readiness Audit and safety checklist.</p>
                 
                 <form id="wizardForm" class="space-y-6">
                     <div>
-                        <label class="block text-sm font-bold text-primary uppercase tracking-widest mb-2">Property ID</label>
-                        <input type="text" id="property_id" name="property_id" class="w-full p-3 bg-surface-container -none focus:ring-2 focus:ring-[#52aecd] rounded-[8px] font-medium" placeholder="Enter ID (e.g. PROP-123)">
+                        <label class="block text-sm font-bold text-primary uppercase tracking-widest mb-2">Property Address</label>
+                        <input type="text" id="address" name="address" class="w-full p-4 bg-surface-container-low glass-input rounded-[8px] font-medium border-none" placeholder="e.g. 123 Ocean Drive, Miami, FL 33139" required>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label class="block text-sm font-bold text-primary uppercase tracking-widest mb-2">Zoning District</label>
-                            <select id="zoning_district_id" name="zoning_district_id" class="w-full p-3 bg-surface-container -none focus:ring-2 focus:ring-[#52aecd] rounded-[8px] font-medium"></select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-bold text-primary uppercase tracking-widest mb-2">Land Use Type</label>
-                            <select id="proposed_land_use_id" name="proposed_land_use_id" class="w-full p-3 bg-surface-container -none focus:ring-2 focus:ring-[#52aecd] rounded-[8px] font-medium"></select>
-                        </div>
-                    </div>
-
-                    <div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-bold text-primary uppercase tracking-widest mb-2">Max Height (ft)</label>
-                                <input type="number" id="max_height" class="w-full p-3 bg-surface-container -none focus:ring-2 focus:ring-[#52aecd] rounded-[8px] font-medium" placeholder="30.0">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-bold text-primary uppercase tracking-widest mb-2">Min Lot Size (sq ft)</label>
-                                <input type="number" id="min_lot_size" class="w-full p-3 bg-surface-container -none focus:ring-2 focus:ring-[#52aecd] rounded-[8px] font-medium" placeholder="12000.0">
-                            </div>
-                        </div>
-                        <input type="hidden" id="actual_values" name="actual_values" value='{"MAX_HEIGHT": 30.0, "MIN_LOT_SIZE": 12000.0}'>
-                    </div>
-
-                    <button type="submit" class="w-full py-4 bg-[#52aecd] text-white font-black uppercase tracking-widest angular-cut-small shadow-ambient shadow-[#52aecd]/20 hover:bg-[#39b2c2] transition-colors">
-                        Check Compliance
+                    <button type="submit" class="w-full py-4 primary-gradient text-white font-black uppercase tracking-widest rounded-[8px] shadow-ambient hover:opacity-90 transition-opacity">
+                        Run Audit
                     </button>
                 </form>
 
                 <div id="result" class="mt-12 hidden">
-                    <h4 class="text-lg font-bold text-primary mb-4">Compliance Result</h4>
-                    <pre id="resultOutput" class="p-6 bg-[#002733] text-[#95f1ff] rounded-xl overflow-x-auto font-mono text-sm  -white/10 shadow-2xl"></pre>
+                    <div id="insightCard" class="glass-panel insight-prism p-8 rounded-[12px]">
+                        <div class="flex items-center gap-3 mb-4">
+                            <span class="material-symbols-outlined text-primary">auto_awesome</span>
+                            <h4 class="text-xl font-headline font-bold text-primary">The Insight Prism</h4>
+                        </div>
+                        <div id="resultOutput" class="font-body text-on-surface"></div>
+                        <ul id="detailsList" class="mt-4 list-disc list-inside font-body text-sm text-on-surface opacity-80 space-y-1 hidden">
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
     </main>
 
     <script>
-        const API_KEY = 'stark-secret-key-2026';
-
         document.getElementById('wizardForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const resultDiv = document.getElementById('result');
             const resultOutput = document.getElementById('resultOutput');
+            const detailsList = document.getElementById('detailsList');
             
             resultDiv.classList.remove('hidden');
-            resultOutput.innerText = 'Analyzing compliance...';
+            resultOutput.innerHTML = '<span class="animate-pulse">Analyzing permit readiness...</span>';
+            detailsList.classList.add('hidden');
+            detailsList.innerHTML = '';
 
             try {
                 const payload = {
-                    property_id: document.getElementById('property_id').value,
-                    zoning_district_id: document.getElementById('zoning_district_id').value,
-                    proposed_land_use_id: document.getElementById('proposed_land_use_id').value,
-                    actual_values: JSON.parse(document.getElementById('actual_values').value)
+                    address: document.getElementById('address').value
                 };
                 
-                const response = await fetch('/api/compliance/check', {
+                const response = await fetch('/wizard/audit', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'X-API-Key': API_KEY
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify(payload)
                 });
                 const result = await response.json();
-                resultOutput.innerText = JSON.stringify(result, null, 2);
+                
+                let htmlContent = `
+                    <p class="font-bold text-lg mb-2 ${result.status === 'Pass' ? 'text-green-600' : 'text-red-600'}">
+                        Status: ${result.status}
+                    </p>
+                    <p class="mb-4">${result.message}</p>
+                `;
+                resultOutput.innerHTML = htmlContent;
+
+                if (result.details && result.details.length > 0) {
+                    detailsList.classList.remove('hidden');
+                    result.details.forEach(detail => {
+                        const li = document.createElement('li');
+                        li.textContent = detail;
+                        detailsList.appendChild(li);
+                    });
+                }
             } catch (err) {
-                resultOutput.innerText = 'Error: ' + err.message;
+                resultOutput.innerHTML = '<p class="text-red-500">Error: ' + err.message + '</p>';
             }
         });
-        
-        async function fetchOptions() {
-            try {
-                const [zdRes, lutRes] = await Promise.all([
-                    fetch('/api/zoning/districts', { headers: { 'X-API-Key': API_KEY } }),
-                    fetch('/api/zoning/land-use-types', { headers: { 'X-API-Key': API_KEY } })
-                ]);
-                
-                const zds = await zdRes.json();
-                const luts = await lutRes.json();
-                
-                const zdSelect = document.getElementById('zoning_district_id');
-                zds.forEach(zd => {
-                    const opt = document.createElement('option');
-                    opt.value = zd.id;
-                    opt.text = zd.name;
-                    zdSelect.add(opt);
-                });
-                
-                const lutSelect = document.getElementById('proposed_land_use_id');
-                luts.forEach(lut => {
-                    const opt = document.createElement('option');
-                    opt.value = lut.id;
-                    opt.text = lut.name;
-                    lutSelect.add(opt);
-                });
-            } catch (err) {
-                console.error('Failed to load options:', err);
-            }
-        }
-        fetchOptions();
     </script>
 </body>
 </html>

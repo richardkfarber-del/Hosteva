@@ -37,10 +37,37 @@ def read_root():
 def read_wizard():
     return FileResponse("templates/wizard.html")
 
+from pydantic import BaseModel
+class AddressQuery(BaseModel):
+    address: str
+
+@app.post("/wizard/audit", include_in_schema=False)
+def perform_audit(query: AddressQuery):
+    address = query.address.lower()
+    
+    # Simulate Pass/Fail
+    if "fl" in address or "florida" in address:
+        status = "Pass"
+        message = "Address is eligible. Form HR-7020 and standard safety requirements met."
+        details = [
+            "Fire Extinguisher verified",
+            "Smoke alarms functional",
+            "Form HR-7020 on file"
+        ]
+    else:
+        status = "Fail"
+        message = "Address not in a supported Florida jurisdiction or incomplete."
+        details = ["Missing Florida State Permit"]
+        
+    return {
+        "status": status,
+        "message": message,
+        "details": details
+    }
+
 @app.get('/dashboard', include_in_schema=False)
 def read_dashboard(request: Request):
     return templates.TemplateResponse(
-        request=request, 
-        name="dashboard.html", 
-        context={"request": request, "google_maps_api_key": os.getenv("GOOGLE_MAPS_API_KEY", "")}
+        "dashboard.html", 
+        {"request": request, "google_maps_api_key": os.getenv("GOOGLE_MAPS_API_KEY", "")}
     )
