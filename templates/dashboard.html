@@ -276,10 +276,49 @@ tailwind.config = {
                 </div>
             </div>
 
-            <div id="property-grid" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div id="property-grid" class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
                 <div class="animate-pulse bg-gray-100 h-96 rounded-sm "></div>
                 <div class="animate-pulse bg-gray-100 h-96 rounded-sm "></div>
                 <div class="animate-pulse bg-gray-100 h-96 rounded-sm "></div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+                <!-- License Tracker -->
+                <div class="bg-surface-container-low p-8 rounded-sm shadow-ambient-light">
+                    <h3 class="text-2xl font-black tracking-tight text-on-surface font-headline uppercase italic mb-6 flex items-center gap-3">
+                        <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">assignment</span>
+                        License Tracker
+                    </h3>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center p-4 bg-surface-container-lowest rounded-sm shadow-sm">
+                            <div>
+                                <p class="text-on-surface font-bold font-headline tracking-tight">Business Tax Receipt (BTR)</p>
+                                <p class="text-gray-500 text-xs">Expires: Oct 31, 2026</p>
+                            </div>
+                            <span class="px-3 py-1 bg-green-500/20 text-green-600 text-[10px] font-black uppercase tracking-wider rounded-sm shadow-ambient backdrop-blur-md">Active</span>
+                        </div>
+                        <div class="flex justify-between items-center p-4 bg-surface-container-lowest rounded-sm shadow-sm">
+                            <div>
+                                <p class="text-on-surface font-bold font-headline tracking-tight">Florida State DBPR License</p>
+                                <p class="text-gray-500 text-xs">Expires: Dec 31, 2026</p>
+                            </div>
+                            <span class="px-3 py-1 bg-green-500/20 text-green-600 text-[10px] font-black uppercase tracking-wider rounded-sm shadow-ambient backdrop-blur-md">Active</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Document Vault -->
+                <div class="bg-surface-container-low p-8 rounded-sm shadow-ambient-light">
+                    <h3 class="text-2xl font-black tracking-tight text-on-surface font-headline uppercase italic mb-6 flex items-center gap-3">
+                        <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">folder_secure</span>
+                        Document Vault
+                    </h3>
+                    <div class="border border-outline-variant border-dashed rounded-sm p-8 flex flex-col items-center justify-center bg-surface-container-lowest hover:bg-gray-50 transition-colors cursor-pointer h-full max-h-[160px]">
+                        <span class="material-symbols-outlined text-4xl text-gray-400 mb-2">cloud_upload</span>
+                        <p class="text-on-surface font-bold font-headline tracking-tight">Upload Compliance Documents</p>
+                        <p class="text-gray-500 text-sm mt-1 text-center">Drag and drop PDFs or click to browse</p>
+                    </div>
+                </div>
             </div>
 
             <div class="mt-12 mb-8">

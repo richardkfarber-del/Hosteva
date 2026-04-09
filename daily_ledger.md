@@ -1,0 +1,1 @@
+/home/rdogen/OpenClaw_Factory/projects/Hosteva/.openclaw/.openclaw/workspace/daily_ledger.md

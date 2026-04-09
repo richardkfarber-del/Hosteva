@@ -9,7 +9,31 @@ export PATH=/usr/local/bin:/usr/bin:/bin:$PATH
 WORKSPACE_DIR="/home/rdogen/OpenClaw_Factory/projects/Hosteva/.openclaw/.openclaw"
 SESSIONS_DIR="$WORKSPACE_DIR/agents"
 
-FROZEN=$(find "$SESSIONS_DIR" -type f -name "*.jsonl" -not -path "*/agents/main/*" -mmin +10 -mmin -60 2>/dev/null)
+FROZEN=$(python3 -c "
+import json
+import time
+import glob
+
+current_time = time.time() * 1000
+frozen = []
+for path in glob.glob('$WORKSPACE_DIR/agents/*/sessions/sessions.json'):
+    try:
+        with open(path, 'r') as f:
+            data = json.load(f)
+        for key, info in data.items():
+            if key == 'agent:main:main':
+                continue
+            status = info.get('status')
+            if status == 'running':
+                updated_at = info.get('updatedAt', 0)
+                age_ms = current_time - updated_at
+                if 600000 <= age_ms <= 3600000:
+                    frozen.append(key)
+    except Exception:
+        pass
+if frozen:
+    print('FROZEN')
+")
 
 if [ -n "$FROZEN" ]; then
     if [ ! -f /tmp/openclaw_watchdog_last_alert ] || [ $(find /tmp/openclaw_watchdog_last_alert -mmin +30) ]; then

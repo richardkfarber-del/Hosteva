@@ -68,6 +68,7 @@ def perform_audit(query: AddressQuery):
 @app.get('/dashboard', include_in_schema=False)
 def read_dashboard(request: Request):
     return templates.TemplateResponse(
-        "dashboard.html", 
-        {"request": request, "google_maps_api_key": os.getenv("GOOGLE_MAPS_API_KEY", "")}
+        request=request,
+        name="dashboard.html", 
+        context={"request": request, "google_maps_api_key": os.getenv("GOOGLE_MAPS_API_KEY", "")}
     )
