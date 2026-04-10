@@ -1,202 +1,130 @@
-<!DOCTYPE html>
-<html class="light" lang="en">
-<head>
-    <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>Eligibility Wizard | Hosteva</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+{% extends "base.html" %}
 
-<script>
-tailwind.config = {
-  theme: {
-    extend: {
-      colors: {
-        'surface': '#f8f9ff',
-        'surface-container-low': '#eff4ff',
-        'surface-container-lowest': '#ffffff',
-        'surface-container-high': '#dce9ff',
-        'primary': '#006576',
-        'primary-container': '#1c7f92',
-        'on-surface': '#001c37',
-        'outline-variant': '#bec8cc',
-        'tertiary-fixed': '#75fbbf'
-      },
-      fontFamily: {
-        'display': ['Manrope', 'sans-serif'],
-        'headline': ['Manrope', 'sans-serif'],
-        'body': ['Inter', 'sans-serif']
-      },
-      boxShadow: {
-        'ambient': '0 20px 40px rgba(0, 28, 55, 0.08)',
-        'ambient-light': '0 20px 40px rgba(0, 28, 55, 0.04)'
-      }
+{% block title %}Eligibility Wizard | Hosteva{% endblock %}
+
+{% block extra_head %}
+<style>
+    .glass-panel {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        box-shadow: 0 20px 40px rgba(0, 28, 55, 0.08);
     }
-  }
-}
-</script>
-    <style>
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
-        body { font-family: 'Inter', sans-serif; }
-        
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            box-shadow: 0 20px 40px rgba(0, 28, 55, 0.08);
-        }
-        
-        .glass-sidebar {
-            background: rgba(0, 39, 51, 0.85);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: none;
-        }
-        
-        .primary-gradient {
-            background: linear-gradient(135deg, #006576 0%, #1c7f92 100%);
-        }
+    
+    .insight-prism {
+        border-left: 3px solid #75fbbf;
+    }
+    
+    .glass-input:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(0, 101, 118, 0.3);
+        background-color: #ffffff;
+    }
+</style>
+{% endblock %}
 
-        .insight-prism {
-            border-left: 3px solid #75fbbf;
-        }
-        
-        /* Focus state for input */
-        .glass-input:focus {
-            outline: none;
-            box-shadow: 0 0 0 2px rgba(0, 101, 118, 0.3); /* primary dim */
-            background-color: #ffffff; /* surface bright */
-        }
-    </style>
-</head>
-<body class="bg-surface text-on-surface">
-    <!-- SideNavBar -->
-    <aside class="w-[240px] h-screen fixed left-0 top-0 glass-sidebar flex flex-col py-8 px-4 gap-2 z-50">
-        <div class="mb-8 px-2">
-            <h1 class="text-2xl font-black tracking-[-0.02em] text-white font-display">Hosteva</h1>
-            <p class="text-[#52aecd] text-xs font-medium uppercase tracking-widest opacity-80 mt-1 font-body">Hosteva Intelligence</p>
+{% block content %}
+<header class="fixed top-0 left-[260px] right-0 h-16 glass-panel z-40 flex justify-between items-center px-8">
+    <div class="flex items-center gap-4">
+        <h2 class="font-headline font-bold text-xl tracking-[-0.02em] text-primary">Permit Readiness Audit</h2>
+    </div>
+</header>
+
+<div class="pt-24 pb-12 px-8 max-w-4xl mx-auto">
+    <div class="mb-8 glass-panel p-6 rounded-[16px] flex items-center gap-4">
+        <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+            <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">assistant</span>
         </div>
-        <nav class="flex flex-col gap-1">
-            <a class="flex items-center gap-3 py-3 px-4 text-[#e2e2e2] opacity-80 hover:bg-[#52aecd]/20 hover:opacity-100 transition-all font-medium rounded-lg" href="/">
-                <span class="material-symbols-outlined">home</span>
-                <span>Home</span>
-            </a>
-            <a class="flex items-center gap-3 py-3 px-4 bg-[#52aecd] text-white duration-300 font-medium rounded-lg shadow-ambient" href="/wizard">
-                <span class="material-symbols-outlined">gavel</span>
-                <span>Compliance</span>
-            </a>
-        </nav>
-    </aside>
-
-    <!-- Main Content Canvas -->
-    <main class="ml-[240px] min-h-screen">
-        <!-- TopAppBar -->
-        <header class="fixed top-0 left-[240px] right-0 h-16 glass-panel z-40 flex justify-between items-center px-8">
-            <div class="flex items-center gap-4">
-                <h2 class="font-headline font-bold text-xl tracking-[-0.02em] text-primary">Permit Readiness Audit</h2>
+        <div>
+            <h3 class="font-headline font-bold text-primary text-lg">Your Digital Concierge</h3>
+            <p class="text-on-surface opacity-70 text-sm">I'll guide you through the permit readiness audit. Enter your address to begin.</p>
+        </div>
+    </div>
+    
+    <div class="glass-panel p-10 rounded-[16px]">
+        <h3 class="text-3xl font-display font-black text-primary mb-2 tracking-tight">Eligibility Wizard</h3>
+        <p class="text-on-surface opacity-80 mb-8 font-body">Enter your property address below to receive an instant Permit Readiness Audit and safety checklist.</p>
+        
+        <form id="wizardForm" class="space-y-6">
+            <div>
+                <label class="block text-sm font-bold text-primary uppercase tracking-widest mb-2">Property Address</label>
+                <input type="text" id="address" name="address" class="w-full p-4 bg-surface-container-low glass-input rounded-[8px] font-medium border-none" placeholder="e.g. 123 Ocean Drive, Miami, FL 33139" required>
             </div>
-        </header>
 
-        <div class="pt-24 pb-12 px-8 max-w-4xl mx-auto">
-            <!-- Digital Concierge -->
-            <div class="mb-8 glass-panel p-6 rounded-[16px] flex items-center gap-4">
-                <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">assistant</span>
-                </div>
-                <div>
-                    <h3 class="font-headline font-bold text-primary text-lg">Your Digital Concierge</h3>
-                    <p class="text-on-surface opacity-70 text-sm">I'll guide you through the permit readiness audit. Enter your address to begin.</p>
-                </div>
-            </div>
-            
-            <div class="glass-panel p-10 rounded-[16px]">
-                <h3 class="text-3xl font-display font-black text-primary mb-2 tracking-tight">Eligibility Wizard</h3>
-                <p class="text-on-surface opacity-80 mb-8 font-body">Enter your property address below to receive an instant Permit Readiness Audit and safety checklist.</p>
-                
-                <form id="wizardForm" class="space-y-6">
-                    <div>
-                        <label class="block text-sm font-bold text-primary uppercase tracking-widest mb-2">Property Address</label>
-                        <input type="text" id="address" name="address" class="w-full p-4 bg-surface-container-low glass-input rounded-[8px] font-medium border-none" placeholder="e.g. 123 Ocean Drive, Miami, FL 33139" required>
-                    </div>
+            <button type="submit" class="w-full py-4 primary-gradient text-white font-black uppercase tracking-widest rounded-[8px] shadow-ambient hover:opacity-90 transition-opacity">
+                Run Audit
+            </button>
+        </form>
 
-                    <button type="submit" class="w-full py-4 primary-gradient text-white font-black uppercase tracking-widest rounded-[8px] shadow-ambient hover:opacity-90 transition-opacity">
-                        Run Audit
-                    </button>
-                </form>
-
-                <div id="result" class="mt-12 hidden">
-                    <div id="insightCard" class="glass-panel insight-prism p-8 rounded-[12px]">
-                        <div class="flex items-center gap-3 mb-4">
-                            <span class="material-symbols-outlined text-primary">auto_awesome</span>
-                            <h4 class="text-xl font-headline font-bold text-primary">The Insight Prism</h4>
-                        </div>
-                        <div id="resultOutput" class="font-body text-on-surface"></div>
-                        <ul id="detailsList" class="mt-4 list-disc list-inside font-body text-sm text-on-surface opacity-80 space-y-1 hidden">
-                        </ul>
-                    </div>
+        <div id="result" class="mt-12 hidden">
+            <div id="insightCard" class="glass-panel insight-prism p-8 rounded-[12px]">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="material-symbols-outlined text-primary">auto_awesome</span>
+                    <h4 class="text-xl font-headline font-bold text-primary">The Insight Prism</h4>
                 </div>
+                <div id="resultOutput" class="font-body text-on-surface"></div>
+                <ul id="detailsList" class="mt-4 list-disc list-inside font-body text-sm text-on-surface opacity-80 space-y-1 hidden">
+                </ul>
             </div>
         </div>
-    </main>
+    </div>
+</div>
+{% endblock %}
 
-    <script>
-        // Pre-fill address from query parameter
-        (function() {
-            const params = new URLSearchParams(window.location.search);
-            const addressParam = params.get('address');
-            if (addressParam) {
-                document.getElementById('address').value = addressParam;
-            }
-        })();
+{% block scripts %}
+<script>
+    (function() {
+        const params = new URLSearchParams(window.location.search);
+        const addressParam = params.get('address');
+        if (addressParam) {
+            document.getElementById('address').value = addressParam;
+        }
+    })();
 
-        document.getElementById('wizardForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const resultDiv = document.getElementById('result');
-            const resultOutput = document.getElementById('resultOutput');
-            const detailsList = document.getElementById('detailsList');
+    document.getElementById('wizardForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const resultDiv = document.getElementById('result');
+        const resultOutput = document.getElementById('resultOutput');
+        const detailsList = document.getElementById('detailsList');
+        
+        resultDiv.classList.remove('hidden');
+        resultOutput.innerHTML = '<span class="animate-pulse">Analyzing permit readiness...</span>';
+        detailsList.classList.add('hidden');
+        detailsList.innerHTML = '';
+
+        try {
+            const payload = {
+                address: document.getElementById('address').value
+            };
             
-            resultDiv.classList.remove('hidden');
-            resultOutput.innerHTML = '<span class="animate-pulse">Analyzing permit readiness...</span>';
-            detailsList.classList.add('hidden');
-            detailsList.innerHTML = '';
+            const response = await fetch('/wizard/audit', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+            const result = await response.json();
+            
+            let htmlContent = `
+                <p class="font-bold text-lg mb-2 ${result.status === 'Pass' ? 'text-green-600' : 'text-red-600'}">
+                    Status: ${result.status}
+                </p>
+                <p class="mb-4">${result.message}</p>
+            `;
+            resultOutput.innerHTML = htmlContent;
 
-            try {
-                const payload = {
-                    address: document.getElementById('address').value
-                };
-                
-                const response = await fetch('/wizard/audit', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(payload)
+            if (result.details && result.details.length > 0) {
+                detailsList.classList.remove('hidden');
+                result.details.forEach(detail => {
+                    const li = document.createElement('li');
+                    li.textContent = detail;
+                    detailsList.appendChild(li);
                 });
-                const result = await response.json();
-                
-                let htmlContent = `
-                    <p class="font-bold text-lg mb-2 ${result.status === 'Pass' ? 'text-green-600' : 'text-red-600'}">
-                        Status: ${result.status}
-                    </p>
-                    <p class="mb-4">${result.message}</p>
-                `;
-                resultOutput.innerHTML = htmlContent;
-
-                if (result.details && result.details.length > 0) {
-                    detailsList.classList.remove('hidden');
-                    result.details.forEach(detail => {
-                        const li = document.createElement('li');
-                        li.textContent = detail;
-                        detailsList.appendChild(li);
-                    });
-                }
-            } catch (err) {
-                resultOutput.innerHTML = '<p class="text-red-500">Error: ' + err.message + '</p>';
             }
-        });
-    </script>
-</body>
-</html>
+        } catch (err) {
+            resultOutput.innerHTML = '<p class="text-red-500">Error: ' + err.message + '</p>';
+        }
+    });
+</script>
+{% endblock %}

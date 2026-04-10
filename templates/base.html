@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>{% block title %}Hosteva{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        'surface': '#f8f9ff',
+        'surface-container-low': '#eff4ff',
+        'surface-container-lowest': '#ffffff',
+        'surface-container-high': '#dce9ff',
+        'primary': '#006576',
+        'primary-container': '#1c7f92',
+        'on-surface': '#001c37',
+        'outline-variant': '#bec8cc',
+        'tertiary-fixed': '#75fbbf'
+      },
+      fontFamily: {
+        'display': ['Manrope', 'sans-serif'],
+        'headline': ['Manrope', 'sans-serif'],
+        'body': ['Inter', 'sans-serif']
+      },
+      boxShadow: {
+        'ambient': '0 20px 40px rgba(0, 28, 55, 0.08)',
+        'ambient-light': '0 20px 40px rgba(0, 28, 55, 0.04)'
+      }
+    }
+  }
+}
+</script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .glass-sidebar {
+            background: rgba(0, 39, 51, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: none;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: 0 20px 40px rgba(0, 28, 55, 0.08);
+        }
+        .primary-gradient {
+            background: linear-gradient(135deg, #006576 0%, #1c7f92 100%);
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-surface text-on-surface font-body antialiased min-h-screen">
+    <!-- Global Dashboard Shell -->
+    <div class="flex min-h-screen">
+        <!-- Sidebar Navigation -->
+        <aside class="w-[260px] h-screen fixed left-0 top-0 glass-sidebar flex flex-col py-8 px-4 gap-2 z-50">
+            <div class="mb-8 px-2">
+                <h1 class="text-2xl font-black tracking-[-0.02em] text-white font-display">Hosteva</h1>
+                <p class="text-[#52aecd] text-xs font-medium uppercase tracking-widest opacity-80 mt-1 font-body">Hosteva Intelligence</p>
+            </div>
+            <nav class="flex flex-col gap-1">
+                <a class="flex items-center gap-3 py-3 px-4 text-[#e2e2e2] opacity-80 hover:bg-[#52aecd]/20 hover:opacity-100 transition-all font-medium rounded-lg {% if active_page == 'home' %}bg-[#52aecd] text-white{% endif %}" href="/">
+                    <span class="material-symbols-outlined">home</span>
+                    <span>Home</span>
+                </a>
+                <a class="flex items-center gap-3 py-3 px-4 text-[#e2e2e2] opacity-80 hover:bg-[#52aecd]/20 hover:opacity-100 transition-all font-medium rounded-lg {% if active_page == 'compliance' %}bg-[#52aecd] text-white{% endif %}" href="/wizard">
+                    <span class="material-symbols-outlined">gavel</span>
+                    <span>Compliance Audit</span>
+                </a>
+                <a class="flex items-center gap-3 py-3 px-4 text-[#e2e2e2] opacity-80 hover:bg-[#52aecd]/20 hover:opacity-100 transition-all font-medium rounded-lg {% if active_page == 'settings' %}bg-[#52aecd] text-white{% endif %}" href="#">
+                    <span class="material-symbols-outlined">settings</span>
+                    <span>Settings</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="ml-[260px] flex-1 min-h-screen">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

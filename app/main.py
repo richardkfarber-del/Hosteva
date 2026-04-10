@@ -35,8 +35,12 @@ def read_root():
     return FileResponse("templates/landing.html")
 
 @app.get("/wizard", include_in_schema=False)
-def read_wizard():
-    return FileResponse("templates/wizard.html")
+def read_wizard(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="wizard.html",
+        context={"request": request, "active_page": "compliance"}
+    )
 
 @app.get("/api/autocomplete")
 def autocomplete(input: str, sessiontoken: str = None):
