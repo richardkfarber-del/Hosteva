@@ -3,6 +3,7 @@ from fastapi.responses import FileResponse, PlainTextResponse
 from fastapi.templating import Jinja2Templates
 from app.database import engine, Base
 from app.routers import zoning, compliance, hosts, properties, notifications, dashboard_api, eligibility
+from app.models import compliance
 import os
 import traceback
 
