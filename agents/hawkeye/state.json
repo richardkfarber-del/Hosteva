@@ -1,9 +1,9 @@
 {
-  "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+  "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
   "board_updated": true,
-  "new_ticket_id": "STORY-005",
+  "new_ticket_id": "STORY-006",
   "ticket_type": "User Story",
   "formatting_check": "Verified 3rd-person Gherkin AC. No 1st-person phrasing.",
-  "resumption_point_set": "STORY-005",
+  "resumption_point_set": "STORY-006",
   "action_taken": "TICKET_CREATED"
 }

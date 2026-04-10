@@ -77,7 +77,7 @@ tailwind.config = {
     <aside class="w-[240px] h-screen fixed left-0 top-0 glass-sidebar flex flex-col py-8 px-4 gap-2 z-50">
         <div class="mb-8 px-2">
             <h1 class="text-2xl font-black tracking-[-0.02em] text-white font-display">Hosteva</h1>
-            <p class="text-[#52aecd] text-xs font-medium uppercase tracking-widest opacity-80 mt-1 font-body">Stark Industries</p>
+            <p class="text-[#52aecd] text-xs font-medium uppercase tracking-widest opacity-80 mt-1 font-body">Hosteva Intelligence</p>
         </div>
         <nav class="flex flex-col gap-1">
             <a class="flex items-center gap-3 py-3 px-4 text-[#e2e2e2] opacity-80 hover:bg-[#52aecd]/20 hover:opacity-100 transition-all font-medium rounded-lg" href="/">
@@ -143,6 +143,15 @@ tailwind.config = {
     </main>
 
     <script>
+        // Pre-fill address from query parameter
+        (function() {
+            const params = new URLSearchParams(window.location.search);
+            const addressParam = params.get('address');
+            if (addressParam) {
+                document.getElementById('address').value = addressParam;
+            }
+        })();
+
         document.getElementById('wizardForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const resultDiv = document.getElementById('result');

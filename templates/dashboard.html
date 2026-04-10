@@ -228,13 +228,19 @@ tailwind.config = {
     </div>
 
     <main class="ml-64 p-10">
-        <div id="search-results" class="hidden mb-8 p-6 bg-gray-100  rounded-sm">
+        <div id="search-results" class="hidden mb-8 p-6 bg-surface-container-lowest/80 backdrop-blur-md rounded-sm shadow-ambient border-none">
             <div class="flex items-center gap-4 mb-4">
-                <h3 class="text-lg font-bold text-on-surface font-headline tracking-tight">Search Result</h3>
-                <span id="search-status-badge" class="px-3 py-1 text-xs font-black uppercase rounded-full"></span>
+                <h3 class="text-lg font-black text-on-surface font-headline tracking-tight uppercase italic">Eligibility Status</h3>
+                <span id="search-status-badge" class="px-3 py-1 text-xs font-black uppercase rounded-sm shadow-ambient backdrop-blur-md"></span>
             </div>
-            <p class="text-gray-500 text-sm mb-2"><span class="text-on-surface font-headline tracking-tight font-medium">Address:</span> <span id="search-address"></span></p>
-            <p class="text-gray-500 text-sm"><span class="text-on-surface font-headline tracking-tight font-medium">Reason:</span> <span id="search-reason"></span></p>
+            <p class="text-gray-500 text-sm mb-2"><span class="text-on-surface font-headline tracking-tight font-bold">Address:</span> <span id="search-address"></span></p>
+            <p class="text-gray-500 text-sm mb-4"><span class="text-on-surface font-headline tracking-tight font-bold">Conditions:</span> <span id="search-reason"></span></p>
+            <div id="permit-link-container" class="hidden">
+                <a id="permit-link" href="#" target="_blank" class="text-sm font-bold text-primary hover:underline flex items-center gap-1">
+                    <span class="material-symbols-outlined text-sm">open_in_new</span>
+                    View Permit Requirements
+                </a>
+            </div>
         </div>
 
         <section class="mb-12">
@@ -422,11 +428,25 @@ tailwind.config = {
                 document.getElementById('search-address').innerText = data.address || address;
                 document.getElementById('search-reason').innerText = data.reason || 'No details available';
 
-                badge.innerText = data.status;
-                if (data.status === 'Eligible') {
-                    badge.className = 'px-3 py-1 text-xs font-black uppercase rounded-full bg-green-500/20 text-green-400';
+                badge.innerText = data.status || 'UNKNOWN';
+                
+                // Traffic Light UI logic
+                const statusUpper = (data.status || '').toUpperCase();
+                if (statusUpper === 'GREEN') {
+                    badge.className = 'px-3 py-1 text-xs font-black uppercase rounded-sm shadow-ambient backdrop-blur-md bg-green-500/20 text-green-600';
+                } else if (statusUpper === 'YELLOW') {
+                    badge.className = 'px-3 py-1 text-xs font-black uppercase rounded-sm shadow-ambient backdrop-blur-md bg-yellow-500/20 text-yellow-600';
+                } else if (statusUpper === 'RED') {
+                    badge.className = 'px-3 py-1 text-xs font-black uppercase rounded-sm shadow-ambient backdrop-blur-md bg-red-500/20 text-red-600 animate-pulse';
                 } else {
-                    badge.className = 'px-3 py-1 text-xs font-black uppercase rounded-full bg-gradient-to-br from-primary to-primary-container/20 text-primary';
+                    badge.className = 'px-3 py-1 text-xs font-black uppercase rounded-sm shadow-ambient backdrop-blur-md bg-gray-500/20 text-gray-600';
+                }
+
+                if (data.permit_link) {
+                    document.getElementById('permit-link').href = data.permit_link;
+                    document.getElementById('permit-link-container').classList.remove('hidden');
+                } else {
+                    document.getElementById('permit-link-container').classList.add('hidden');
                 }
 
                 panel.classList.remove('hidden');

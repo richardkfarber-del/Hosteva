@@ -70,8 +70,8 @@ tailwind.config = {
             <div class="hidden md:flex items-center gap-8">
                 <a class="text-primary font-semibold -b-2  py-1" href="/">Home</a>
                 <a class="text-slate-600 font-medium hover:text-primary transition-all duration-300" href="/wizard">Compliance Wizard</a>
-                <a class="text-slate-600 font-medium hover:text-primary transition-all duration-300" href="/wizard">Insights</a>
-                <a class="text-slate-600 font-medium hover:text-primary transition-all duration-300" href="/wizard">Support</a>
+                <a class="text-slate-600 font-medium hover:text-primary transition-all duration-300" href="#">Insights</a>
+                <a class="text-slate-600 font-medium hover:text-primary transition-all duration-300" href="#">Support</a>
             </div>
             <a href="/wizard" class="bg-primary text-on-primary px-5 py-2.5 rounded-[8px] font-semibold tracking-tight scale-95 active:scale-90 transition-transform primary-gradient shadow-ambient shadow-primary/20">
                 Get Started
@@ -95,31 +95,23 @@ tailwind.config = {
                     <div class="p-2 bg-surface-container-lowest rounded-xl shadow-xl shadow-on-surface/5 flex flex-col md:flex-row gap-2 max-w-xl outline outline-1 outline-outline-variant/15">
                         <div class="flex-grow flex items-center px-4 gap-3">
                             <span class="material-symbols-outlined text-outline">location_on</span>
-                            <input class="w-full bg-transparent -none focus:ring-0 text-on-surface font-medium placeholder:text-outline" placeholder="Enter property address..." type="text"/>
+                            <input id="homeAddress" class="w-full bg-transparent -none focus:ring-0 text-on-surface font-medium placeholder:text-outline" placeholder="Enter property address..." type="text"/>
                         </div>
-                        <a href="/wizard" class="primary-gradient text-on-primary px-8 py-4 rounded-[8px] font-bold text-sm whitespace-nowrap transition-transform active:scale-95 text-center">
+                        <a href="#" onclick="goToWizard()" class="primary-gradient text-on-primary px-8 py-4 rounded-[8px] font-bold text-sm whitespace-nowrap transition-transform active:scale-95 text-center">
                             Check Compliance
                         </a>
                     </div>
                 </div>
-                <div class="relative">
-                    <div class="absolute -top-20 -right-20 w-96 h-96 bg-primary-fixed-dim/30 rounded-full blur-[100px]"></div>
-                    <div class="absolute -bottom-20 -left-20 w-72 h-72 bg-tertiary-fixed/20 rounded-full blur-[80px]"></div>
-                    <div class="relative bg-surface-container-lowest rounded-3xl p-4 shadow-2xl overflow-hidden  -outline-variant/15 aspect-[4/3] group">
-                        <img class="w-full h-full object-cover rounded-2xl group-hover:scale-105 transition-transform duration-700" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAyb5k_3HBFypz-Y0tSd47_ioIOUUQvSqs2yNmN8eXN-J76wQxPm5YbPd1Zl9t16kRnV5LnV569ZqH7GV6XYq9W3y_yi5DjLBR_3xEN_Hd6PvlIkZ1nYMe2Jm7PbEL1O7VYxOAh6-2OTy7CHCgjwnmKss8eZi16MGYdFjPnr11q420QJ10lUgnWZ3rbtsOdkgs41XdE_u331yTKhn9JsbOOj7_oQ-OVVRlkA4O9hQqHWJCZ5QHXLwPAY7BBnRU43zXmDAFOyS4KmNk"/>
-                        <div class="absolute bottom-8 right-8 left-8 bg-surface-container-lowest/90 backdrop-blur-md p-6 rounded-xl -[3px] border-tertiary-fixed shadow-2xl flex items-center gap-4">
-                            <div class="w-12 h-12 rounded-full bg-tertiary-container/10 flex items-center justify-center text-tertiary">
-                                <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">fact_check</span>
-                            </div>
-                            <div>
-                                <p class="text-xs font-bold text-tertiary uppercase tracking-widest mb-1">Compliance Audit</p>
-                                <p class="text-sm font-semibold text-on-surface">Address is eligible. Florida DBPR and local BTR readiness confirmed.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
-        </section>
+        </div>
+    </section>
+
+    <script>
+        function goToWizard() {
+            const address = document.getElementById('homeAddress').value;
+            window.location.href = '/wizard' + (address ? '?address=' + encodeURIComponent(address) : '');
+        }
+    </script>
         <section class="bg-surface-container-low py-24 px-6">
             <div class="max-w-7xl mx-auto">
                 <div class="text-center mb-16">
@@ -163,9 +155,9 @@ tailwind.config = {
                 <p class="font-inter text-xs tracking-wide uppercase text-slate-500">© 2026 Hosteva AI. Hosteva Intelligence.</p>
             </div>
             <div class="flex flex-wrap justify-center gap-8">
-                <a class="font-inter text-xs tracking-wide uppercase text-slate-500 hover:text-on-surface font-headline tracking-tight hover:underline transition-all" href="/wizard">Privacy Policy</a>
-                <a class="font-inter text-xs tracking-wide uppercase text-slate-500 hover:text-on-surface font-headline tracking-tight hover:underline transition-all" href="/wizard">Terms of Service</a>
-                <a class="font-inter text-xs tracking-wide uppercase text-slate-500 hover:text-on-surface font-headline tracking-tight hover:underline transition-all" href="/wizard">Contact Support</a>
+                <a class="font-inter text-xs tracking-wide uppercase text-slate-500 hover:text-on-surface font-headline tracking-tight hover:underline transition-all" href="#">Privacy Policy</a>
+                <a class="font-inter text-xs tracking-wide uppercase text-slate-500 hover:text-on-surface font-headline tracking-tight hover:underline transition-all" href="#">Terms of Service</a>
+                <a class="font-inter text-xs tracking-wide uppercase text-slate-500 hover:text-on-surface font-headline tracking-tight hover:underline transition-all" href="#">Contact Support</a>
             </div>
         </div>
     </footer>
