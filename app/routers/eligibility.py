@@ -8,8 +8,12 @@ router = APIRouter(prefix="/api/eligibility", tags=["Eligibility"])
 class SearchRequest(BaseModel):
     address: str
 
+class EligibilityRequest(BaseModel):
+    address: str
+    place_id: str = None
+
 @router.get("/autocomplete")
-def autocomplete_address(input: str):
+def autocomplete_address(input: str, sessiontoken: str = None):
     api_key = os.getenv("GOOGLE_MAPS_API_KEY")
     
     if not api_key:
@@ -23,6 +27,9 @@ def autocomplete_address(input: str):
             "types": "address",
             "components": "country:us"
         }
+        if sessiontoken:
+            params["sessiontoken"] = sessiontoken
+            
         response = requests.get(autocomplete_url, params=params, timeout=10)
         data = response.json()
         
@@ -44,6 +51,9 @@ def autocomplete_address(input: str):
         return {"predictions": [], "error": "Request timed out"}
     except Exception as e:
         return {"predictions": [], "error": str(e)}
+
+@router.post("/check")
+def check_eligibility(request: EligibilityRequest):
     api_key = os.getenv("GOOGLE_MAPS_API_KEY")
     
     if not api_key:

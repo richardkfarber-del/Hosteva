@@ -426,12 +426,13 @@ tailwind.config = {
                 const badge = document.getElementById('search-status-badge');
 
                 document.getElementById('search-address').innerText = data.address || address;
-                document.getElementById('search-reason').innerText = data.reason || 'No details available';
+                document.getElementById('search-reason').innerText = data.plain_english_conditions || data.reason || 'No details available';
 
-                badge.innerText = data.status || 'UNKNOWN';
+                const status = data.eligibility_status || data.status;
+                badge.innerText = status || 'UNKNOWN';
                 
                 // Traffic Light UI logic
-                const statusUpper = (data.status || '').toUpperCase();
+                const statusUpper = (status || '').toUpperCase();
                 if (statusUpper === 'GREEN') {
                     badge.className = 'px-3 py-1 text-xs font-black uppercase rounded-sm shadow-ambient backdrop-blur-md bg-green-500/20 text-green-600';
                 } else if (statusUpper === 'YELLOW') {
@@ -442,8 +443,9 @@ tailwind.config = {
                     badge.className = 'px-3 py-1 text-xs font-black uppercase rounded-sm shadow-ambient backdrop-blur-md bg-gray-500/20 text-gray-600';
                 }
 
-                if (data.permit_link) {
-                    document.getElementById('permit-link').href = data.permit_link;
+                const permitLink = data.permit_application_url || data.permit_link;
+                if (permitLink) {
+                    document.getElementById('permit-link').href = permitLink;
                     document.getElementById('permit-link-container').classList.remove('hidden');
                 } else {
                     document.getElementById('permit-link-container').classList.add('hidden');
