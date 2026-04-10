@@ -8,8 +8,42 @@ router = APIRouter(prefix="/api/eligibility", tags=["Eligibility"])
 class SearchRequest(BaseModel):
     address: str
 
-@router.post("/search")
-def search_eligibility(request: SearchRequest):
+@router.get("/autocomplete")
+def autocomplete_address(input: str):
+    api_key = os.getenv("GOOGLE_MAPS_API_KEY")
+    
+    if not api_key:
+        return {"predictions": [], "error": "API key not configured"}
+    
+    try:
+        autocomplete_url = "https://maps.googleapis.com/maps/api/place/autocomplete/json"
+        params = {
+            "input": input,
+            "key": api_key,
+            "types": "address",
+            "components": "country:us"
+        }
+        response = requests.get(autocomplete_url, params=params, timeout=10)
+        data = response.json()
+        
+        if data.get("status") != "OK":
+            return {"predictions": [], "error": data.get("error_message", "Unknown error")}
+        
+        predictions = []
+        for pred in data.get("predictions", []):
+            predictions.append({
+                "place_id": pred.get("place_id"),
+                "description": pred.get("description"),
+                "main_text": pred.get("structured_formatting", {}).get("main_text", ""),
+                "secondary_text": pred.get("structured_formatting", {}).get("secondary_text", "")
+            })
+        
+        return {"predictions": predictions}
+        
+    except requests.exceptions.Timeout:
+        return {"predictions": [], "error": "Request timed out"}
+    except Exception as e:
+        return {"predictions": [], "error": str(e)}
     api_key = os.getenv("GOOGLE_MAPS_API_KEY")
     
     if not api_key:

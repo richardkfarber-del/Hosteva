@@ -1,0 +1,7 @@
+{
+  "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+  "ticket_id": "TECH-002",
+  "definition_of_ready": true,
+  "reason": "Tech ticket contains a bulleted list for Acceptance Criteria. Mission parameters are clear and actionable.",
+  "action_taken": "READY_FOR_EXECUTION"
+}

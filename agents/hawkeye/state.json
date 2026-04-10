@@ -1,0 +1,9 @@
+{
+  "timestamp": "2026-04-09T22:50:00Z",
+  "board_updated": true,
+  "new_ticket_id": "TECH-002",
+  "ticket_type": "Tech / Spike",
+  "formatting_check": "Verified bulleted list AC. No Gherkin.",
+  "resumption_point_set": "TECH-002",
+  "action_taken": "TICKET_CREATED"
+}

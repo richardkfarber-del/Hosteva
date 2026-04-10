@@ -35,6 +35,9 @@ def check_eligibility(request: EligibilityCheckRequest, db: Session = Depends(ge
                     addr = data["result"]["address"]
                     locality = addr.get("locality")
                     admin_area = addr.get("administrativeArea")
+                    
+                    if "formattedAddress" in addr:
+                        request.address = addr["formattedAddress"]
         except Exception:
             pass
     

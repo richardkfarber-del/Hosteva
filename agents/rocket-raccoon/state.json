@@ -1,0 +1,8 @@
+{
+  "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+  "system_status": "STABILIZED",
+  "action_taken": "DIAGNOSTIC_REPORT_GENERATED",
+  "offending_agent": "AGENT-TONY-STARK-ACPX",
+  "vram_recovered_mb": 0,
+  "message": "Listen up idiots. Stark's opencode session didn't stall out of memory, it was blasted by the ACPX runtime. Permission denied on write/exec in a non-interactive session. The acpx permissionMode is malformed scrap. Systemic fix: configure plugins.entries.acpx.config.permissionMode to approve-all in openclaw.json. Fix your configs before deploying your fancy harnesses."
+}

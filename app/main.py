@@ -5,6 +5,7 @@ from app.database import engine, Base
 from app.routers import zoning, compliance, hosts, properties, notifications, dashboard_api, eligibility
 import os
 import traceback
+import requests
 
 templates = Jinja2Templates(directory="templates")
 Base.metadata.create_all(bind=engine)
@@ -36,6 +37,23 @@ def read_root():
 @app.get("/wizard", include_in_schema=False)
 def read_wizard():
     return FileResponse("templates/wizard.html")
+
+@app.get("/api/autocomplete")
+def autocomplete(input: str, sessiontoken: str = None):
+    api_key = os.getenv("GOOGLE_MAPS_API_KEY")
+    if not api_key:
+        return {"error": "API key not configured"}
+    
+    url = "https://maps.googleapis.com/maps/api/place/autocomplete/json"
+    params = {
+        "input": input,
+        "key": api_key,
+    }
+    if sessiontoken:
+        params["sessiontoken"] = sessiontoken
+        
+    response = requests.get(url, params=params)
+    return response.json()
 
 from pydantic import BaseModel
 class AddressQuery(BaseModel):
