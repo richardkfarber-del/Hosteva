@@ -357,7 +357,7 @@ tailwind.config = {
             }
             clearTimeout(debounceTimer);
             debounceTimer = setTimeout(() => {
-                fetch(`/api/autocomplete?input=${encodeURIComponent(val)}&sessiontoken=${sessionToken}`)
+                fetch(`/api/eligibility/autocomplete?input=${encodeURIComponent(val)}&sessiontoken=${sessionToken}`)
                     .then(r => r.json())
                     .then(data => {
                         if (data.predictions && data.predictions.length > 0) {
@@ -415,7 +415,7 @@ tailwind.config = {
 
             setLoading(true);
 
-            fetch('/api/compliance/eligibility-check', {
+            fetch('/api/eligibility/check', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ address: address, place_id: placeId })
