@@ -125,11 +125,15 @@ tailwind.config = {
         <div class="flex items-center gap-4 flex-1">
             <div class="relative w-full max-w-md">
                 <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-lg">search</span>
-                <input id="address-search" class="w-full bg-gray-100 -none rounded-sm pl-10 pr-24 py-2 text-sm focus:ring-1 focus:ring-teal-600 transition-all text-gray-800" placeholder="Search address for eligibility..." type="text"/>
+                <input id="address-search" class="w-full bg-gray-100 -none rounded-sm pl-10 pr-24 py-2 text-sm focus:ring-1 focus:ring-teal-600 transition-all text-gray-800" placeholder="Search address for eligibility..." type="text" autocomplete="off"/>
                 <button id="search-btn" class="absolute right-2 top-1/2 -translate-y-1/2 text-xs bg-gradient-to-br from-primary to-primary-container text-on-surface font-headline tracking-tight px-3 py-1.5 rounded font-bold hover:opacity-90 transition-opacity flex items-center gap-1">
                     <span id="search-btn-text">Search</span>
                     <span id="search-spinner" class="hidden material-symbols-outlined animate-spin text-sm">progress_activity</span>
                 </button>
+                <!-- Autocomplete Dropdown (No-Line Glassmorphism) -->
+                <div id="autocomplete-dropdown" class="absolute top-full left-0 w-full mt-2 rounded-sm bg-white/10 backdrop-blur-md shadow-2xl overflow-hidden hidden z-50 text-gray-800">
+                    <!-- Dynamic suggestions will be injected here -->
+                </div>
             </div>
         </div>
         <div class="flex items-center gap-6">
@@ -332,22 +336,53 @@ tailwind.config = {
     </main>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&libraries=places&callback=initAutocomplete" async defer></script>
     <script>
-        let autocomplete;
+        let sessionToken = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2);
+        let debounceTimer;
 
-        function initAutocomplete() {
-            autocomplete = new google.maps.places.Autocomplete(
-                document.getElementById('address-search'),
-                { types: ['address'], componentRestrictions: { country: 'us' } }
-            );
-            autocomplete.addListener('place_changed', () => {
-                const place = autocomplete.getPlace();
-                if (place.formatted_address) {
-                    document.getElementById('address-search').value = place.formatted_address;
-                    performSearch();
-                }
-            });
+        const searchInput = document.getElementById('address-search');
+        const dropdown = document.getElementById('autocomplete-dropdown');
+        
+        searchInput.addEventListener('input', (e) => {
+            const val = e.target.value.trim();
+            if (!val) {
+                dropdown.classList.add('hidden');
+                return;
+            }
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                fetch(`/api/autocomplete?input=${encodeURIComponent(val)}&sessiontoken=${sessionToken}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.predictions && data.predictions.length > 0) {
+                            dropdown.innerHTML = data.predictions.map(p => `
+                                <div class="px-4 py-3 hover:bg-surface-container-low cursor-pointer transition-colors border-none text-sm font-medium" 
+                                     onclick="selectPlace('${p.place_id}', '${p.description.replace(/'/g, "\'")}')">
+                                    ${p.description}
+                                </div>
+                            `).join('');
+                            dropdown.classList.remove('hidden');
+                        } else {
+                            dropdown.classList.add('hidden');
+                        }
+                    })
+                    .catch(err => console.error('Autocomplete error:', err));
+            }, 300);
+        });
+
+        // Hide dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        function selectPlace(placeId, description) {
+            searchInput.value = description;
+            dropdown.classList.add('hidden');
+            // Refresh session token after successful selection
+            sessionToken = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2);
+            performSearch(placeId, description);
         }
 
         function setLoading(loading) {
@@ -368,16 +403,16 @@ tailwind.config = {
             }
         }
 
-        function performSearch() {
-            const address = document.getElementById('address-search').value;
+        function performSearch(placeId = null, description = null) {
+            const address = description || document.getElementById('address-search').value;
             if (!address) return;
 
             setLoading(true);
 
-            fetch('/api/eligibility/search', {
+            fetch('/api/compliance/eligibility-check', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ address: address })
+                body: JSON.stringify({ address: address, place_id: placeId })
             })
             .then(r => r.json())
             .then(data => {
@@ -468,7 +503,7 @@ tailwind.config = {
             }
         });
 
-        document.getElementById('search-btn').addEventListener('click', performSearch);
+        document.getElementById('search-btn').addEventListener('click', () => performSearch());
 
         let parcelMap;
 
