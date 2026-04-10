@@ -20,6 +20,32 @@
         box-shadow: 0 0 0 2px rgba(0, 101, 118, 0.3);
         background-color: #ffffff;
     }
+    
+    .autocomplete-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        margin-top: 4px;
+        border-radius: 0 0 8px 8px;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(12px);
+        box-shadow: 0 20px 40px rgba(0, 28, 55, 0.12);
+        z-index: 60;
+        max-height: 280px;
+        overflow-y: auto;
+    }
+    .autocomplete-dropdown div {
+        padding: 12px 16px;
+        cursor: pointer;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+        transition: background-color 0.15s ease;
+        font-size: 14px;
+        color: #001c37;
+    }
+    .autocomplete-dropdown div:hover {
+        background: rgba(0, 101, 118, 0.08);
+    }
 </style>
 {% endblock %}
 
@@ -46,9 +72,10 @@
         <p class="text-on-surface opacity-80 mb-8 font-body">Enter your property address below to receive an instant Permit Readiness Audit and safety checklist.</p>
         
         <form id="wizardForm" class="space-y-6">
-            <div>
+            <div class="relative">
                 <label class="block text-sm font-bold text-primary uppercase tracking-widest mb-2">Property Address</label>
                 <input type="text" id="address" name="address" class="w-full p-4 bg-surface-container-low glass-input rounded-[8px] font-medium border-none" placeholder="e.g. 123 Ocean Drive, Miami, FL 33139" required>
+                <div id="autocomplete-dropdown" class="autocomplete-dropdown hidden"></div>
             </div>
 
             <button type="submit" class="w-full py-4 primary-gradient text-white font-black uppercase tracking-widest rounded-[8px] shadow-ambient hover:opacity-90 transition-opacity">
@@ -73,6 +100,9 @@
 
 {% block scripts %}
 <script>
+    let sessionToken = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2);
+    let debounceTimer;
+
     (function() {
         const params = new URLSearchParams(window.location.search);
         const addressParam = params.get('address');
@@ -80,6 +110,50 @@
             document.getElementById('address').value = addressParam;
         }
     })();
+    
+    const addressInput = document.getElementById('address');
+    const autocompleteDropdown = document.getElementById('autocomplete-dropdown');
+
+    addressInput.addEventListener('input', (e) => {
+        const val = e.target.value.trim();
+        if (!val) {
+            autocompleteDropdown.classList.add('hidden');
+            return;
+        }
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            fetch(`/api/eligibility/autocomplete?input=${encodeURIComponent(val)}&sessiontoken=${sessionToken}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.predictions && data.predictions.length > 0) {
+                        autocompleteDropdown.innerHTML = data.predictions.map(p => `
+                            <div class="suggestion-item" data-place-id="${p.place_id}" data-description="${p.description.replace(/"/g, '&quot;')}">
+                                ${p.description}
+                            </div>
+                        `).join('');
+                        autocompleteDropdown.classList.remove('hidden');
+                    } else {
+                        autocompleteDropdown.classList.add('hidden');
+                    }
+                })
+                .catch(err => console.error('Autocomplete error:', err));
+        }, 300);
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!addressInput.contains(e.target) && !autocompleteDropdown.contains(e.target)) {
+            autocompleteDropdown.classList.add('hidden');
+        }
+    });
+
+    autocompleteDropdown.addEventListener('click', (e) => {
+        const item = e.target.closest('.suggestion-item');
+        if (item) {
+            const description = item.dataset.description;
+            addressInput.value = description;
+            autocompleteDropdown.classList.add('hidden');
+        }
+    });
 
     document.getElementById('wizardForm').addEventListener('submit', async (e) => {
         e.preventDefault();
