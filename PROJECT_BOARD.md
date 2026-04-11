@@ -1,26 +1,27 @@
 # Hosteva Project Board
 
-> CURRENT_FOCUS_TARGET: BUG-001
+> CURRENT_FOCUS_TARGET: FEAT-002
 
 ## Active Sprint
 
-### BUG-001: Address Eligibility Module
-**Sprint Goal:** Ensure the Address Eligibility module correctly parses autocomplete selections and consistently returns accurate traffic light statuses with plain English conditions.
+### FEAT-002: Host Dashboard & Unified View
+**Sprint Goal:** Develop the Host Dashboard to provide a unified view of the host's Address Eligibility Status and Listing Health metrics, adhering strictly to the Stitch-Design token system.
 
 **Acceptance Criteria:**
 ```gherkin
-Feature: Address Eligibility Module Bug Fix (BUG-001)
+Feature: Host Dashboard Unified View (FEAT-002)
 
-  Scenario: System resolves autocomplete selection to eligibility status
-    Given the user has selected a valid address from the autocomplete dropdown
-    When the backend eligibility service processes the location data
-    Then the system shall return a valid traffic light status (GREEN, YELLOW, or RED)
-    And the system shall return plain English regulatory conditions for the address
-    And the system shall not throw an unhandled exception for unseeded addresses
-
-  Scenario: UI displays the eligibility result correctly
-    Given the backend has returned an eligibility status
-    When the UI receives the payload
-    Then the dashboard shall visually indicate the traffic light status
-    And the dashboard shall display the plain English conditions
+  Scenario: Host accesses the dashboard
+    Given the host is authenticated
+    When the host views the primary dashboard interface
+    Then the system shall display the previously generated Address Eligibility Status
+    And the system shall display current Listing Health metrics
+    And the dashboard components shall correctly utilize the Stitch-Design tokens (Teal, White, Slate)
 ```
+
+## Backlog
+
+### BUG-001: Address Eligibility Module
+**Status:** CLOSED
+**Sprint Goal:** Ensure the Address Eligibility module correctly parses autocomplete selections and consistently returns accurate traffic light statuses with plain English conditions.
+

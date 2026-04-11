@@ -17,7 +17,7 @@ This document defines the absolute, unalterable process for all code generation,
    - **[PASS]:** Proceeds to Local Merge.
 
 ## Phase 3: Local Merge & Post-Merge QA
-5. **Heimdall (Release Manager):** Merges the approved code into the local `main` branch. Logs to ledger. Coulson audits.
+5. **Heimdall (Release Manager/Git Sentinel):** Acts as the strict Git Sentinel. Before merging approved code into the local `main` branch, Heimdall MUST verify unit test passage, visual QA clearance, and LOBSTER.md compliance (no bloated diffs). Logs to ledger. Coulson audits.
 6. **Black Widow (QA):** Tests the merged code locally on the `main` branch to ensure no integration regressions. Logs to ledger. Coulson audits.
    - **[FAIL]:** Immediate Bug Ticket loop.
    - **[PASS]:** Proceeds to Live Deployment.
@@ -54,4 +54,5 @@ This document defines the absolute, unalterable process for all code generation,
 - **Mandate:** Stark MUST use ACPx (OpenClaw ACP runtime) utilizing dedicated coding agents (e.g., Aider, Codex, Claude Code) for all file modifications. Standard subagent file manipulation is prohibited to prevent aggressive overwrites and UI regressions.
 
 ## Black Widow's QA Protocol
+- **Visual QA Vision Models:** When performing visual regression checks on the UI, Black Widow must utilize local vision models (Qwen-VL or Llama 3 Vision) via auto-snapshot hooks. If visual diffs exceed a 2% threshold from the baseline, the deployment must be HALTED.
 - **Mandate:** Black Widow MUST perform a 'Baseline Visual Regression Check' against `DESIGN_STATE.md` before passing any UI changes. Simulating checks or purely verifying new text additions is prohibited. All prior CSS and Design Tokens must remain intact.

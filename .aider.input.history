@@ -1,0 +1,6 @@
+
+# 2026-04-11 13:20:51.678864
++Implement backend logic for FEAT-002 (Host Dashboard & Unified View). Update dashboard_api.py to provide a unified endpoint that returns a host's Address Eligibility Status and Listing Health metrics.
+
+# 2026-04-11 13:20:51.678902
++Implement backend logic for FEAT-002 (Host Dashboard & Unified View). Update dashboard_api.py to provide a unified endpoint that returns a host's Address Eligibility Status and Listing Health metrics.
