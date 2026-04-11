@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, PlainTextResponse
 from fastapi.templating import Jinja2Templates
 from app.database import engine, Base
-from app.routers import zoning, compliance, hosts, properties, notifications, dashboard_api, eligibility
+from app.routers import zoning, compliance, hosts, properties, notifications, dashboard_api, eligibility, florida_compliance, listing_optimizer
 from app.schemas.dashboard import HostDashboardResponse
 import os
 import traceback
@@ -30,6 +30,8 @@ app.include_router(properties.router)
 app.include_router(notifications.router)
 app.include_router(dashboard_api.router)
 app.include_router(eligibility.router)
+app.include_router(florida_compliance.router)
+app.include_router(listing_optimizer.router)
 
 @app.get("/", include_in_schema=False)
 def read_root():
