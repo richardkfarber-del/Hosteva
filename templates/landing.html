@@ -61,7 +61,7 @@ tailwind.config = {
                 left: 0;
                 right: 0;
                 margin-top: 4px;
-                border-radius: 0 0 12px 12px;
+                border-none-radius: 0 0 12px 12px;
                 background: rgba(255, 255, 255, 0.95);
                 backdrop-filter: blur(12px);
                 box-shadow: 0 20px 40px rgba(0, 28, 55, 0.12);
@@ -72,7 +72,7 @@ tailwind.config = {
             .autocomplete-dropdown div {
                 padding: 12px 16px;
                 cursor: pointer;
-                border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+                border-none-bottom: 1px solid rgba(0, 0, 0, 0.04);
                 transition: background-color 0.15s ease;
                 font-size: 14px;
                 color: #001c37;
@@ -118,7 +118,7 @@ tailwind.config = {
                     <p class="text-lg text-on-surface-variant max-w-lg mb-10 leading-relaxed">
                         The ultimate permit readiness tool for property owners. Hosteva automatically audits your address for state and local regulations to ensure 100% compliance.
                     </p>
-                    <div class="p-2 bg-surface-container-lowest rounded-xl shadow-xl shadow-on-surface/5 flex flex-col md:flex-row gap-2 max-w-xl outline outline-1 outline-outline-variant/15">
+                    <div class="p-2 bg-white/10 backdrop-blur-[20px] shadow-ambient border-none rounded-xl shadow-xl shadow-on-surface/5 flex flex-col md:flex-row gap-2 max-w-xl outline outline-1 outline-outline-variant/15">
                         <div class="flex-grow flex items-center px-4 gap-3 relative">
                             <span class="material-symbols-outlined text-outline">location_on</span>
                             <input id="homeAddress" class="w-full bg-transparent -none focus:ring-0 text-on-surface font-medium placeholder:text-outline" placeholder="Enter property address..." type="text"/>
@@ -189,14 +189,14 @@ tailwind.config = {
             window.location.href = '/wizard' + (address ? '?address=' + encodeURIComponent(address) : '');
         }
     </script>
-        <section class="bg-surface-container-low py-24 px-6">
+        <section class="bg-white/10 backdrop-blur-[20px] shadow-ambient border-none py-24 px-6">
             <div class="max-w-7xl mx-auto">
                 <div class="text-center mb-16">
                     <h2 class="font-headline text-4xl font-extrabold text-on-surface tracking-tight mb-4">Precision Management Tools</h2>
                     <p class="text-on-surface-variant max-w-2xl mx-auto">Enterprise-grade solutions simplified for the independent host.</p>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="md:col-span-2 bg-surface-container-lowest p-8 rounded-2xl shadow-ambient-light flex flex-col justify-between group overflow-hidden relative">
+                    <div class="md:col-span-2 bg-white/10 backdrop-blur-[20px] shadow-ambient border-none p-8 rounded-2xl shadow-ambient-light flex flex-col justify-between group overflow-hidden relative">
                         <div class="absolute top-0 right-0 w-64 h-64 primary-gradient opacity-5 rounded-full -mr-20 -mt-20 group-hover:opacity-10 transition-opacity"></div>
                         <div>
                             <span class="material-symbols-outlined text-primary text-4xl mb-6">rule</span>
@@ -222,7 +222,7 @@ tailwind.config = {
             </div>
         </section>
     </main>
-    <footer class="bg-surface-container-low w-full -t ">
+    <footer class="bg-white/10 backdrop-blur-[20px] shadow-ambient border-none w-full -t ">
         <div class="flex flex-col md:flex-row justify-between items-center px-8 py-12 gap-6 max-w-7xl mx-auto">
             <div class="flex flex-col items-center md:items-start gap-4">
                 <div class="flex items-center gap-2">

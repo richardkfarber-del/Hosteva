@@ -12,7 +12,7 @@
     }
     
     .insight-prism {
-        border-left: 3px solid #75fbbf;
+        border-none-left: 3px solid #75fbbf;
     }
     
     .glass-input:focus {
@@ -27,7 +27,7 @@
         left: 0;
         right: 0;
         margin-top: 4px;
-        border-radius: 0 0 8px 8px;
+        border-none-radius: 0 0 8px 8px;
         background: rgba(255, 255, 255, 0.95);
         backdrop-filter: blur(12px);
         box-shadow: 0 20px 40px rgba(0, 28, 55, 0.12);
@@ -38,7 +38,7 @@
     .autocomplete-dropdown div {
         padding: 12px 16px;
         cursor: pointer;
-        border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+        border-none-bottom: 1px solid rgba(0, 0, 0, 0.04);
         transition: background-color 0.15s ease;
         font-size: 14px;
         color: #001c37;
@@ -74,7 +74,7 @@
         <form id="wizardForm" class="space-y-6">
             <div class="relative">
                 <label class="block text-sm font-bold text-primary uppercase tracking-widest mb-2">Property Address</label>
-                <input type="text" id="address" name="address" class="w-full p-4 bg-surface-container-low glass-input rounded-[8px] font-medium border-none" placeholder="e.g. 123 Ocean Drive, Miami, FL 33139" required>
+                <input type="text" id="address" name="address" class="w-full p-4 bg-white/10 backdrop-blur-[20px] shadow-ambient border-none glass-input rounded-[8px] font-medium border-none" placeholder="e.g. 123 Ocean Drive, Miami, FL 33139" required>
                 <div id="autocomplete-dropdown" class="autocomplete-dropdown hidden"></div>
             </div>
 
@@ -181,9 +181,11 @@
             const result = await response.json();
             
             let htmlContent = `
-                <p class="font-bold text-lg mb-2 ${result.status === 'Pass' ? 'text-green-600' : 'text-red-600'}">
-                    Status: ${result.status}
-                </p>
+                <div class="mb-4">
+            <span class="px-3 py-1 text-xs font-black uppercase rounded-[8px] shadow-ambient backdrop-blur-[20px] border-none ${result.status === 'Pass' ? 'bg-green-500/20 text-green-600' : 'bg-red-500/20 text-red-600 animate-pulse'}">
+                ${result.status}
+            </span>
+        </div>
                 <p class="mb-4">${result.message}</p>
             `;
             resultOutput.innerHTML = htmlContent;
