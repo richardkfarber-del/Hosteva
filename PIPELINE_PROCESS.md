@@ -89,3 +89,7 @@ When QA (Black Widow, Captain America, Coulson) logs a failure or integration er
 2. Hawkeye will read the QA Report and generate a formal `BUG-` ticket with strict Gherkin Acceptance Criteria.
 3. Hawkeye will output the raw Markdown ticket, which the Orchestrator will pipe into `PROJECT_BOARD.md` via the Markdown Writer script.
 4. Only then will Execution Agents (Stark/Wasp) be deployed to fix the bug.
+
+### THE ORCHESTRATOR'S COMMIT MANDATE
+The Orchestrator (Nick Fury) is responsible for maintaining the Git history of all structural and procedural artifacts generated outside of Execution Agents (Stark/Wasp). 
+Whenever the Orchestrator manually injects code, updates `PROJECT_BOARD.md`, modifies `PIPELINE_PROCESS.md`, or creates utility scripts (e.g., in `scripts/`), the Orchestrator MUST execute a `git add . && git commit -m "chore(infra): [Description]"` command before handing the pipeline back to QA or Release Management.

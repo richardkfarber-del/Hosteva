@@ -742,3 +742,6 @@ The `pytest tests/` command returned an error indicating that the `tests/` direc
 
 **3. Branch Verification:** ⚠️ FAILED
 The local repository is currently on the `master` branch. The `main` branch does not exist or is not checked out.
+### Procedural Update: The Orchestrator's Commit Mandate (Nick Fury)
+- **Status:** EXECUTED
+- **Action:** Director questioned the responsibility of structural commits. Added 'The Orchestrator's Commit Mandate' to PIPELINE_PROCESS.md. Nick Fury is officially responsible for committing all structural and procedural artifacts (scripts, ledgers, project boards) to Git. Execution Agents are only responsible for committing their application code.
