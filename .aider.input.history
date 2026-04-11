@@ -10,3 +10,15 @@
 
 # 2026-04-11 13:46:05.060504
 +Implement backend logic for FEAT-003 (Compliance Engine Base for Pasco and Hillsborough counties) and FEAT-004 (Listing Optimizer API Sync for Airbnb/VRBO) as described in PROJECT_BOARD.md. Please create or update necessary files in app/routers, app/schemas, and app/services. Ensure new endpoints are added to app/main.py.
+
+# 2026-04-11 14:00:49.384076
++Implement FEAT-005: Automated Permit Application Generator. Create a PermitGeneratorService in app/services/permit_generator.py with a method generate_application that takes a property_id and uses the FloridaComplianceEngine's baseline. It should output a mock permit application object. Add schemas in app/schemas/permit_generator.py (PermitApplicationRequest, PermitApplicationResponse). Add a FastAPI router in app/routers/permit_generator.py with a POST endpoint /api/permit-generator/generate. Also register the router in app/main.py.
+
+# 2026-04-11 14:00:49.384194
++Implement FEAT-005: Automated Permit Application Generator. Create a PermitGeneratorService in app/services/permit_generator.py with a method generate_application that takes a property_id and uses the FloridaComplianceEngine's baseline. It should output a mock permit application object. Add schemas in app/schemas/permit_generator.py (PermitApplicationRequest, PermitApplicationResponse). Add a FastAPI router in app/routers/permit_generator.py with a POST endpoint /api/permit-generator/generate. Also register the router in app/main.py.
+
+# 2026-04-11 14:01:32.847416
++Implement FEAT-006: Listing Optimization Recommendation Engine. Create a RecommendationEngineService in app/services/recommendations.py with a method generate_recommendations that takes a property_id, fetches listing metrics from ListingOptimizerService (mock the fetch or get from db), and generates actionable recommendations to improve performance. Add schemas in app/schemas/recommendations.py (RecommendationRequest, RecommendationResponse, Recommendation). Add a FastAPI router in app/routers/recommendations.py with a POST endpoint /api/recommendation-engine/generate. Also register the router in app/main.py.
+
+# 2026-04-11 14:01:32.847916
++Implement FEAT-006: Listing Optimization Recommendation Engine. Create a RecommendationEngineService in app/services/recommendations.py with a method generate_recommendations that takes a property_id, fetches listing metrics from ListingOptimizerService (mock the fetch or get from db), and generates actionable recommendations to improve performance. Add schemas in app/schemas/recommendations.py (RecommendationRequest, RecommendationResponse, Recommendation). Add a FastAPI router in app/routers/recommendations.py with a POST endpoint /api/recommendation-engine/generate. Also register the router in app/main.py.

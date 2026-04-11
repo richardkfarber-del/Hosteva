@@ -1,8 +1,41 @@
 # Hosteva Project Board
 
-> CURRENT_FOCUS_TARGET: FEAT-003, FEAT-004
+> CURRENT_FOCUS_TARGET: FEAT-005, FEAT-006
 
 ## Active Sprint
+
+**Batch Sprint Goal:** Automate the permit application process by generating pre-filled applications from the compliance engine, and provide intelligent listing optimization recommendations to maximize host revenue and compliance.
+
+### > CURRENT_FOCUS_TARGET: FEAT-005: Automated Permit Application Generator
+**Status:** TODO
+**Sprint Goal:** Develop a generator that transforms baseline compliance data into completed municipal permit applications.
+
+**Acceptance Criteria:**
+```gherkin
+Feature: Automated Permit Application Generator (FEAT-005)
+
+  Scenario: System generates a pre-filled permit application
+    Given the compliance engine has established baseline compliance
+    When a host requests a permit application for their property
+    Then the system shall generate a completed permit application document
+    And the system shall populate all required municipal fields using the property details
+```
+
+### > CURRENT_FOCUS_TARGET: FEAT-006: Listing Optimization Recommendation Engine
+**Status:** TODO
+**Sprint Goal:** Implement a recommendation engine that analyzes listing health metrics to suggest actionable improvements for hosts.
+
+**Acceptance Criteria:**
+```gherkin
+Feature: Listing Optimization Recommendation Engine (FEAT-006)
+
+  Scenario: System provides listing optimization recommendations
+    Given the listing data is synchronized via the Listing Optimizer API
+    When the system analyzes the listing health metrics
+    Then the system shall generate actionable recommendations to improve listing performance
+    And the system shall surface these recommendations on the Host Dashboard
+```
+
 
 ### FEAT-003: Compliance Engine Base Implementation
 **Status:** IMPLEMENTED
