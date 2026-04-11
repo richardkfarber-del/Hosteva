@@ -47,23 +47,6 @@ def read_wizard(request: Request):
         context={"request": request, "active_page": "compliance"}
     )
 
-@app.get("/api/autocomplete")
-def autocomplete(input: str, sessiontoken: str = None):
-    api_key = os.getenv("GOOGLE_MAPS_API_KEY")
-    if not api_key:
-        return {"error": "API key not configured"}
-    
-    url = "https://maps.googleapis.com/maps/api/place/autocomplete/json"
-    params = {
-        "input": input,
-        "key": api_key,
-    }
-    if sessiontoken:
-        params["sessiontoken"] = sessiontoken
-        
-    response = requests.get(url, params=params)
-    return response.json()
-
 from pydantic import BaseModel
 class AddressQuery(BaseModel):
     address: str

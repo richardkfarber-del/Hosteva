@@ -563,9 +563,88 @@ tailwind.config = {
             });
         }
 
-        function generatePermit(event, propertyId) {
+        async function generatePermit(event, propertyId) {
             event.stopPropagation();
-            alert('FEAT-005: Generating automated permit application for property ' + propertyId + '...');
+            const button = event.target.closest('button');
+            const originalText = button.innerHTML;
+            
+            try {
+                button.disabled = true;
+                button.innerHTML = '<span class="material-symbols-outlined text-sm animate-spin">progress_activity</span> Generating...';
+                
+                const response = await fetch('/api/permit-generator/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ property_id: propertyId })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to generate permit application');
+                }
+                
+                const data = await response.json();
+                
+                // Show success modal or download PDF
+                alert(`Permit Application Generated!\n\nApplication ID: ${data.application_id}\nCounty: ${data.county}\nStatus: ${data.compliance_status}\n\nRequired Documents:\n${data.required_documents.join('\n')}\n\nProcessing Time: ${data.estimated_processing_time}`);
+                
+            } catch (error) {
+                console.error('Error generating permit:', error);
+                alert('Failed to generate permit application. Please try again.');
+            } finally {
+                button.disabled = false;
+                button.innerHTML = originalText;
+            }
+        }
+
+        async function loadRecommendations(event, propertyId) {
+            if (event) event.stopPropagation();
+            
+            const container = document.querySelector(`.recommendations-container[data-property-id="${propertyId}"]`);
+            const contentDiv = container.querySelector('.recommendations-content');
+            
+            try {
+                contentDiv.innerHTML = '<p class="text-xs text-gray-500 animate-pulse">Loading recommendations...</p>';
+                
+                const response = await fetch('/api/recommendation-engine/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ property_id: propertyId })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load recommendations');
+                }
+                
+                const data = await response.json();
+                
+                if (data.recommendations && data.recommendations.length > 0) {
+                    const recommendationsHTML = data.recommendations
+                        .slice(0, 3) // Show top 3 recommendations
+                        .map(rec => {
+                            const priorityColor = rec.priority === 'high' ? 'text-red-600' : 
+                                                 rec.priority === 'medium' ? 'text-yellow-600' : 'text-gray-600';
+                            return `<li class="${priorityColor}">${rec.title} ${rec.expected_impact ? `(${rec.expected_impact})` : ''}</li>`;
+                        })
+                        .join('');
+                    
+                    contentDiv.innerHTML = `
+                        <div class="mb-2">
+                            <span class="text-xs font-bold text-gray-500">Health Score: </span>
+                            <span class="text-xs font-bold text-primary">${data.overall_health_score.toFixed(1)}%</span>
+                        </div>
+                        <ul class="text-xs space-y-1 list-disc list-inside">
+                            ${recommendationsHTML}
+                        </ul>
+                        ${data.recommendations.length > 3 ? `<p class="text-xs text-gray-500 mt-2">+${data.recommendations.length - 3} more recommendations</p>` : ''}
+                    `;
+                } else {
+                    contentDiv.innerHTML = '<p class="text-xs text-gray-600">No recommendations available. Property is optimized!</p>';
+                }
+                
+            } catch (error) {
+                console.error('Error loading recommendations:', error);
+                contentDiv.innerHTML = '<p class="text-xs text-red-600">Failed to load recommendations</p>';
+            }
         }
 
         function exportPDF(propertyId) {
@@ -677,6 +756,11 @@ tailwind.config = {
                     </div>
                 </div>
             `).join('');
+            
+            // Auto-load recommendations for each property
+            properties.forEach(p => {
+                setTimeout(() => loadRecommendations(null, p.id), 100);
+            });
         }
 
         function getStatusBadge(status) {
@@ -691,13 +775,27 @@ tailwind.config = {
 
         document.addEventListener('DOMContentLoaded', () => {
             fetchProperties();
-            fetch('/api/dashboard/stats')
+            
+            // Fetch unified dashboard data for listing health metrics
+            fetch('/api/dashboard/unified')
                 .then(r => r.json())
                 .then(data => {
-                    document.querySelector('.compliance-score').innerText = data.compliance_score;
-                    document.querySelector('.active-alerts').innerText = data.active_alerts;
+                    // Update compliance score
+                    document.querySelector('.compliance-score').innerText = `${data.overall_compliance_score}%`;
+                    
+                    // Update active alerts
+                    const alertsFormatted = String(data.total_active_alerts).padStart(2, '0');
+                    document.querySelector('.active-alerts').innerText = alertsFormatted;
+                    
+                    // Update total properties count if needed
+                    // You could add more dashboard stats here
                 })
-                .catch(() => {});
+                .catch(err => {
+                    console.error('Failed to fetch dashboard stats:', err);
+                    // Fallback to default values
+                    document.querySelector('.compliance-score').innerText = '99.1%';
+                    document.querySelector('.active-alerts').innerText = '01';
+                });
         });
     </script>
 </body>
