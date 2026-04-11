@@ -4,3 +4,9 @@
 
 # 2026-04-11 13:20:51.678902
 +Implement backend logic for FEAT-002 (Host Dashboard & Unified View). Update dashboard_api.py to provide a unified endpoint that returns a host's Address Eligibility Status and Listing Health metrics.
+
+# 2026-04-11 13:46:05.060472
++Implement backend logic for FEAT-003 (Compliance Engine Base for Pasco and Hillsborough counties) and FEAT-004 (Listing Optimizer API Sync for Airbnb/VRBO) as described in PROJECT_BOARD.md. Please create or update necessary files in app/routers, app/schemas, and app/services. Ensure new endpoints are added to app/main.py.
+
+# 2026-04-11 13:46:05.060504
++Implement backend logic for FEAT-003 (Compliance Engine Base for Pasco and Hillsborough counties) and FEAT-004 (Listing Optimizer API Sync for Airbnb/VRBO) as described in PROJECT_BOARD.md. Please create or update necessary files in app/routers, app/schemas, and app/services. Ensure new endpoints are added to app/main.py.

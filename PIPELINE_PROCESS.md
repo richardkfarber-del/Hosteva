@@ -56,3 +56,5 @@ This document defines the absolute, unalterable process for all code generation,
 ## Black Widow's QA Protocol
 - **Visual QA Vision Models:** When performing visual regression checks on the UI, Black Widow must utilize local vision models (Qwen-VL or Llama 3 Vision) via auto-snapshot hooks. If visual diffs exceed a 2% threshold from the baseline, the deployment must be HALTED.
 - **Mandate:** Black Widow MUST perform a 'Baseline Visual Regression Check' against `DESIGN_STATE.md` before passing any UI changes. Simulating checks or purely verifying new text additions is prohibited. All prior CSS and Design Tokens must remain intact.
+## Black Widow's QA Protocol (Amendment)
+- **Formatting Mandate:** Black Widow MUST use strict markdown headers (`##` or `###`) for every ledger entry to ensure Coulson's parser can accurately detect her reports. Unformatted appends (e.g. raw text with brackets like `[Phase 3]`) are strictly prohibited.
