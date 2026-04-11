@@ -138,3 +138,28 @@ The Orchestrator MUST dynamically allocate the compute model for Heimdall (Relea
 
 ### THE SEV-1 ARCHITECTURAL TRIAGE PROTOCOL (Update)
 If a Live Deployment fails with a Sev-1 infrastructure crash (502/503), the traceback pulled by Heimdall MUST be routed to **Vision (Architect/Alignment)** for a root-cause architectural analysis BEFORE being handed to Hawkeye for ticket generation. Vision will define the necessary infrastructure or dependency fixes, and Hawkeye will structure the formal Gherkin `BUG-` ticket based entirely on Vision's mandate.
+
+### THE CODE WRITER DELEGATION (Update)
+The Orchestrator (Nick Fury) will NO LONGER act as an intermediary to run `scripts/write_code.py` or `scripts/write_markdown.py`.
+Execution Agents (Stark/Wasp/Hawkeye) running on local models MUST execute the scripts themselves via the `exec` tool using bash Heredocs (e.g., `cat << 'EOF' | python3 scripts/write_code.py <file> --lang python`). If a local model suffers tool-call paralysis on this command, the agent must be temporarily escalated to `mistral-nemo` or the Cloud API to perform the exact `exec` command. 
+
+### THE PRE-EMPTIVE ARCHITECTURAL REVIEW (Vision)
+If a deployment fails during Phase 4 polling (exceeding a 120-second threshold without a 200 OK), the Orchestrator MUST escalate the raw logs pulled by Heimdall directly to **Vision (Architect)** on the Cloud API before engaging Hawkeye for ticket creation. Vision must analyze if a recommended architectural change (e.g., `psycopg[binary]`) triggered a secondary or cascading failure in the production environment.
+
+### THE SWARM STRIKE TEAM PROTOCOL (Sev-1 Loop Recovery)
+If a production deployment enters a Sev-1 failure loop (multiple sequential 502/503 crashes on Render despite structural hotfixes), the Orchestrator MUST assemble a cross-functional Strike Team on the Cloud API.
+The Strike Team (Vision, Black Panther, Kang) will conduct a holistic audit of:
+1. The Render Crash Logs (pulled by Heimdall).
+2. The Database Architecture (Postgres/pgvector).
+3. The Python Dependencies (`requirements.txt` vs runtime libraries).
+4. The Git Commit History (Recent pivots and Orchestrator bypasses).
+The team must identify the true root cause and output a singular, definitive Architectural Mandate before any execution agent is allowed to write code.
+
+### THE FULL-SPECTRUM UAT REGRESSION MANDATE
+Phase 4 (Live UAT) executed by Black Widow MUST always be a full-spectrum regression test. A successful production deployment requires Black Widow to explicitly re-test EVERY previously built feature, EVERY page route, EVERY button interaction, and verify ALL existing UI elements (e.g., Glassmorphism, No-Line rule, Stitch Design) against `DESIGN_STATE.md` and `PROJECT_BOARD.md`. A simple 200 OK ping on the new feature is NOT sufficient to clear Phase 4.
+
+### THE "ONE GUN AT A TIME" DOCTRINE (Update)
+To prevent "Implicit Execution" failures on Cloud API models:
+1. Micro-Tasks assigned to Cloud APIs (Heimdall, Black Widow) MUST enforce a strict 1-tool-per-turn mandate in their prompts. 
+2. The Orchestrator MUST severely restrict the context payload provided to the agent, omitting broad project board history or unrelated personas.
+3. The Orchestrator MUST explicitly instruct the agent: `CRITICAL: Do NOT plan multiple steps. Emit exactly ONE tool call JSON per response and WAIT for the output.`

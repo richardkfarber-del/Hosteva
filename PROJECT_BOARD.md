@@ -6,30 +6,27 @@
 **Batch Sprint Goal:** Florida V1 Foundation & Paywalled Gemini AI Integration
 **Definition of Done (Strict Constraint):** Completion requires explicit final sign-off from Black Widow, Wasp, Falcon, and Hawkeye confirming functionality and monetization gates.
 
-### BUG-007: Migrate to psycopg (v3) Driver
-**Status:** DONE
-**Description:** The application crashes on Render because `psycopg2-binary` fails to dynamically link in `python:3.12-slim`. We must migrate the backend database driver to `psycopg[binary]` and remove the bloated C-compilers from the Dockerfile.
+### > CURRENT_FOCUS_TARGET: BUG-008: SQLAlchemy Driver Prefix Crash
+**Status:** TODO
+**Description:** The application crashes on Render with a 503 error because SQLAlchemy defaults to loading `psycopg2` when the `postgresql://` connection prefix is used. We must update `app/database.py` to correctly map the connection string to `postgresql+psycopg://` to utilize the modern psycopg v3 driver installed during BUG-007.
 
 **Acceptance Criteria:**
 ```gherkin
-Feature: Migrate Postgres Driver to psycopg v3 (BUG-007)
+Feature: Update SQLAlchemy Driver Prefix (BUG-008)
 
   Scenario: Engineering (Data/Backend) Implementation
-    Given the backend is currently configured to use psycopg2-binary
-    When the engineering team replaces psycopg2-binary with psycopg[binary] in requirements.txt
-    Then the Dockerfile must be stripped of the apt-get install -y libpq-dev gcc commands
-    And any application code using psycopg2 must be refactored to support the modern psycopg v3 API
+    Given the database driver has been migrated to psycopg v3
+    And the application configures its database connection in "app/database.py"
+    When the SQLAlchemy database engine is initialized
+    Then the connection string prefix MUST be exactly "postgresql+psycopg://"
+    And the application MUST connect to the PostgreSQL database without attempting to load the legacy "psycopg2" module.
 
   Scenario: Development (Frontend) Integration
-    Given the updated Docker container is built and deployed to Render
-    When the gunicorn workers initialize
-    Then the application must successfully establish a connection to the PostgreSQL database without dynamic linking errors
-    And the web application must load seamlessly returning a 200 OK status instead of a 502 Bad Gateway
-
-  Scenario: Design (UI/UX) Implementation
-    Given this is a backend infrastructure bug
-    When the user interacts with the UI
-    Then there are no visual or design changes required
+    Given the connection string prefix has been updated
+    When the application is deployed and started in the Render environment
+    Then the application MUST successfully establish a database connection
+    And the application MUST NOT crash with a "ModuleNotFoundError: No module named 'psycopg2'"
+    And the application MUST resolve the previous 503 Render crash.
 ```
 
 ## Backlog
