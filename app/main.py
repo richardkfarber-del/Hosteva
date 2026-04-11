@@ -10,12 +10,6 @@ import traceback
 import requests
 
 templates = Jinja2Templates(directory="templates")
-# Enable pgvector explicitly before creating tables
-with engine.connect() as conn:
-    conn.execute(text('CREATE EXTENSION IF NOT EXISTS vector;'))
-    conn.commit()
-
-Base.metadata.create_all(bind=engine)
 
 SHOW_DOCS = os.getenv("SHOW_DOCS", "True").lower() == "true"
 
