@@ -563,6 +563,11 @@ tailwind.config = {
             });
         }
 
+        function generatePermit(event, propertyId) {
+            event.stopPropagation();
+            alert('FEAT-005: Generating automated permit application for property ' + propertyId + '...');
+        }
+
         function exportPDF(propertyId) {
             fetch(`/api/dashboard/compliance/history/${propertyId}`)
                 .then(r => r.json())
@@ -649,6 +654,24 @@ tailwind.config = {
                                     <span class="px-2 py-1 text-[10px] font-black uppercase rounded-[8px] bg-white/10 backdrop-blur-[20px] text-teal-600 shadow-ambient border-none flex items-center gap-1">Airbnb <span class="material-symbols-outlined text-[12px] text-green-500">sync</span></span>
                                     <span class="px-2 py-1 text-[10px] font-black uppercase rounded-[8px] bg-white/10 backdrop-blur-[20px] text-indigo-600 shadow-ambient border-none flex items-center gap-1">VRBO <span class="material-symbols-outlined text-[12px] text-green-500">sync</span></span>
                                 </div>
+                            </div>
+
+                            <!-- FEAT-005: Automated Permit Application Generator -->
+                            <button class="mt-2 w-full px-4 py-2 bg-primary/10 text-primary hover:bg-primary/20 backdrop-blur-[20px] rounded-[8px] border-none font-bold text-xs uppercase tracking-widest transition-colors flex items-center justify-center gap-2 shadow-ambient" onclick="generatePermit(event, '${p.id}')">
+                                <span class="material-symbols-outlined text-sm">description</span>
+                                Generate Permit Application
+                            </button>
+
+                            <!-- FEAT-006: Listing Optimization Recommendation Engine -->
+                            <div class="mt-2 p-3 bg-surface-container-low backdrop-blur-[20px] rounded-[8px] border-none shadow-ambient">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">lightbulb</span>
+                                    <p class="text-xs font-bold text-on-surface uppercase tracking-widest">Optimization Ideas</p>
+                                </div>
+                                <ul class="text-xs text-gray-600 space-y-1 list-disc list-inside">
+                                    <li>Update weekend pricing (+15% revenue)</li>
+                                    <li>Add high-res local amenity photos</li>
+                                </ul>
                             </div>
                         </div>
                     </div>
