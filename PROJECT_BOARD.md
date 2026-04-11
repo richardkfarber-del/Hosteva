@@ -3,77 +3,33 @@
 > CURRENT_FOCUS_TARGET: FEAT-011, FEAT-012, FEAT-013, FEAT-014
 
 ## Active Sprint
-
 **Batch Sprint Goal:** Florida V1 Foundation & Paywalled Gemini AI Integration
 **Definition of Done (Strict Constraint):** Completion requires explicit final sign-off from Black Widow, Wasp, Falcon, and Hawkeye confirming functionality and monetization gates.
 
-### > CURRENT_FOCUS_TARGET: FEAT-011: Florida Ordinance Data Pipeline
-**Status:** TODO
-**Description:** Build the ingestion and normalization pipeline to construct a database of Florida state and municipal STR ordinances.
+### BUG-003: Render PostgreSQL Dependency Crash
+**Status:** DONE
+**Description:** The `Dockerfile` uses `python:3.12-slim` which lacks the C-compilers (`libpq-dev`, `gcc`) required to install `psycopg2`. The build fails, crashing the gunicorn workers. We must update the Dockerfile to `RUN apt-get update && apt-get install -y libpq-dev gcc` before `pip install`.
 
 **Acceptance Criteria:**
 ```gherkin
-Feature: Florida Ordinance Data Pipeline (FEAT-011)
-
-  Scenario: System ingests and normalizes Florida municipal ordinances
-    Given the data pipeline is active
-    When the system processes Florida municipal STR regulations
-    Then the system shall ingest the data into a centralized database
-    And the system shall normalize the regulations into queryable compliance rules
-```
-
-### > CURRENT_FOCUS_TARGET: FEAT-012: Gemini RAG Infrastructure
-**Status:** TODO
-**Description:** Build the Retrieval-Augmented Generation (RAG) infrastructure to feed the Florida ordinance database into the Gemini LLM context window.
-
-**Acceptance Criteria:**
-```gherkin
-Feature: Gemini RAG Infrastructure (FEAT-012)
+Feature: Render PostgreSQL Dependency Fix (BUG-003)
 
   Scenario: Engineering (Data/Backend) Implementation
-    Given the backend system has ingested a new set of compliance documents
-    When the system processes the documents through the embedding pipeline
-    Then the engineering infrastructure must store the resulting vectors in the secure vector database
-    And the system must retrieve the top-K relevant chunks within 500ms when a query is executed
-
-  Scenario: Design (UI/UX) Implementation
-    Given the Gemini RAG query is processing
-    When the user waits for the generated response
-    Then the design implementation must render a localized skeleton loader or streaming text animation
-    And the UI must clearly attribute the sourced documents in a collapsible citation component below the response
+    Given the application uses the python:3.12-slim Docker base image
+    When the image build process executes
+    Then the Dockerfile must run apt-get update && apt-get install -y libpq-dev gcc before executing pip install
+    And the psycopg2 package must compile and install successfully without missing C-compiler errors
 
   Scenario: Development (Frontend) Integration
-    Given a user submits a natural language query regarding compliance regulations
-    When the client application sends the query payload to the RAG endpoint
-    Then the development layer must construct the prompt appending the retrieved vector context
-    And the system must return the Gemini-generated response mapped to the standardized JSON schema
-```
-
-### > CURRENT_FOCUS_TARGET: FEAT-013: AI Premium Paywall Integration
-**Status:** TODO
-**Description:** Implement a strict monetization gate (e.g., Stripe) that blocks access to Gemini AI features for free-tier users.
-
-**Acceptance Criteria:**
-```gherkin
-Feature: AI Premium Paywall Integration (FEAT-013)
-
-  Scenario: Engineering (Data/Backend) Implementation
-    Given a user attempts to access the Gemini RAG endpoints
-    When the backend receives the API request
-    Then the engineering layer must validate the user's current Stripe subscription token
-    And the system must reject the request with a 403 Forbidden status code if the active premium entitlement is missing
+    Given the updated Docker container is built and deployed to Render
+    When the gunicorn workers initialize
+    Then the application must successfully establish a connection to the PostgreSQL database
+    And the web application must load seamlessly without throwing 500 Internal Server Errors related to database adapter failures
 
   Scenario: Design (UI/UX) Implementation
-    Given the user is browsing the dashboard on a basic tier
-    When the design components render the premium AI features
-    Then the UI must display a lock icon adjacent to the feature titles
-    And the system must present a visually distinct "Upgrade to Premium" banner that highlights the benefits of the AI toolset
-
-  Scenario: Development (Frontend) Integration
-    Given an authenticated user with a basic (free) account state
-    When the user clicks on a premium-locked AI feature component
-    Then the development layer must intercept the routing event
-    And the application must redirect the user to the subscription checkout flow without executing the underlying feature logic
+    Given this is a backend infrastructure bug
+    When the user interacts with the UI
+    Then there are no visual or design changes required
 ```
 
 ## Backlog
