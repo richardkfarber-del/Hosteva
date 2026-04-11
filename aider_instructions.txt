@@ -1,0 +1,9 @@
+FIX-009: 
+- Ensure the endpoints for FEAT-005 (Permit Generator) and FEAT-006 (Listing Optimizer Recommendation Engine) are properly wired and serving data to the frontend UI components that Wasp is surfacing. This might involve checking app/routers/permit_generator.py and app/routers/recommendations.py and making sure they are hooked into the frontend correctly (e.g., adding routes returning HTML templates or JSON data for the dashboard, adding buttons/links in the dashboard.html to access these APIs if needed).
+- Surface the FEAT-005 and FEAT-006 components on the frontend UI so they are actually accessible.
+
+FIX-010: 
+- Wire the Dashboard top navigation search bar logic to the existing address autocomplete endpoint (/api/autocomplete).
+- Ensure Listing Health metrics logic is properly piped to the Dashboard.
+
+Check `app/main.py`, `app/routers/dashboard_api.py`, `templates/dashboard.html` and other relevant frontend files. Make the necessary changes to fulfill the requirements of FIX-009 and FIX-010.
