@@ -6,30 +6,26 @@
 **Batch Sprint Goal:** Florida V1 Foundation & Paywalled Gemini AI Integration
 **Definition of Done (Strict Constraint):** Completion requires explicit final sign-off from Black Widow, Wasp, Falcon, and Hawkeye confirming functionality and monetization gates.
 
-### BUG-003: Render PostgreSQL Dependency Crash
-**Status:** DONE
-**Description:** The `Dockerfile` uses `python:3.12-slim` which lacks the C-compilers (`libpq-dev`, `gcc`) required to install `psycopg2`. The build fails, crashing the gunicorn workers. We must update the Dockerfile to `RUN apt-get update && apt-get install -y libpq-dev gcc` before `pip install`.
+### > CURRENT_FOCUS_TARGET: BUG-004: Missing get_db in app.database
+**Status:** TODO
+**Description:** The `app/database.py` file is missing the `get_db()` generator function. Other routers are failing to import it, causing a deployment crash. We must append the `get_db` function back into `app/database.py`.
 
 **Acceptance Criteria:**
 ```gherkin
-Feature: Render PostgreSQL Dependency Fix (BUG-003)
+Feature: Restore get_db Dependency (BUG-004)
 
-  Scenario: Engineering (Data/Backend) Implementation
-    Given the application uses the python:3.12-slim Docker base image
-    When the image build process executes
-    Then the Dockerfile must run apt-get update && apt-get install -y libpq-dev gcc before executing pip install
-    And the psycopg2 package must compile and install successfully without missing C-compiler errors
+  Scenario: [Engineering] Restore the get_db generator function
+    Given the `app/database.py` file has been migrated to Postgres
+    And the `get_db()` generator function is missing from the file
+    When the developer appends the `get_db()` function that yields a database session
+    Then legacy routers like `app/routers/zoning.py` will successfully import the function
+    And the application will boot without raising an ImportError
 
-  Scenario: Development (Frontend) Integration
-    Given the updated Docker container is built and deployed to Render
-    When the gunicorn workers initialize
-    Then the application must successfully establish a connection to the PostgreSQL database
-    And the web application must load seamlessly without throwing 500 Internal Server Errors related to database adapter failures
-
-  Scenario: Design (UI/UX) Implementation
-    Given this is a backend infrastructure bug
-    When the user interacts with the UI
-    Then there are no visual or design changes required
+  Scenario: [Development] Verify application boot stability
+    Given the `get_db()` function is restored in `app/database.py`
+    When the application is deployed and initialized
+    Then the application starts successfully without crashing
+    And endpoints relying on the database session execute properly
 ```
 
 ## Backlog

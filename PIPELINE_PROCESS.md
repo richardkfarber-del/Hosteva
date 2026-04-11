@@ -93,3 +93,21 @@ When QA (Black Widow, Captain America, Coulson) logs a failure or integration er
 ### THE ORCHESTRATOR'S COMMIT MANDATE
 The Orchestrator (Nick Fury) is responsible for maintaining the Git history of all structural and procedural artifacts generated outside of Execution Agents (Stark/Wasp). 
 Whenever the Orchestrator manually injects code, updates `PROJECT_BOARD.md`, modifies `PIPELINE_PROCESS.md`, or creates utility scripts (e.g., in `scripts/`), the Orchestrator MUST execute a `git add . && git commit -m "chore(infra): [Description]"` command before handing the pipeline back to QA or Release Management.
+
+### THE MICRO-TASKING DOCTRINE (Update: Hawkeye's Scope)
+**4. Ticket Granularity:** Hawkeye MUST write `PROJECT_BOARD.md` tickets as atomic, single-file Micro-Tasks. A single Epic (e.g., FEAT-012) must be broken down into individual file-specific tickets (e.g., 'Update requirements.txt', 'Create router.py'). 
+**5. Orchestrator Hand-off:** The Orchestrator (Nick Fury) is STRICTLY FORBIDDEN from manually summarizing, truncating, or providing "simplified baselines" of code files to Execution Agents during micro-tasking. Execution Agents must use `aider` or `read` tools to view the raw, unaltered source code themselves to prevent dependency omission.
+
+### THE AIDER DEVOPS EXEMPTION (Update)
+Aider's default behavior is to automatically run local tests or builds after a file edit. If the local build fails, Aider automatically rolls back the commit and undoes the file changes.
+Therefore, Execution Agents MUST NOT use `aider` to modify infrastructure files (`Dockerfile`, `docker-compose.yml`, `requirements.txt`) where local context might cause a false-positive build failure. 
+For all DevOps/Infrastructure files, agents must use the Micro-Tasking Doctrine to output raw code blocks, which the Orchestrator will automatically inject using `scripts/write_code.py`.
+
+### THE PROTOCOL SUPREMACY DOCTRINE
+The Golden Pipeline is absolute. Production downtime (Sev-1) prior to formal launch does NOT constitute an emergency that justifies bypassing procedural governance. 
+- The Orchestrator MUST NOT manually hotfix code to restore production.
+- All fixes MUST originate as a Gherkin ticket on `PROJECT_BOARD.md` via Hawkeye.
+- All fixes MUST be executed by Stark/Wasp via the Aider or Code Writer scripts.
+- All fixes MUST pass Local Pre-Merge QA by Black Widow.
+- All fixes MUST be deployed by Heimdall.
+No exceptions. Process supersedes uptime during the pre-launch epoch.
