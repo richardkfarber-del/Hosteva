@@ -9,7 +9,7 @@ This document defines the absolute, unalterable process for all code generation,
 ## Phase 1: Engineering
 1. **Hawkeye:** Generates the Ticket on `PROJECT_BOARD.md` and marks it `> CURRENT_FOCUS_TARGET`. Logs to ledger. Coulson audits.
 2. **Captain America:** Validates the ticket against the Definition of Ready. Logs to ledger. Coulson audits.
-3. **Stark / Wasp:** Executes the code/design. Logs to ledger. Coulson audits.
+3. **Stark / Wasp:** Executes the code/design. **Mandatory:** The agent MUST explicitly commit their own local changes to Git before logging completion. Heimdall is a gatekeeper, not a janitor. Logs to ledger. Coulson audits.
 
 ## Phase 2: Local Pre-Merge QA
 4. **Black Widow (QA):** Tests the executed code locally. Logs to ledger. Coulson audits.

@@ -1,5 +1,5 @@
 # Aider config to prevent gateway crashes
-no-chat-history: true
+#no-chat-history: true
 chat-history-file: /dev/null
 # Disable dirty commits to avoid unexpected git state
 dirty-commits: false

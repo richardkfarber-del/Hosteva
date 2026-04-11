@@ -231,7 +231,7 @@ tailwind.config = {
         <div id="search-results" class="hidden mb-8 p-6 bg-surface-container-lowest/80 backdrop-blur-md rounded-sm shadow-ambient border-none">
             <div class="flex items-center gap-4 mb-4">
                 <h3 class="text-lg font-black text-on-surface font-headline tracking-tight uppercase italic">Eligibility Status</h3>
-                <span id="search-status-badge" class="px-3 py-1 text-xs font-black uppercase rounded-sm shadow-ambient backdrop-blur-md"></span>
+                <span id="search-status-badge" class="px-3 py-1 text-xs font-black uppercase rounded-[8px] shadow-ambient backdrop-blur-[20px] border-none"></span>
             </div>
             <p class="text-gray-500 text-sm mb-2"><span class="text-on-surface font-headline tracking-tight font-bold">Address:</span> <span id="search-address"></span></p>
             <p class="text-gray-500 text-sm mb-4"><span class="text-on-surface font-headline tracking-tight font-bold">Conditions:</span> <span id="search-reason"></span></p>
@@ -426,7 +426,7 @@ tailwind.config = {
                 const badge = document.getElementById('search-status-badge');
 
                 document.getElementById('search-address').innerText = data.address || address;
-                document.getElementById('search-reason').innerText = data.plain_english_conditions || data.reason || 'No details available';
+                document.getElementById('search-reason').innerText = data.plain_english_conditions || data.conditions || data.reason || 'No details available';
 
                 const status = data.eligibility_status || data.status;
                 badge.innerText = status || 'UNKNOWN';
@@ -434,13 +434,13 @@ tailwind.config = {
                 // Traffic Light UI logic
                 const statusUpper = (status || '').toUpperCase();
                 if (statusUpper === 'GREEN') {
-                    badge.className = 'px-3 py-1 text-xs font-black uppercase rounded-sm shadow-ambient backdrop-blur-md bg-green-500/20 text-green-600';
+                    badge.className = 'px-3 py-1 text-xs font-black uppercase rounded-[8px] shadow-ambient backdrop-blur-[20px] bg-green-500/20 text-green-600 border-none';
                 } else if (statusUpper === 'YELLOW') {
-                    badge.className = 'px-3 py-1 text-xs font-black uppercase rounded-sm shadow-ambient backdrop-blur-md bg-yellow-500/20 text-yellow-600';
+                    badge.className = 'px-3 py-1 text-xs font-black uppercase rounded-[8px] shadow-ambient backdrop-blur-[20px] bg-yellow-500/20 text-yellow-600 border-none';
                 } else if (statusUpper === 'RED') {
-                    badge.className = 'px-3 py-1 text-xs font-black uppercase rounded-sm shadow-ambient backdrop-blur-md bg-red-500/20 text-red-600 animate-pulse';
+                    badge.className = 'px-3 py-1 text-xs font-black uppercase rounded-[8px] shadow-ambient backdrop-blur-[20px] bg-red-500/20 text-red-600 animate-pulse border-none';
                 } else {
-                    badge.className = 'px-3 py-1 text-xs font-black uppercase rounded-sm shadow-ambient backdrop-blur-md bg-gray-500/20 text-gray-600';
+                    badge.className = 'px-3 py-1 text-xs font-black uppercase rounded-[8px] shadow-ambient backdrop-blur-[20px] bg-gray-500/20 text-gray-600 border-none';
                 }
 
                 const permitLink = data.permit_application_url || data.permit_link;
