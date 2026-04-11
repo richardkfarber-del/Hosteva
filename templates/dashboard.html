@@ -638,6 +638,19 @@ tailwind.config = {
                             </div>
                             <button class="text-primary font-bold text-sm hover:underline italic uppercase tracking-widest">Access</button>
                         </div>
+                        <div class="mt-4 p-4 bg-white/10 backdrop-blur-md rounded-[8px] shadow-ambient border-none flex flex-col gap-3">
+                            <div class="flex justify-between items-center">
+                                <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Compliance Engine</p>
+                                <span class="px-2 py-1 text-[10px] font-black uppercase rounded-[8px] bg-green-500/20 text-green-600 shadow-ambient backdrop-blur-[20px] border-none">${p.county || 'Pasco'}</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Listing Sync</p>
+                                <div class="flex items-center gap-2">
+                                    <span class="px-2 py-1 text-[10px] font-black uppercase rounded-[8px] bg-white/10 backdrop-blur-[20px] text-teal-600 shadow-ambient border-none flex items-center gap-1">Airbnb <span class="material-symbols-outlined text-[12px] text-green-500">sync</span></span>
+                                    <span class="px-2 py-1 text-[10px] font-black uppercase rounded-[8px] bg-white/10 backdrop-blur-[20px] text-indigo-600 shadow-ambient border-none flex items-center gap-1">VRBO <span class="material-symbols-outlined text-[12px] text-green-500">sync</span></span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             `).join('');
@@ -646,9 +659,9 @@ tailwind.config = {
         function getStatusBadge(status) {
             const base = "px-3 py-1 text-xs font-black uppercase rounded-[8px] shadow-ambient backdrop-blur-[20px] border-none flex items-center gap-1 ";
             switch(status) {
-                case 'Compliant': return `<span class="${base} bg-success/20 text-success -success/30"><span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">verified_user</span>Compliant</span>`;
-                case 'Pending': return `<span class="${base} bg-warning/20 text-warning -warning/30"><span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">pending</span>Pending</span>`;
-                case 'Violation': return `<span class="${base} bg-error/20 text-error -error/30 animate-pulse"><span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">warning</span>Violation</span>`;
+                case 'Compliant': return `<span class="${base} bg-green-500/20 text-green-600"><span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">verified_user</span>Compliant</span>`;
+                case 'Pending': return `<span class="${base} bg-yellow-500/20 text-yellow-600"><span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">pending</span>Pending</span>`;
+                case 'Violation': return `<span class="${base} bg-red-500/20 text-red-600 animate-pulse"><span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">warning</span>Violation</span>`;
                 default: return `<span class="${base} bg-gray-100 text-gray-500">Unknown</span>`;
             }
         }
