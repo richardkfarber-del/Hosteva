@@ -2,7 +2,7 @@ import json
 import logging
 from pathlib import Path
 
-logger = logging.getLogger("email_service")
+logger = logging.getLogger(__name__)
 
 def dispatch_email_alert(host_email: str, property_id: str, old_status: str, new_status: str):
     """
@@ -23,4 +23,3 @@ def dispatch_email_alert(host_email: str, property_id: str, old_status: str, new
         f.write(json.dumps(payload) + "\n")
         
     logger.info(f"DISPATCHED EMAIL: to {host_email} regarding {property_id} status change to {new_status}")
-    print(f"DISPATCHED EMAIL: to {host_email} regarding {property_id} status change to {new_status}")

@@ -1,8 +1,11 @@
 import os
+import logging
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 import requests
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/eligibility", tags=["Eligibility"])
 
@@ -49,8 +52,10 @@ def autocomplete_address(input: str, sessiontoken: str = None):
         return {"predictions": predictions}
         
     except requests.exceptions.Timeout:
+        logger.warning(f"Autocomplete request timed out for input: {input}")
         return {"predictions": [], "error": "Request timed out"}
-    except Exception as e:
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Autocomplete request failed for input: {input}", exc_info=True)
         return {"predictions": [], "error": str(e)}
 
 def _determine_status(address: str, city: str, jurisdiction: str):
@@ -137,13 +142,15 @@ def check_eligibility(request: EligibilityRequest):
         }
         
     except requests.exceptions.Timeout:
+        logger.warning(f"Eligibility check timed out for address: {request.address}")
         return {
             "address": request.address,
             "jurisdiction": "Unknown",
             "status": "YELLOW",
             "conditions": "Manual verification required. Request timed out."
         }
-    except Exception as e:
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Eligibility check failed for address: {request.address}", exc_info=True)
         return {
             "address": request.address,
             "jurisdiction": "Unknown",

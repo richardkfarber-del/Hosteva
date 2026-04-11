@@ -1,6 +1,9 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
+import logging
 from app.database import get_db
+
+logger = logging.getLogger(__name__)
 from app.models.compliance import Region, ZoningCode, ComplianceRule
 from app.schemas.compliance import (
     RegionCreate, RegionResponse,
@@ -38,8 +41,8 @@ def check_eligibility(request: EligibilityCheckRequest, db: Session = Depends(ge
                     
                     if "formattedAddress" in addr:
                         request.address = addr["formattedAddress"]
-        except Exception:
-            pass
+        except requests.exceptions.RequestException as e:
+            logger.warning(f"Address validation failed for {request.address}", exc_info=True)
     
     if not locality or not admin_area:
         if "fl" in request.address.lower() or "florida" in request.address.lower():

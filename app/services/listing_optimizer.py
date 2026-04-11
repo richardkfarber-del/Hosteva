@@ -1,7 +1,10 @@
 from typing import Dict, List, Optional
 from datetime import datetime
 import os
+import logging
 import requests
+
+logger = logging.getLogger(__name__)
 
 class ListingOptimizerService:
     """
@@ -63,7 +66,8 @@ class ListingOptimizerService:
             
             return data
             
-        except Exception as e:
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Failed to sync Airbnb listing {listing_id}", exc_info=True)
             return {
                 "status": "error",
                 "message": f"Failed to sync Airbnb listing: {str(e)}",
@@ -120,7 +124,8 @@ class ListingOptimizerService:
             
             return data
             
-        except Exception as e:
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Failed to sync VRBO listing {listing_id}", exc_info=True)
             return {
                 "status": "error",
                 "message": f"Failed to sync VRBO listing: {str(e)}",

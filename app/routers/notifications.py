@@ -1,6 +1,9 @@
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status
 from pydantic import BaseModel
 import subprocess
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/notifications", tags=["Notifications"])
 
@@ -18,8 +21,10 @@ def dispatch_email_script(payload: StatusChangePayload):
             [script_path, payload.email, payload.property_address, payload.old_status, payload.new_status],
             check=True
         )
-    except Exception as e:
-        print(f"Error dispatching email: {e}")
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Error dispatching email for {payload.property_address}", exc_info=True)
+    except FileNotFoundError as e:
+        logger.error(f"Email script not found: {script_path}", exc_info=True)
 
 @router.post("/trigger", status_code=status.HTTP_202_ACCEPTED)
 def trigger_status_change_email(payload: StatusChangePayload, background_tasks: BackgroundTasks):

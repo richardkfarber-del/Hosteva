@@ -8,8 +8,6 @@ from app.dependencies import get_api_key
 from passlib.context import CryptContext
 import uuid
 
-# Task 1: Fix passlib/bcrypt 72-byte limit by using bcrypt_sha256 backend
-# Task 2: Use response_model to prevent password hashes from leaking
 pwd_context = CryptContext(schemes=["bcrypt_sha256", "bcrypt"], deprecated="auto")
 
 router = APIRouter(prefix="/api/hosts", tags=["Hosts"], dependencies=[Depends(get_api_key)])
