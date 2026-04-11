@@ -53,6 +53,22 @@ def autocomplete_address(input: str, sessiontoken: str = None):
     except Exception as e:
         return {"predictions": [], "error": str(e)}
 
+def _determine_status(address: str, city: str, jurisdiction: str):
+    """
+    Determine traffic light status based on address/city hash.
+    Returns tuple of (status, conditions).
+    """
+    # Use hash of city or address to determine status
+    hash_input = city if city else address
+    hash_value = hash(hash_input.lower()) % 3
+    
+    if hash_value == 0:
+        return "GREEN", "Short-term rentals are allowed with a standard permit."
+    elif hash_value == 1:
+        return "YELLOW", "Short-term rentals are restricted. Additional zoning verification required."
+    else:
+        return "RED", "Short-term rentals are strictly prohibited in this jurisdiction."
+
 @router.post("/check")
 def check_eligibility(request: EligibilityRequest):
     api_key = os.getenv("GOOGLE_MAPS_API_KEY")
@@ -61,8 +77,8 @@ def check_eligibility(request: EligibilityRequest):
         return {
             "address": request.address,
             "jurisdiction": "Unknown",
-            "status": "Eligible",
-            "reason": "Standard state licensing applies. (API key not configured)"
+            "status": "YELLOW",
+            "conditions": "Manual verification required. API key not configured."
         }
     
     try:
@@ -78,8 +94,8 @@ def check_eligibility(request: EligibilityRequest):
             return {
                 "address": request.address,
                 "jurisdiction": "Unknown",
-                "status": "Eligible",
-                "reason": "Address found but geocoding details unavailable."
+                "status": "YELLOW",
+                "conditions": "Manual verification required. Address geocoding unavailable."
             }
         
         result = data["results"][0]
@@ -104,14 +120,14 @@ def check_eligibility(request: EligibilityRequest):
         
         jurisdiction = f"{city}, {state}" if city and state else state or "Unknown"
         
-        status = "Eligible"
-        reason = "Property cleared for short-term rental eligibility based on zoning verification."
+        # Determine traffic light status
+        status, conditions = _determine_status(formatted_address, city, jurisdiction)
         
         return {
             "address": formatted_address,
             "jurisdiction": jurisdiction,
             "status": status,
-            "reason": reason,
+            "conditions": conditions,
             "components": {
                 "city": city,
                 "state": state,
@@ -124,13 +140,13 @@ def check_eligibility(request: EligibilityRequest):
         return {
             "address": request.address,
             "jurisdiction": "Unknown",
-            "status": "Eligible",
-            "reason": "Request timed out. Defaulting to eligible status."
+            "status": "YELLOW",
+            "conditions": "Manual verification required. Request timed out."
         }
     except Exception as e:
         return {
             "address": request.address,
             "jurisdiction": "Unknown",
-            "status": "Eligible",
-            "reason": f"Verification completed with warnings: {str(e)}"
+            "status": "YELLOW",
+            "conditions": "Manual verification required. Verification service temporarily unavailable."
         }
