@@ -111,3 +111,30 @@ The Golden Pipeline is absolute. Production downtime (Sev-1) prior to formal lau
 - All fixes MUST pass Local Pre-Merge QA by Black Widow.
 - All fixes MUST be deployed by Heimdall.
 No exceptions. Process supersedes uptime during the pre-launch epoch.
+
+### THE RENDER LOG DELEGATION
+Heimdall (Release Manager) is responsible for monitoring live production deployments. 
+Since the Orchestrator does not have native API access to the Render Dashboard, Heimdall MUST be deployed on a Micro-Task using the `web_fetch` or `browser` tool (or via a curl command against the Render API if a token is provided) to poll the production URL `https://hosteva.onrender.com/` for a `200 OK` status before declaring a deployment "Live".
+
+### THE INJECTION PROTOCOL (Stark/Wasp Autonomy)
+Execution Agents (Stark/Wasp) running on local models are strictly forbidden from manual text manipulation via `edit` or `sed`. If they must inject code snippets into existing files (and Aider cannot be used due to DevOps Exemptions), they MUST use the `exec` tool to pipe their raw code block directly into the `scripts/write_code.py` tool themselves. 
+The Orchestrator is banned from running the injection scripts on their behalf.
+Example Execution Command:
+`cat << 'PYTHON_EOF' | python3 scripts/write_code.py <target_file> --lang python`
+
+### THE PROTOCOL SUPREMACY DOCTRINE (Update)
+The Golden Pipeline is absolute. The Orchestrator (Nick Fury) is strictly forbidden from executing deployments, interacting with the Render API, or pinging the live web server.
+- **Heimdall (Release Manager)** exclusively owns all interactions with the Render API and deployment triggers.
+- If Heimdall fails a deployment task due to tool-call paralysis on local models, the Orchestrator MUST deploy **Rocket Raccoon** to diagnose and build an automated script tool (e.g., `scripts/deploy_render.py`) for Heimdall to execute via a single command, mitigating his hallucination risks. The Orchestrator will NEVER manually execute the bypass.
+
+### THE DEPLOYMENT DELEGATION PROTOCOL (Nick Fury)
+The local `phi3:14b` and `mistral-nemo` models suffer from severe execution paralysis when attempting to orchestrate deployment API payloads or complex polling loops via the `exec` tool.
+**The Fix:** Heimdall (Release Manager) MUST be migrated back to the Cloud API to run Phase 4 deployments. The Cloud models possess the structural reasoning and tool compliance necessary to reliably execute curl pipelines, parse JSON API responses, and report live deployment status without falling into endless loops.
+
+### THE DYNAMIC COMPUTE ALLOCATION (Nick Fury)
+The Orchestrator MUST dynamically allocate the compute model for Heimdall (Release Manager) based on the Phase of the pipeline:
+- **Phase 3 (Local Merge):** Heimdall MUST be spawned on local compute (`phi3:14b` or `mistral-nemo`). Phase 3 only requires static Git checks (`git status`, `pytest`, `git merge`) and strict LOBSTER.md compliance verification. Local models handle these binary checks efficiently.
+- **Phase 4 (Live Deployment & Log Monitoring):** Heimdall MUST be spawned on the **Cloud API**. Phase 4 requires complex multi-step orchestration (POST requests to Render, polling JSON status payloads, parsing streaming container logs for tracebacks). Local models suffer execution paralysis during dynamic API polling.
+
+### THE SEV-1 ARCHITECTURAL TRIAGE PROTOCOL (Update)
+If a Live Deployment fails with a Sev-1 infrastructure crash (502/503), the traceback pulled by Heimdall MUST be routed to **Vision (Architect/Alignment)** for a root-cause architectural analysis BEFORE being handed to Hawkeye for ticket generation. Vision will define the necessary infrastructure or dependency fixes, and Hawkeye will structure the formal Gherkin `BUG-` ticket based entirely on Vision's mandate.

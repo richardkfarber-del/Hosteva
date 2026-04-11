@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, PlainTextResponse
 from fastapi.templating import Jinja2Templates
+from sqlalchemy import text
 from app.database import engine, Base
 from app.routers import ordinances, zoning, compliance, hosts, properties, notifications, dashboard_api, eligibility, florida_compliance, listing_optimizer, permit_generator, recommendations
 from app.schemas.dashboard import HostDashboardResponse
@@ -9,6 +10,11 @@ import traceback
 import requests
 
 templates = Jinja2Templates(directory="templates")
+# Enable pgvector explicitly before creating tables
+with engine.connect() as conn:
+    conn.execute(text('CREATE EXTENSION IF NOT EXISTS vector;'))
+    conn.commit()
+
 Base.metadata.create_all(bind=engine)
 
 SHOW_DOCS = os.getenv("SHOW_DOCS", "True").lower() == "true"

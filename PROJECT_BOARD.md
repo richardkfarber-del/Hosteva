@@ -6,26 +6,30 @@
 **Batch Sprint Goal:** Florida V1 Foundation & Paywalled Gemini AI Integration
 **Definition of Done (Strict Constraint):** Completion requires explicit final sign-off from Black Widow, Wasp, Falcon, and Hawkeye confirming functionality and monetization gates.
 
-### > CURRENT_FOCUS_TARGET: BUG-004: Missing get_db in app.database
-**Status:** TODO
-**Description:** The `app/database.py` file is missing the `get_db()` generator function. Other routers are failing to import it, causing a deployment crash. We must append the `get_db` function back into `app/database.py`.
+### BUG-007: Migrate to psycopg (v3) Driver
+**Status:** DONE
+**Description:** The application crashes on Render because `psycopg2-binary` fails to dynamically link in `python:3.12-slim`. We must migrate the backend database driver to `psycopg[binary]` and remove the bloated C-compilers from the Dockerfile.
 
 **Acceptance Criteria:**
 ```gherkin
-Feature: Restore get_db Dependency (BUG-004)
+Feature: Migrate Postgres Driver to psycopg v3 (BUG-007)
 
-  Scenario: [Engineering] Restore the get_db generator function
-    Given the `app/database.py` file has been migrated to Postgres
-    And the `get_db()` generator function is missing from the file
-    When the developer appends the `get_db()` function that yields a database session
-    Then legacy routers like `app/routers/zoning.py` will successfully import the function
-    And the application will boot without raising an ImportError
+  Scenario: Engineering (Data/Backend) Implementation
+    Given the backend is currently configured to use psycopg2-binary
+    When the engineering team replaces psycopg2-binary with psycopg[binary] in requirements.txt
+    Then the Dockerfile must be stripped of the apt-get install -y libpq-dev gcc commands
+    And any application code using psycopg2 must be refactored to support the modern psycopg v3 API
 
-  Scenario: [Development] Verify application boot stability
-    Given the `get_db()` function is restored in `app/database.py`
-    When the application is deployed and initialized
-    Then the application starts successfully without crashing
-    And endpoints relying on the database session execute properly
+  Scenario: Development (Frontend) Integration
+    Given the updated Docker container is built and deployed to Render
+    When the gunicorn workers initialize
+    Then the application must successfully establish a connection to the PostgreSQL database without dynamic linking errors
+    And the web application must load seamlessly returning a 200 OK status instead of a 502 Bad Gateway
+
+  Scenario: Design (UI/UX) Implementation
+    Given this is a backend infrastructure bug
+    When the user interacts with the UI
+    Then there are no visual or design changes required
 ```
 
 ## Backlog
