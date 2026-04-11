@@ -1,12 +1,6 @@
 fastapi
-uvicorn
+uvicorn[standard]
 sqlalchemy
+pydantic
 psycopg2-binary
-pydantic[email]
-pydantic-settings
-pytest
-httpx
-passlib[bcrypt]
-bcrypt
-requests
-jinja2
+pgvector

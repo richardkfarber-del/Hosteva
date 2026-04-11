@@ -22,3 +22,9 @@
 
 # 2026-04-11 14:01:32.847916
 +Implement FEAT-006: Listing Optimization Recommendation Engine. Create a RecommendationEngineService in app/services/recommendations.py with a method generate_recommendations that takes a property_id, fetches listing metrics from ListingOptimizerService (mock the fetch or get from db), and generates actionable recommendations to improve performance. Add schemas in app/schemas/recommendations.py (RecommendationRequest, RecommendationResponse, Recommendation). Add a FastAPI router in app/routers/recommendations.py with a POST endpoint /api/recommendation-engine/generate. Also register the router in app/main.py.
+
+# 2026-04-11 15:20:21.343288
++1. Replace all 'print()' statements with standard Python 'logging'. Add 'import logging' and set up a basic logger (e.g., logger = logging.getLogger(__name__)) if missing. 2. Fix broad exception handlers (e.g., 'except Exception:') by either catching specific exceptions (like requests.exceptions.RequestException, subprocess.CalledProcessError) or at least logging the exception properly using 'logger.error("message", exc_info=True)' or replacing them with a more specific exception. 3. In app/routers/hosts.py, 'Task 1' and 'Task 2' are already implemented so just remove those TODO-like comments if they exist.
+
+# 2026-04-11 15:20:21.343397
++1. Replace all 'print()' statements with standard Python 'logging'. Add 'import logging' and set up a basic logger (e.g., logger = logging.getLogger(__name__)) if missing. 2. Fix broad exception handlers (e.g., 'except Exception:') by either catching specific exceptions (like requests.exceptions.RequestException, subprocess.CalledProcessError) or at least logging the exception properly using 'logger.error("message", exc_info=True)' or replacing them with a more specific exception. 3. In app/routers/hosts.py, 'Task 1' and 'Task 2' are already implemented so just remove those TODO-like comments if they exist.

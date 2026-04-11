@@ -58,3 +58,34 @@ This document defines the absolute, unalterable process for all code generation,
 - **Mandate:** Black Widow MUST perform a 'Baseline Visual Regression Check' against `DESIGN_STATE.md` before passing any UI changes. Simulating checks or purely verifying new text additions is prohibited. All prior CSS and Design Tokens must remain intact.
 ## Black Widow's QA Protocol (Amendment)
 - **Formatting Mandate:** Black Widow MUST use strict markdown headers (`##` or `###`) for every ledger entry to ensure Coulson's parser can accurately detect her reports. Unformatted appends (e.g. raw text with brackets like `[Phase 3]`) are strictly prohibited.
+
+### THE MARKDOWN WRITER MANDATE (Update)
+All agents operating on local models (`phi3`, `mistral-nemo`, `qwen2.5-coder`) MUST use `python3 scripts/write_markdown.py` via the `exec` tool for ALL modifications to `PROJECT_BOARD.md` and `daily_ledger.md`. The `edit` and `write` tools are strictly forbidden for markdown files to prevent exact-string matching hallucinations. 
+
+Usage:
+`cat << 'MARKDOWN_EOF' | python3 scripts/write_markdown.py <file> --mode append`
+
+### THE AIDER EXECUTION MANDATE
+All Execution Agents (Stark, Wasp) running on local coder models (`qwen2.5-coder:7b`) MUST exclusively use the `aider` CLI via the `exec` tool for ALL source code modifications (HTML, CSS, JS, Python). 
+Do NOT attempt to use complex Bash commands (`sed`, `cat << EOF`) or the `edit` API tool to modify source code, as local models struggle with strict string escaping and whitespace matching.
+**Usage Example:** `aider app/templates/ordinance_directory.html --message "Add javascript fetch logic pointing to /api/ordinances/"`
+
+### THE VISION MANDATE (Phase 1, Step 3)
+Before any new Epic enters Phase 3 (Execution), it MUST pass an Architectural Review by Vision. Vision will evaluate the cross-functional Gherkin tickets and define the specific database, infrastructural, and engineering technical paths required to support the feature. Execution agents (Stark/Wasp) must build strictly to Vision's architectural specifications.
+
+### THE MICRO-TASKING DOCTRINE (Nick Fury)
+**1. Cloud API Allocation:** Phase 1 (Initial Research, Architectural Review by Vision, and Ticket Generation by Hawkeye) MUST be executed using Cloud API models. They possess the cognitive capacity to define broad scope.
+**2. Execution Breakdown:** All execution tickets MUST be broken down into single-file, single-action Micro-Tasks before being handed to local models (Stark, Wasp, Black Widow). Local models are forbidden from multi-file or multi-step batch processing.
+**3. Granular Feedback:** Any feedback or rejections from QA (Cap/Black Widow), Architecture (Vision), or Deployment (Heimdall) must be parsed into isolated micro-tasks before being handed back to an execution agent.
+
+### THE EXECUTION BYPASS PROTOCOL & BUG TRACKING
+1. **The Python Executor Script:** To prevent Nick Fury from manually injecting code for local 7B models, all future Micro-Tasks that output raw Python or YAML MUST be accompanied by an automated OpenClaw execution script (e.g., `write_code.py <file>`). The Orchestrator will run this script automatically on the model's output block.
+2. **Mandatory Bug Tracking:** Any failure caught by QA (Black Widow/Cap), Architecture (Vision), or Deployment (Heimdall) MUST automatically generate a formal `BUG-` ticket in `PROJECT_BOARD.md` before the fix is assigned.
+
+### THE DEFECT DELEGATION PROTOCOL (Update)
+The Orchestrator will NO LONGER manually write BUG tickets. 
+When QA (Black Widow, Captain America, Coulson) logs a failure or integration error:
+1. The Orchestrator will spawn **Hawkeye (Product Planner)** on a Micro-Task.
+2. Hawkeye will read the QA Report and generate a formal `BUG-` ticket with strict Gherkin Acceptance Criteria.
+3. Hawkeye will output the raw Markdown ticket, which the Orchestrator will pipe into `PROJECT_BOARD.md` via the Markdown Writer script.
+4. Only then will Execution Agents (Stark/Wasp) be deployed to fix the bug.

@@ -1,168 +1,117 @@
 # Hosteva Project Board
 
-> CURRENT_FOCUS_TARGET: FEAT-005, FEAT-006
+> CURRENT_FOCUS_TARGET: FEAT-011, FEAT-012, FEAT-013, FEAT-014
 
 ## Active Sprint
 
-**Batch Sprint Goal:** Production Alignment & Design Stabilization
-**Definition of Done (Strict Constraint):** Completion requires explicit final sign-off from Black Widow, Wasp, Falcon, and Hawkeye confirming 100% alignment between live production and design tokens.
+**Batch Sprint Goal:** Florida V1 Foundation & Paywalled Gemini AI Integration
+**Definition of Done (Strict Constraint):** Completion requires explicit final sign-off from Black Widow, Wasp, Falcon, and Hawkeye confirming functionality and monetization gates.
 
-### > CURRENT_FOCUS_TARGET: FIX-007: Enforce Glassmorphism and No-Line rule
+### > CURRENT_FOCUS_TARGET: FEAT-011: Florida Ordinance Data Pipeline
 **Status:** TODO
-**Description:** Enforce Glassmorphism (bg-white/10) and No-Line rule explicitly across all UI components.
+**Description:** Build the ingestion and normalization pipeline to construct a database of Florida state and municipal STR ordinances.
 
 **Acceptance Criteria:**
 ```gherkin
-Feature: Enforce Glassmorphism and No-Line rule (FIX-007)
+Feature: Florida Ordinance Data Pipeline (FEAT-011)
 
-  Scenario: System renders UI components with Glassmorphism
-    Given the user interface is rendered
-    When the user views the application components
-    Then the system shall apply Glassmorphism (bg-white/10)
-    And the system shall enforce the No-Line rule explicitly across all UI elements
+  Scenario: System ingests and normalizes Florida municipal ordinances
+    Given the data pipeline is active
+    When the system processes Florida municipal STR regulations
+    Then the system shall ingest the data into a centralized database
+    And the system shall normalize the regulations into queryable compliance rules
 ```
 
-### > CURRENT_FOCUS_TARGET: FIX-008: Implement Stitch-Design Traffic Light UI Statuses
+### > CURRENT_FOCUS_TARGET: FEAT-012: Gemini RAG Infrastructure
 **Status:** TODO
-**Description:** Implement Stitch-Design Traffic Light UI Statuses (px-3 py-1 text-xs font-black uppercase rounded-[8px] shadow-ambient backdrop-blur-[20px] border-none) on the Wizard.
+**Description:** Build the Retrieval-Augmented Generation (RAG) infrastructure to feed the Florida ordinance database into the Gemini LLM context window.
 
 **Acceptance Criteria:**
 ```gherkin
-Feature: Stitch-Design Traffic Light UI Statuses (FIX-008)
+Feature: Gemini RAG Infrastructure (FEAT-012)
 
-  Scenario: System displays status badges on the Wizard
-    Given the user navigates to the Wizard
-    When the system displays a status badge
-    Then the system shall apply Stitch-Design Traffic Light UI styling
-    And the styling shall include px-3, py-1, text-xs, font-black, uppercase, rounded-[8px], shadow-ambient, backdrop-blur-[20px], and border-none
+  Scenario: Engineering (Data/Backend) Implementation
+    Given the backend system has ingested a new set of compliance documents
+    When the system processes the documents through the embedding pipeline
+    Then the engineering infrastructure must store the resulting vectors in the secure vector database
+    And the system must retrieve the top-K relevant chunks within 500ms when a query is executed
+
+  Scenario: Design (UI/UX) Implementation
+    Given the Gemini RAG query is processing
+    When the user waits for the generated response
+    Then the design implementation must render a localized skeleton loader or streaming text animation
+    And the UI must clearly attribute the sourced documents in a collapsible citation component below the response
+
+  Scenario: Development (Frontend) Integration
+    Given a user submits a natural language query regarding compliance regulations
+    When the client application sends the query payload to the RAG endpoint
+    Then the development layer must construct the prompt appending the retrieved vector context
+    And the system must return the Gemini-generated response mapped to the standardized JSON schema
 ```
 
-### > CURRENT_FOCUS_TARGET: FIX-009: Surface FEAT-005 and FEAT-006 components
+### > CURRENT_FOCUS_TARGET: FEAT-013: AI Premium Paywall Integration
 **Status:** TODO
-**Description:** Surface the FEAT-005 and FEAT-006 components on the frontend UI so they are actually accessible.
+**Description:** Implement a strict monetization gate (e.g., Stripe) that blocks access to Gemini AI features for free-tier users.
 
 **Acceptance Criteria:**
 ```gherkin
-Feature: Surface FEAT-005 and FEAT-006 components (FIX-009)
+Feature: AI Premium Paywall Integration (FEAT-013)
 
-  Scenario: User accesses the FEAT-005 and FEAT-006 features
-    Given the FEAT-005 and FEAT-006 components are implemented
-    When the user navigates the frontend application
-    Then the system shall display the Automated Permit Application Generator (FEAT-005)
-    And the system shall display the Listing Optimization Recommendation Engine (FEAT-006) making them fully accessible
+  Scenario: Engineering (Data/Backend) Implementation
+    Given a user attempts to access the Gemini RAG endpoints
+    When the backend receives the API request
+    Then the engineering layer must validate the user's current Stripe subscription token
+    And the system must reject the request with a 403 Forbidden status code if the active premium entitlement is missing
+
+  Scenario: Design (UI/UX) Implementation
+    Given the user is browsing the dashboard on a basic tier
+    When the design components render the premium AI features
+    Then the UI must display a lock icon adjacent to the feature titles
+    And the system must present a visually distinct "Upgrade to Premium" banner that highlights the benefits of the AI toolset
+
+  Scenario: Development (Frontend) Integration
+    Given an authenticated user with a basic (free) account state
+    When the user clicks on a premium-locked AI feature component
+    Then the development layer must intercept the routing event
+    And the application must redirect the user to the subscription checkout flow without executing the underlying feature logic
 ```
-
-### > CURRENT_FOCUS_TARGET: FIX-010: Wire Dashboard top navigation search bar
-**Status:** TODO
-**Description:** Wire the Dashboard top navigation search bar and display the Listing Health metrics (FEAT-004/002).
-
-**Acceptance Criteria:**
-```gherkin
-Feature: Wire Dashboard Search and Metrics (FIX-010)
-
-  Scenario: User interacts with Dashboard navigation and metrics
-    Given the Dashboard is active
-    When the user accesses the top navigation search bar
-    Then the system shall provide functional search capabilities
-    And the system shall accurately display Listing Health metrics from FEAT-004 and FEAT-002
-```
-
-### FEAT-005: Automated Permit Application Generator
-**Status:** TODO
-**Sprint Goal:** Develop a generator that transforms baseline compliance data into completed municipal permit applications.
-
-**Acceptance Criteria:**
-```gherkin
-Feature: Automated Permit Application Generator (FEAT-005)
-
-  Scenario: System generates a pre-filled permit application
-    Given the compliance engine has established baseline compliance
-    When a host requests a permit application for their property
-    Then the system shall generate a completed permit application document
-    And the system shall populate all required municipal fields using the property details
-```
-
-### FEAT-006: Listing Optimization Recommendation Engine
-**Status:** TODO
-**Sprint Goal:** Implement a recommendation engine that analyzes listing health metrics to suggest actionable improvements for hosts.
-
-**Acceptance Criteria:**
-```gherkin
-Feature: Listing Optimization Recommendation Engine (FEAT-006)
-
-  Scenario: System provides listing optimization recommendations
-    Given the listing data is synchronized via the Listing Optimizer API
-    When the system analyzes the listing health metrics
-    Then the system shall generate actionable recommendations to improve listing performance
-    And the system shall surface these recommendations on the Host Dashboard
-```
-
-
-### FEAT-003: Compliance Engine Base Implementation
-**Status:** IMPLEMENTED
-**Sprint Goal:** Build the core monitoring engine for Florida municipal codes (specifically Pasco and Hillsborough counties) to establish the foundation for automated permit logic.
-
-**Implementation Details:**
-- Created `FloridaComplianceEngine` service with county-specific evaluators
-- Implemented Pasco County compliance rules (5 rules)
-- Implemented Hillsborough County compliance rules (6 rules)
-- Created REST API endpoints at `/api/florida-compliance/`
-- Added schemas for compliance requests and responses
-
-**Acceptance Criteria:**
-```gherkin
-Feature: Compliance Engine Base (FEAT-003)
-
-  Scenario: System evaluates municipal compliance rules
-    Given the compliance engine is active
-    When the system processes property details for Pasco or Hillsborough counties
-    Then the system shall apply the correct municipal code logic
-    And the system shall return an accurate baseline compliance status
-```
-✅ **ACCEPTANCE CRITERIA MET**
-
-### FEAT-004: Listing Optimizer Integration
-**Status:** IMPLEMENTED
-**Sprint Goal:** Establish dynamic synchronization for Airbnb and VRBO listings via their official APIs to feed real-time health data to the Host Dashboard.
-
-**Implementation Details:**
-- Created `ListingOptimizerService` with Airbnb and VRBO sync capabilities
-- Implemented single and batch listing synchronization
-- Added background task support for async syncing
-- Created REST API endpoints at `/api/listing-optimizer/`
-- Added schemas for listing sync requests and responses
-- Implemented health metrics calculation
-
-**Acceptance Criteria:**
-```gherkin
-Feature: Listing Optimizer API Sync (FEAT-004)
-
-  Scenario: System synchronizes listing health data
-    Given the dynamic sync integration is configured
-    When the system fetches listing data from Airbnb and VRBO APIs
-    Then the system shall securely ingest listing health metrics
-    And the system shall pass the updated metrics to the Host Dashboard
-```
-✅ **ACCEPTANCE CRITERIA MET**
 
 ## Backlog
-
-### FEAT-002: Host Dashboard & Unified View
-**Status:** CLOSED
-**Sprint Goal:** Develop the Host Dashboard to provide a unified view of the host's Address Eligibility Status and Listing Health metrics, adhering strictly to the Stitch-Design token system.
+### > CURRENT_FOCUS_TARGET: FEAT-014: Progressive Web App Core Migration
+**Status:** TODO
+**Description:** Migrate frontend from Jinja2/Tailwind CDN to a modern Vite build pipeline with Workbox Service Workers and web manifest.
 
 **Acceptance Criteria:**
 ```gherkin
-Feature: Host Dashboard Unified View (FEAT-002)
+Feature: Progressive Web App (PWA) Core Migration (FEAT-014)
 
-  Scenario: Host accesses the dashboard
-    Given the host is authenticated
-    When the host views the primary dashboard interface
-    Then the system shall display the previously generated Address Eligibility Status
-    And the system shall display current Listing Health metrics
-    And the dashboard components shall correctly utilize the Stitch-Design tokens (Teal, White, Slate)
+  Scenario: Engineering (Data/Backend) Implementation
+    Given the Hosteva application infrastructure currently utilizes Jinja2 templates and a Tailwind CDN
+    When the system build pipeline executes the new Vite configuration with Workbox Service Worker integration
+    Then the system pipeline shall successfully generate optimized static assets, Service Worker caches, and a valid web manifest file
+
+  Scenario: Design (UI/UX) Implementation
+    Given the Hosteva web interface is rendered on a supported mobile or desktop browser
+    When the system user views the application and triggers the "Add to Home Screen" installation prompt
+    Then the system interface must display the standardized PWA application icon, splash screen, and native-like standalone window parameters
+
+  Scenario: Development (Frontend) Integration
+    Given the system user is accessing the Hosteva frontend application
+    When the system user loses network connectivity and attempts to navigate core views
+    Then the frontend application must successfully retrieve offline assets via the Workbox Service Worker to maintain core UI functionality
 ```
 
-### BUG-001: Address Eligibility Module
-**Status:** CLOSED
-**Sprint Goal:** Ensure the Address Eligibility module correctly parses autocomplete selections and consistently returns accurate traffic light statuses with plain English conditions.
+
+### BUG-002: Clean up Duplicate JS in FEAT-011
+**Status:** DONE
+**Description:** The `app/templates/ordinance_directory.html` file contains duplicated fetch logic (an async/await block and a Promise chain block targeting two different element IDs). The UI/UX lead must use `aider` to refactor the file to contain exactly one standardized JavaScript fetch block mapping to the backend endpoints.
+
+**Acceptance Criteria:**
+```gherkin
+Feature: UI Cleanup for FEAT-011 (BUG-002)
+
+  Scenario: Development (Frontend) Integration
+    Given the ordinance_directory.html template contains duplicate fetch scripts
+    When the system user refactors the frontend file
+    Then the template must contain exactly one JavaScript fetch block targeting the correct DOM container
+```
