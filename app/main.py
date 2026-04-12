@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Request
+from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, PlainTextResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import text
@@ -18,6 +19,8 @@ app = FastAPI(
     docs_url="/docs" if SHOW_DOCS else None,
     redoc_url="/redoc" if SHOW_DOCS else None
 )
+
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
