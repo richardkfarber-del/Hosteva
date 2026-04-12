@@ -36,3 +36,7 @@
 
 ## Ticket Prioritization (The Spike Rule)
 - Tech/Spike tickets MUST always be prioritized and executed first in any sprint. The results of the Spike research dictate the strategy for the subsequent user-facing features.
+
+## Bug Ticket Formatting Update (The "Current Behavior" Rule)
+- Bug tickets MUST strictly define both **Current Behavior** (what is happening now) and **Expected Behavior** (what should be happening). 
+- Both sections must remain concise (single sentence or bulleted list) and explicitly NO GHERKIN.

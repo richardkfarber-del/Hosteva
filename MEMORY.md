@@ -12,3 +12,11 @@
 ## Sprint 1 Retrospective Heuristics (Memory Ingestion)
 1. **Definition of Done (DoD) Verification:** The Swarm must explicitly check that all tickets/tasks contain a valid DoD *before* initiating the PR Gate or beginning implementation to prevent downstream PR rejection.
 2. **Context Drop Prevention (PR Gate):** To prevent context drops during PR Gate reviews (like Iron Man experienced), agents must summarize key PR changes in a concise summary block and avoid sending overly large diffs in a single prompt. If a diff is too large, it must be chunked or evaluated using targeted review queries.
+
+## Sprint 2 Retrospective Heuristics (Memory Ingestion)
+1. **API Contract Enforcement:** To prevent disconnects between Frontend (Wasp) and Backend (The Hulk), the Swarm must mandate a shared Swagger/OpenAPI spec as the single source of truth. No siloed building.
+2. **Explicit API Contracts in Spikes:** Spikes must explicitly include an "API Contract" bullet point (including expected payload shapes, casing, and route prefixes) *before* Frontend begins work.
+3. **Backend Architecture Definition:** To prevent backend gaps, Hawkeye must clearly define architecture, routes, and expected data formats before assigning tasks to backend workers.
+## 3. The API Contract Mandate
+- Hawkeye MUST define exact JSON payload contracts (e.g. `{"tier": "Pro"}`) in his tickets.
+- Backend Spikes MUST explicitly finalize and output these API contracts before Wasp (Frontend) is allowed to begin executing fetch routes.

@@ -94,13 +94,16 @@ tailwind.config = {
             <div class="hidden md:flex items-center gap-8">
                 <a class="text-primary font-semibold border-b-2  py-1" href="/">Home</a>
                 <a class="text-slate-600 font-medium hover:text-primary transition-all duration-300" href="/wizard">Compliance Wizard</a>
-                <a class="text-slate-600 font-medium hover:text-primary transition-all duration-300" href="/dashboard">Dashboard</a>
+                <a class="text-slate-600 font-medium hover:text-primary transition-all duration-300" href="{{ url_for('dashboard') }}">Dashboard</a>
                 <a class="text-slate-600 font-medium hover:text-primary transition-all duration-300 opacity-50 cursor-not-allowed" href="javascript:void(0)">Insights</a>
                 <a class="text-slate-600 font-medium hover:text-primary transition-all duration-300 opacity-50 cursor-not-allowed" href="javascript:void(0)">Support</a>
             </div>
-            <a href="/wizard" class="bg-primary text-on-primary px-5 py-2.5 rounded-[8px] font-semibold tracking-tight scale-95 active:scale-90 transition-transform primary-gradient shadow-ambient shadow-primary/20">
-                Get Started
-            </a>
+            <div class="flex items-center gap-4">
+                <a href="{{ url_for('dashboard') }}" class="md:hidden text-primary font-semibold text-sm hover:text-primary-container transition-colors">Dashboard</a>
+                <a href="/wizard" class="bg-primary text-on-primary px-5 py-2.5 rounded-[8px] font-semibold tracking-tight scale-95 active:scale-90 transition-transform primary-gradient shadow-ambient shadow-primary/20">
+                    Get Started
+                </a>
+            </div>
         </div>
     </nav>
     <main class="pt-24">
@@ -129,7 +132,6 @@ tailwind.config = {
                     </div>
                 </div>
             </div>
-        </div>
     </section>
 
     <script>

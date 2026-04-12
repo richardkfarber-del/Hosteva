@@ -1,23 +1,18 @@
-## PR Diff Summary Map
-- **b/MEMORY.md**: +4 / -0 lines changed.
-- **b/agents/captain-america/SKILL.md**: +3 / -1 lines changed.
-- **b/agents/hawkeye/SKILL.md**: +3 / -1 lines changed.
-- **b/agents/shang-chi/SKILL.md**: +5 / -1 lines changed.
-- **b/agents/the-hulk/SKILL.md**: +5 / -1 lines changed.
-- **b/agents/wasp/SKILL.md**: +5 / -1 lines changed.
-- **b/app/__pycache__/database.cpython-312.pyc**: +0 / -0 lines changed.
-- **b/app/__pycache__/main.cpython-312.pyc**: +0 / -0 lines changed.
-- **b/app/main.py**: +3 / -1 lines changed.
-- **b/app/routers/__pycache__/compliance.cpython-312.pyc**: +0 / -0 lines changed.
-- **b/app/routers/__pycache__/eligibility.cpython-312.pyc**: +0 / -0 lines changed.
-- **b/app/routers/__pycache__/hosts.cpython-312.pyc**: +0 / -0 lines changed.
-- **b/app/routers/__pycache__/notifications.cpython-312.pyc**: +0 / -0 lines changed.
-- **b/app/routers/documents.py**: +31 / -0 lines changed.
-- **b/app/routers/subscriptions.py**: +32 / -0 lines changed.
-- **b/app/services/__pycache__/email_service.cpython-312.pyc**: +0 / -0 lines changed.
-- **b/app/services/__pycache__/listing_optimizer.cpython-312.pyc**: +0 / -0 lines changed.
-- **b/daily_ledger.md**: +51 / -0 lines changed.
-- **b/infrastructure/LOBSTER.md**: +6 / -0 lines changed.
-- **b/planning/subscription_gateway_tickets.md**: +36 / -22 lines changed.
-- **b/templates/dashboard.html**: +52 / -5 lines changed.
+# PR Summary: Emergency Bug Fix - Dashboard Navigation
 
+## Branch
+`bugfix/sprint-3-dashboard-nav`
+
+## Changes Made
+1. **`templates/landing.html`**:
+   - Updated the desktop navigation bar to use Flask routing `{{ url_for('dashboard') }}` for the Dashboard link.
+   - Injected a new mobile-responsive Dashboard link (`md:hidden`) next to the "Get Started" button, ensuring users on mobile devices can successfully route to the Dashboard from the root page.
+   - **DOM Fix**: Removed an orphaned `</div>` tag at the end of the first `<section>` to balance the DOM tree and resolve a syntax error.
+
+2. **`templates/base.html`**:
+   - Updated the sidebar navigation link to use Flask routing `{{ url_for('dashboard') }}` for the Host Dashboard link.
+   - Injected a mobile-responsive Dashboard button into the global top bar (`header`). Since the sidebar is hidden on small viewports (`mobile-hidden`), this new button guarantees that users on the `/wizard` endpoint (and any other endpoint extending `base.html`) always have a visible path to the Dashboard without breaking the viewport or Sprint 1 mobile layouts.
+
+## Testing
+- Verified syntax for Flask routing.
+- Validated Tailwind CSS classes (`md:hidden`, flex container spacing) to adhere to Iron Man's responsive design constraints.
