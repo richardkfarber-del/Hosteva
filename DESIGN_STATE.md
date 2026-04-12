@@ -25,3 +25,11 @@ Used for the `eligibility_status` badges to communicate regulatory conditions cl
   - Classes applied: `bg-yellow-500/20 text-yellow-600`
 - **RED (Violation / Not Eligible)**:
   - Classes applied: `bg-red-500/20 text-red-600 animate-pulse`
+
+## 7. Logo Dimensionality Assessment (Wasp)
+The current `h-8 w-auto` utility classes are optimized for traditional, horizontally-oriented wordmarks. Because the new Hosteva logo utilizes a square (1:1) aspect ratio for its shield/prism design, restricting the height to `h-8` (32px) proportionately restricts the width to 32px. This creates a microscopic, illegible footprint within the sidebar container.
+**Mandate:**
+- **Remove:** `h-8 w-auto`
+- **Apply Logo Sizing:** Use `h-16 w-16` or `h-20 w-20` (64px to 80px) to provide the square mark with appropriate visual weight and screen real estate.
+- **Apply Object Constraints:** Add `object-contain` to guarantee the shield never distorts across viewport changes.
+- **Parent Container Alignment:** Upgrade the current parent wrapper (`mb-8 px-2`) to utilize flexbox for proper centering of the heavier square asset. Apply `flex justify-center items-center mb-8 px-2`.

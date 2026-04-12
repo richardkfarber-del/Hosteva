@@ -53,7 +53,7 @@ tailwind.config = {
             backdrop-filter: blur(20px);
         }
         [v-cloak] { display: none; }
-        .pac-container { background: #ffffff; : 1px solid #e5e7eb; }
+        .pac-container { background: #ffffff; border: 1px solid #e5e7eb; }
         .pac-item { padding: 8px; color: #374151; cursor: pointer; }
         .pac-item:hover { background: #f3f4f6; }
         .pac-item-query { color: #374151; }
@@ -75,63 +75,57 @@ tailwind.config = {
         }
     </style>
 </head>
-<body class="bg-white/10 backdrop-blur-[20px] shadow-ambient border-none font-body text-gray-800 antialiased min-h-screen">
-    <aside class="fixed left-0 top-0 h-full flex flex-col p-6 w-64  bg-white/10 backdrop-blur-[20px] shadow-ambient border-none/80 sidebar-blur z-50">
-        <div class="mb-10 flex items-center gap-3">
-            <div class="w-10 h-10 bg-gradient-to-br from-primary to-primary-container flex items-center justify-center rounded-[8px]">
-                <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">shield_with_house</span>
+<body class="bg-white/10 backdrop-blur-[20px] shadow-ambient border font-body text-gray-800 antialiased min-h-screen">
+    <aside class="hidden md:flex w-[260px] h-screen fixed left-0 top-0 bg-white/80 backdrop-blur-xl border-r border-slate-200/60 shadow-2xl flex-col py-8 px-4 gap-2 z-50 mobile-hidden">
+            <div class="flex flex-col justify-center items-center mb-8 px-2">
+                <img src="/static/img/hosteva_logo.png" alt="Hosteva Logo" class="h-20 w-20 object-contain">
+                <p class="text-[#52aecd] text-xs font-medium uppercase tracking-widest opacity-80 mt-1 font-body">Hosteva Intelligence</p>
             </div>
-            <div>
-                <h1 class="text-2xl font-black tracking-tighter text-on-surface font-headline tracking-tight uppercase italic">Hosteva</h1>
-                <p class="text-[10px] uppercase tracking-[0.2em] text-primary font-bold -mt-1">Intelligence</p>
-            </div>
-        </div>
-        <nav class="flex-1 space-y-2">
-            <a class="flex items-center gap-3 px-4 py-3 text-gray-500 hover:text-on-surface font-headline tracking-tight transition-all duration-200 hover:bg-white/10 backdrop-blur-[20px] shadow-ambient border-none text-white text-sm tracking-tight" href="#">
-                <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
-                <span>Dashboard</span>
-            </a>
-            <a class="flex items-center gap-3 px-4 py-3 text-primary bg-teal-50 border-none  font-bold text-sm tracking-tight" href="#">
-                <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">folder_special</span>
-                <span>My Portfolio</span>
-            </a>
-            <a class="flex items-center gap-3 px-4 py-3 text-gray-500 hover:text-on-surface font-headline tracking-tight transition-all duration-200 hover:bg-white/10 backdrop-blur-[20px] shadow-ambient border-none text-white text-sm tracking-tight" href="#">
-                <span class="material-symbols-outlined">domain</span>
-                <span>Properties</span>
-            </a>
-            <a class="flex items-center gap-3 px-4 py-3 text-gray-500 hover:text-on-surface font-headline tracking-tight transition-all duration-200 hover:bg-white/10 backdrop-blur-[20px] shadow-ambient border-none text-white text-sm tracking-tight" href="#">
-                <span class="material-symbols-outlined">verified_user</span>
-                <span>Compliance</span>
-            </a>
-            <a class="flex items-center gap-3 px-4 py-3 text-gray-500 hover:text-on-surface font-headline tracking-tight transition-all duration-200 hover:bg-white/10 backdrop-blur-[20px] shadow-ambient border-none text-white text-sm tracking-tight" href="#">
-                <span class="material-symbols-outlined">analytics</span>
-                <span>Analytics</span>
-            </a>
-        </nav>
-        <div class="mt-auto pt-6 border-none -white/10">
-            <div class="flex items-center gap-3 px-2">
-                <div class="w-10 h-10 rounded-full bg-white/10 backdrop-blur-[20px] shadow-ambient border-none text-white flex items-center justify-center  overflow-hidden">
-                    <span class="material-symbols-outlined text-primary">person</span>
-                </div>
-                <div class="overflow-hidden">
-                    <p class="text-on-surface font-headline tracking-tight text-sm font-bold truncate">Host Admin</p>
-                    <p class="text-gray-500 text-xs truncate">Intelligence</p>
+            <nav class="flex flex-col gap-1">
+                <a class="flex items-center gap-3 py-3 px-4 text-slate-600 opacity-90 hover:bg-[#52aecd]/20 hover:opacity-100 transition-all font-medium rounded-lg {% if active_page == 'home' %}bg-[#52aecd] text-white{% endif %}" href="/">
+                    <span class="material-symbols-outlined">home</span>
+                    <span>Home</span>
+                </a>
+                <a class="flex items-center gap-3 py-3 px-4 text-slate-600 opacity-90 hover:bg-[#52aecd]/20 hover:opacity-100 transition-all font-medium rounded-lg {% if active_page == 'compliance' %}bg-[#52aecd] text-white{% endif %}" href="/wizard">
+                    <span class="material-symbols-outlined">rule</span>
+                    <span>Compliance Wizard</span>
+                </a>
+                <a class="flex items-center gap-3 py-3 px-4 text-slate-600 opacity-90 hover:bg-[#52aecd]/20 hover:opacity-100 transition-all font-medium rounded-lg {% if active_page == 'dashboard' %}bg-[#52aecd] text-white{% endif %}" href="/dashboard">
+                    <span class="material-symbols-outlined">dashboard</span>
+                    <span>Host Dashboard</span>
+                </a>
+                
+                <div class="mt-8 mb-2 px-4 text-xs font-bold uppercase tracking-widest text-[#52aecd]/50">Insights</div>
+                <a class="flex items-center gap-3 py-3 px-4 text-slate-600 font-medium rounded-lg opacity-50 cursor-not-allowed" href="javascript:void(0)">
+                    <span class="material-symbols-outlined">analytics</span>
+                    <span>Analytics</span>
+                </a>
+            </nav>
+            
+            <div class="mt-auto px-4">
+                <div class="bg-black/20 rounded-xl p-4 border border-white/5">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="w-8 h-8 rounded-full bg-gradient-to-r from-[#75fbbf] to-[#52aecd] flex items-center justify-center font-bold text-on-surface text-sm">JS</div>
+                        <div>
+                            <p class="text-sm font-bold text-slate-800">John Smith</p>
+                            <p class="text-xs text-[#52aecd]">Pro Host</p>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-    </aside>
+        </aside>
 
-    <header class="ml-64 h-16 flex items-center justify-between px-8  border-none bg-white/10 backdrop-blur-[20px] shadow-ambient border-none/50 backdrop-blur-[20px] sticky top-0 z-40">
+    <header class="md:ml-[260px] ml-0 h-16 flex items-center justify-between px-8  border bg-white/10 backdrop-blur-[20px] shadow-ambient border/50 backdrop-blur-[20px] sticky top-0 z-40">
         <div class="flex items-center gap-4 flex-1">
             <div class="relative w-full max-w-md">
                 <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-lg">search</span>
-                <input id="address-search" class="w-full bg-white/10 backdrop-blur-[20px] shadow-ambient border-none text-white border-none rounded-[8px] pl-10 pr-24 py-2 text-sm focus:ring-1 focus:ring-teal-600 transition-all text-gray-800" placeholder="Search address for eligibility..." type="text" autocomplete="off"/>
+                <input id="address-search" class="w-full bg-white/10 backdrop-blur-[20px] shadow-ambient border text-white border rounded-[8px] pl-10 pr-24 py-2 text-sm focus:ring-1 focus:ring-teal-600 transition-all text-gray-800" placeholder="Search address for eligibility..." type="text" autocomplete="off"/>
                 <button id="search-btn" class="absolute right-2 top-1/2 -translate-y-1/2 text-xs bg-gradient-to-br from-primary to-primary-container text-on-surface font-headline tracking-tight px-3 py-1.5 rounded-[8px] font-bold hover:opacity-90 transition-opacity flex items-center gap-1">
                     <span id="search-btn-text">Search</span>
                     <span id="search-spinner" class="hidden material-symbols-outlined animate-spin text-sm">progress_activity</span>
                 </button>
                 <!-- Autocomplete Dropdown (No-Line Glassmorphism) -->
-                <div id="autocomplete-dropdown" class="absolute top-full left-0 w-full mt-2 rounded-[8px] bg-white/10 backdrop-blur-md shadow-2xl border-none overflow-hidden hidden z-50 text-gray-800">
+                <div id="autocomplete-dropdown" class="absolute top-full left-0 w-full mt-2 rounded-[8px] bg-white/10 backdrop-blur-md shadow-2xl border overflow-hidden hidden z-50 text-gray-800">
                     <!-- Dynamic suggestions will be injected here -->
                 </div>
             </div>
@@ -148,8 +142,8 @@ tailwind.config = {
     </header>
 
     <div id="add-property-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center">
-        <div class="bg-white/10 backdrop-blur-[20px] shadow-ambient border-none rounded-[8px] shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
-            <div class="flex items-center justify-between px-6 py-4 border-none  bg-white/10 backdrop-blur-[20px] shadow-ambient border-none">
+        <div class="bg-white/10 backdrop-blur-[20px] shadow-ambient border rounded-[8px] shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
+            <div class="flex items-center justify-between px-6 py-4 border  bg-white/10 backdrop-blur-[20px] shadow-ambient border">
                 <h3 class="text-xl font-bold text-on-surface font-headline tracking-tight uppercase italic">Add Property</h3>
                 <button onclick="closeAddPropertyModal()" class="text-gray-500 hover:text-gray-700 transition-colors">
                     <span class="material-symbols-outlined">close</span>
@@ -158,26 +152,26 @@ tailwind.config = {
             <form id="add-property-form" class="p-6 space-y-4">
                 <div>
                     <label class="block text-sm font-bold text-gray-700 mb-1">Address</label>
-                    <input type="text" name="address" required class="w-full px-4 py-2  border-none rounded-[8px] focus:ring-2 focus:ring-teal-600 focus:border-none-transparent text-gray-800">
+                    <input type="text" name="address" required class="w-full px-4 py-2  border rounded-[8px] focus:ring-2 focus:ring-teal-600 focus:border-transparent text-gray-800">
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-bold text-gray-700 mb-1">City</label>
-                        <input type="text" name="city" required class="w-full px-4 py-2  border-none rounded-[8px] focus:ring-2 focus:ring-teal-600 focus:border-none-transparent text-gray-800">
+                        <input type="text" name="city" required class="w-full px-4 py-2  border rounded-[8px] focus:ring-2 focus:ring-teal-600 focus:border-transparent text-gray-800">
                     </div>
                     <div>
                         <label class="block text-sm font-bold text-gray-700 mb-1">State</label>
-                        <input type="text" name="state" required class="w-full px-4 py-2  border-none rounded-[8px] focus:ring-2 focus:ring-teal-600 focus:border-none-transparent text-gray-800">
+                        <input type="text" name="state" required class="w-full px-4 py-2  border rounded-[8px] focus:ring-2 focus:ring-teal-600 focus:border-transparent text-gray-800">
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-bold text-gray-700 mb-1">ZIP Code</label>
-                        <input type="text" name="zip_code" class="w-full px-4 py-2  border-none rounded-[8px] focus:ring-2 focus:ring-teal-600 focus:border-none-transparent text-gray-800">
+                        <input type="text" name="zip_code" class="w-full px-4 py-2  border rounded-[8px] focus:ring-2 focus:ring-teal-600 focus:border-transparent text-gray-800">
                     </div>
                     <div>
                         <label class="block text-sm font-bold text-gray-700 mb-1">Property Type</label>
-                        <input type="text" name="property_type" placeholder="e.g., Single Family" class="w-full px-4 py-2  border-none rounded-[8px] focus:ring-2 focus:ring-teal-600 focus:border-none-transparent text-gray-800">
+                        <input type="text" name="property_type" placeholder="e.g., Single Family" class="w-full px-4 py-2  border rounded-[8px] focus:ring-2 focus:ring-teal-600 focus:border-transparent text-gray-800">
                     </div>
                 </div>
                 <div class="flex items-center gap-2">
@@ -185,7 +179,7 @@ tailwind.config = {
                     <label for="hoa_status" class="text-sm font-bold text-gray-700">HOA Property</label>
                 </div>
                 <div class="flex justify-end gap-3 pt-4">
-                    <button type="button" onclick="closeAddPropertyModal()" class="px-6 py-2 bg-white/10 backdrop-blur-[20px] shadow-ambient border-none text-white text-on-surface font-headline tracking-tight font-bold rounded-[8px] hover:bg-gray-200 transition-colors">Cancel</button>
+                    <button type="button" onclick="closeAddPropertyModal()" class="px-6 py-2 bg-white/10 backdrop-blur-[20px] shadow-ambient border text-white text-on-surface font-headline tracking-tight font-bold rounded-[8px] hover:bg-gray-200 transition-colors">Cancel</button>
                     <button type="submit" class="px-6 py-2 bg-gradient-to-br from-primary to-primary-container text-on-surface font-headline tracking-tight font-bold rounded-[8px] hover:opacity-90 transition-opacity">Add Property</button>
                 </div>
             </form>
@@ -193,8 +187,8 @@ tailwind.config = {
     </div>
 
     <div id="filter-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center">
-        <div class="bg-white/10 backdrop-blur-[20px] shadow-ambient border-none rounded-[8px] shadow-2xl w-full max-w-md mx-4 overflow-hidden">
-            <div class="flex items-center justify-between px-6 py-4 border-none  bg-white/10 backdrop-blur-[20px] shadow-ambient border-none">
+        <div class="bg-white/10 backdrop-blur-[20px] shadow-ambient border rounded-[8px] shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+            <div class="flex items-center justify-between px-6 py-4 border  bg-white/10 backdrop-blur-[20px] shadow-ambient border">
                 <h3 class="text-xl font-bold text-on-surface font-headline tracking-tight uppercase italic">Filter Properties</h3>
                 <button onclick="closeFilterModal()" class="text-gray-500 hover:text-gray-700 transition-colors">
                     <span class="material-symbols-outlined">close</span>
@@ -203,7 +197,7 @@ tailwind.config = {
             <div class="p-6 space-y-4">
                 <div>
                     <label class="block text-sm font-bold text-gray-700 mb-2">Zoning Status</label>
-                    <select id="filter-status" class="w-full px-4 py-2  border-none rounded-[8px] focus:ring-2 focus:ring-teal-600 focus:border-none-transparent text-gray-800">
+                    <select id="filter-status" class="w-full px-4 py-2  border rounded-[8px] focus:ring-2 focus:ring-teal-600 focus:border-transparent text-gray-800">
                         <option value="">All Statuses</option>
                         <option value="Compliant">Compliant</option>
                         <option value="Pending">Pending</option>
@@ -212,7 +206,7 @@ tailwind.config = {
                 </div>
                 <div>
                     <label class="block text-sm font-bold text-gray-700 mb-2">Property Type</label>
-                    <select id="filter-type" class="w-full px-4 py-2  border-none rounded-[8px] focus:ring-2 focus:ring-teal-600 focus:border-none-transparent text-gray-800">
+                    <select id="filter-type" class="w-full px-4 py-2  border rounded-[8px] focus:ring-2 focus:ring-teal-600 focus:border-transparent text-gray-800">
                         <option value="">All Types</option>
                         <option value="Single Family">Single Family</option>
                         <option value="Condo">Condo</option>
@@ -220,23 +214,23 @@ tailwind.config = {
                     </select>
                 </div>
                 <div class="flex justify-end gap-3 pt-4">
-                    <button onclick="clearFilters()" class="px-6 py-2 bg-white/10 backdrop-blur-[20px] shadow-ambient border-none text-white text-on-surface font-headline tracking-tight font-bold rounded-[8px] hover:bg-gray-200 transition-colors">Clear</button>
+                    <button onclick="clearFilters()" class="px-6 py-2 bg-white/10 backdrop-blur-[20px] shadow-ambient border text-white text-on-surface font-headline tracking-tight font-bold rounded-[8px] hover:bg-gray-200 transition-colors">Clear</button>
                     <button onclick="applyFilters()" class="px-6 py-2 bg-gradient-to-br from-primary to-primary-container text-on-surface font-headline tracking-tight font-bold rounded-[8px] hover:opacity-90 transition-opacity">Apply Filters</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <main class="ml-64 p-10">
-        <div id="search-results" class="hidden mb-8 p-6 bg-white/10 backdrop-blur-[20px] shadow-ambient border-none/80 backdrop-blur-[20px] rounded-[8px] shadow-ambient border-none">
+    <main class="md:ml-[260px] ml-0 p-10">
+        <div id="search-results" class="hidden mb-8 p-6 bg-white/10 backdrop-blur-[20px] shadow-ambient border-white/80 backdrop-blur-[20px] rounded-[8px] shadow-ambient border">
             <div class="flex items-center gap-4 mb-4">
                 <h3 class="text-lg font-black text-on-surface font-headline tracking-tight uppercase italic">Eligibility Status</h3>
-                <span id="search-status-badge" class="px-3 py-1 text-xs font-black uppercase rounded-[8px] shadow-ambient backdrop-blur-[20px] border-none"></span>
+                <span id="search-status-badge" class="px-3 py-1 text-xs font-black uppercase rounded-[8px] shadow-ambient backdrop-blur-[20px] border"></span>
             </div>
             <p class="text-gray-500 text-sm mb-2"><span class="text-on-surface font-headline tracking-tight font-bold">Address:</span> <span id="search-address"></span></p>
             <p class="text-gray-500 text-sm mb-4"><span class="text-on-surface font-headline tracking-tight font-bold">Conditions:</span> <span id="search-reason"></span></p>
             <div id="permit-link-container" class="hidden">
-                <a id="permit-link" href="#" target="_blank" class="text-sm font-bold text-primary hover:underline flex items-center gap-1">
+                <a id="permit-link" href="javascript:void(0)" target="_blank" class="text-sm font-bold text-primary hover:underline flex items-center gap-1">
                     <span class="material-symbols-outlined text-sm">open_in_new</span>
                     View Permit Requirements
                 </a>
@@ -250,7 +244,7 @@ tailwind.config = {
                     <p class="text-gray-500 font-medium">Monitoring zoning compliance across property grid</p>
                 </div>
                 <div class="flex gap-4">
-                    <button onclick="openFilterModal()" class="px-6 py-2 bg-white/10 backdrop-blur-[20px] shadow-ambient border-none text-white text-on-surface font-headline tracking-tight font-bold rounded-[8px] hover:bg-white/10 backdrop-blur-[20px] shadow-ambient border-none text-white/80 transition-colors flex items-center gap-2 ">
+                    <button onclick="openFilterModal()" class="px-6 py-2 bg-white/10 backdrop-blur-[20px] shadow-ambient border text-white text-on-surface font-headline tracking-tight font-bold rounded-[8px] hover:bg-white/10 backdrop-blur-[20px] shadow-ambient border text-white/80 transition-colors flex items-center gap-2 ">
                         <span class="material-symbols-outlined text-sm">filter_list</span>
                         Filter
                     </button>
@@ -270,14 +264,14 @@ tailwind.config = {
                         <span class="text-success font-bold text-sm tracking-tighter">+12.4%</span>
                     </div>
                 </div>
-                <div class="bg-white/10 backdrop-blur-[20px] shadow-ambient border-none text-white p-8 rounded-[8px] ">
+                <div class="bg-white/10 backdrop-blur-[20px] shadow-ambient border text-white p-8 rounded-[8px] ">
                     <p class="text-gray-500 font-bold text-xs uppercase tracking-widest mb-4">Compliance Score</p>
                     <div class="flex items-baseline gap-2">
                         <h3 class="text-4xl font-black text-on-surface font-headline tracking-tight tracking-tighter italic compliance-score">99.1%</h3>
                         <span class="material-symbols-outlined text-success" style="font-variation-settings: 'FILL' 1;">bolt</span>
                     </div>
                 </div>
-                <div class="bg-white/10 backdrop-blur-[20px] shadow-ambient border-none text-white p-8 rounded-[8px] ">
+                <div class="bg-white/10 backdrop-blur-[20px] shadow-ambient border text-white p-8 rounded-[8px] ">
                     <p class="text-gray-500 font-bold text-xs uppercase tracking-widest mb-4">Active Alerts</p>
                     <div class="flex items-baseline gap-2">
                         <h3 class="text-4xl font-black text-on-surface font-headline tracking-tight tracking-tighter italic active-alerts">01</h3>
@@ -287,43 +281,43 @@ tailwind.config = {
             </div>
 
             <div id="property-grid" class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
-                <div class="animate-pulse bg-white/10 backdrop-blur-[20px] shadow-ambient border-none text-white h-96 rounded-[8px] "></div>
-                <div class="animate-pulse bg-white/10 backdrop-blur-[20px] shadow-ambient border-none text-white h-96 rounded-[8px] "></div>
-                <div class="animate-pulse bg-white/10 backdrop-blur-[20px] shadow-ambient border-none text-white h-96 rounded-[8px] "></div>
+                <div class="animate-pulse bg-white/10 backdrop-blur-[20px] shadow-ambient border text-white h-96 rounded-[8px] "></div>
+                <div class="animate-pulse bg-white/10 backdrop-blur-[20px] shadow-ambient border text-white h-96 rounded-[8px] "></div>
+                <div class="animate-pulse bg-white/10 backdrop-blur-[20px] shadow-ambient border text-white h-96 rounded-[8px] "></div>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
                 <!-- License Tracker -->
-                <div class="bg-white/10 backdrop-blur-[20px] shadow-ambient border-none p-8 rounded-[8px] shadow-ambient-light">
+                <div class="bg-white/10 backdrop-blur-[20px] shadow-ambient border p-8 rounded-[8px] shadow-ambient-light">
                     <h3 class="text-2xl font-black tracking-tight text-on-surface font-headline uppercase italic mb-6 flex items-center gap-3">
                         <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">assignment</span>
                         License Tracker
                     </h3>
                     <div class="space-y-4">
-                        <div class="flex justify-between items-center p-4 bg-white/10 backdrop-blur-[20px] shadow-ambient border-none rounded-[8px] shadow-ambient">
+                        <div class="flex justify-between items-center p-4 bg-white/10 backdrop-blur-[20px] shadow-ambient border rounded-[8px] shadow-ambient">
                             <div>
                                 <p class="text-on-surface font-bold font-headline tracking-tight">Business Tax Receipt (BTR)</p>
                                 <p class="text-gray-500 text-xs">Expires: Oct 31, 2026</p>
                             </div>
-                            <span class="px-3 py-1 text-xs font-black uppercase rounded-[8px] shadow-ambient backdrop-blur-[20px] bg-green-500/20 text-green-600 border-none">Active</span>
+                            <span class="px-3 py-1 text-xs font-black uppercase rounded-[8px] shadow-ambient backdrop-blur-[20px] bg-green-500/20 text-green-600 border">Active</span>
                         </div>
-                        <div class="flex justify-between items-center p-4 bg-white/10 backdrop-blur-[20px] shadow-ambient border-none rounded-[8px] shadow-ambient">
+                        <div class="flex justify-between items-center p-4 bg-white/10 backdrop-blur-[20px] shadow-ambient border rounded-[8px] shadow-ambient">
                             <div>
                                 <p class="text-on-surface font-bold font-headline tracking-tight">Florida State DBPR License</p>
                                 <p class="text-gray-500 text-xs">Expires: Dec 31, 2026</p>
                             </div>
-                            <span class="px-3 py-1 text-xs font-black uppercase rounded-[8px] shadow-ambient backdrop-blur-[20px] bg-green-500/20 text-green-600 border-none">Active</span>
+                            <span class="px-3 py-1 text-xs font-black uppercase rounded-[8px] shadow-ambient backdrop-blur-[20px] bg-green-500/20 text-green-600 border">Active</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Document Vault -->
-                <div class="bg-white/10 backdrop-blur-[20px] shadow-ambient border-none p-8 rounded-[8px] shadow-ambient-light">
+                <div class="bg-white/10 backdrop-blur-[20px] shadow-ambient border p-8 rounded-[8px] shadow-ambient-light">
                     <h3 class="text-2xl font-black tracking-tight text-on-surface font-headline uppercase italic mb-6 flex items-center gap-3">
                         <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">folder_secure</span>
                         Document Vault
                     </h3>
-                    <div class="border-none rounded-[8px] p-8 flex flex-col items-center justify-center bg-white/10 backdrop-blur-[20px] shadow-ambient border-none hover:bg-gray-50 transition-colors cursor-pointer h-full max-h-[160px]">
+                    <div class="border rounded-[8px] p-8 flex flex-col items-center justify-center bg-white/10 backdrop-blur-[20px] shadow-ambient border hover:bg-gray-50 transition-colors cursor-pointer h-full max-h-[160px]">
                         <span class="material-symbols-outlined text-4xl text-gray-400 mb-2">cloud_upload</span>
                         <p class="text-on-surface font-bold font-headline tracking-tight">Upload Compliance Documents</p>
                         <p class="text-gray-500 text-sm mt-1 text-center">Drag and drop PDFs or click to browse</p>
@@ -362,7 +356,7 @@ tailwind.config = {
                     .then(data => {
                         if (data.predictions && data.predictions.length > 0) {
                             dropdown.innerHTML = data.predictions.map(p => `
-                                <div class="px-4 py-3 hover:bg-white/10 backdrop-blur-[20px] shadow-ambient border-none cursor-pointer transition-colors border-none text-sm font-medium" 
+                                <div class="px-4 py-3 hover:bg-white/10 backdrop-blur-[20px] shadow-ambient border cursor-pointer transition-colors border text-sm font-medium" 
                                      onclick="selectPlace('${p.place_id}', '${p.description.replace(/'/g, "\'")}')">
                                     ${p.description}
                                 </div>
@@ -434,13 +428,13 @@ tailwind.config = {
                 // Traffic Light UI logic
                 const statusUpper = (status || '').toUpperCase();
                 if (statusUpper === 'GREEN') {
-                    badge.className = 'px-3 py-1 text-xs font-black uppercase rounded-[8px] shadow-ambient backdrop-blur-[20px] bg-green-500/20 text-green-600 border-none';
+                    badge.className = 'px-3 py-1 text-xs font-black uppercase rounded-[8px] shadow-ambient backdrop-blur-[20px] bg-green-500/20 text-green-600 border';
                 } else if (statusUpper === 'YELLOW') {
-                    badge.className = 'px-3 py-1 text-xs font-black uppercase rounded-[8px] shadow-ambient backdrop-blur-[20px] bg-yellow-500/20 text-yellow-600 border-none';
+                    badge.className = 'px-3 py-1 text-xs font-black uppercase rounded-[8px] shadow-ambient backdrop-blur-[20px] bg-yellow-500/20 text-yellow-600 border';
                 } else if (statusUpper === 'RED') {
-                    badge.className = 'px-3 py-1 text-xs font-black uppercase rounded-[8px] shadow-ambient backdrop-blur-[20px] bg-red-500/20 text-red-600 animate-pulse border-none';
+                    badge.className = 'px-3 py-1 text-xs font-black uppercase rounded-[8px] shadow-ambient backdrop-blur-[20px] bg-red-500/20 text-red-600 animate-pulse border';
                 } else {
-                    badge.className = 'px-3 py-1 text-xs font-black uppercase rounded-[8px] shadow-ambient backdrop-blur-[20px] bg-gray-500/20 text-gray-600 border-none';
+                    badge.className = 'px-3 py-1 text-xs font-black uppercase rounded-[8px] shadow-ambient backdrop-blur-[20px] bg-gray-500/20 text-gray-600 border';
                 }
 
                 const permitLink = data.permit_application_url || data.permit_link;
@@ -695,12 +689,12 @@ tailwind.config = {
         function renderProperties(properties) {
             const grid = document.getElementById('property-grid');
             grid.innerHTML = properties.map(p => `
-                <div class="group bg-white/10 backdrop-blur-[20px] shadow-ambient border-none text-white  overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-teal-600/10 relative">
+                <div class="group bg-white/10 backdrop-blur-[20px] shadow-ambient border text-white  overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-teal-600/10 relative">
                     ${p.zoning_status === 'Violation' ? '<div class="violation-banner absolute top-0 left-0 right-0 z-20 px-4 py-2 flex items-center gap-2"><span class="material-symbols-outlined text-white text-sm" style="font-variation-settings: \'FILL\' 1;">warning</span><span class="text-white text-xs font-black uppercase tracking-widest">Critical Violation</span></div>' : ''}
                     <div class="relative h-64 overflow-hidden property-card-clip${p.zoning_status === 'Violation' ? ' mt-10' : ''}">
                         <img src="${p.image_url}" alt="${p.name}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
                         <div class="absolute top-4 left-4">${getStatusBadge(p.zoning_status)}</div>
-                        <button onclick="exportPDF(${p.id})" class="absolute top-4 right-4 p-2 bg-white/10 backdrop-blur-[20px] shadow-ambient border-none/90 rounded-[8px] shadow-ambient hover:bg-white/10 backdrop-blur-[20px] shadow-ambient border-none transition-colors" title="Export PDF">
+                        <button onclick="exportPDF(${p.id})" class="absolute top-4 right-4 p-2 bg-white/10 backdrop-blur-[20px] shadow-ambient border/90 rounded-[8px] shadow-ambient hover:bg-white/10 backdrop-blur-[20px] shadow-ambient border transition-colors" title="Export PDF">
                             <span class="material-symbols-outlined text-gray-700 text-sm">picture_as_pdf</span>
                         </button>
                         <div class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-gray-200 to-transparent">
@@ -715,34 +709,34 @@ tailwind.config = {
                                 <p class="text-gray-500 text-[10px] uppercase font-bold tracking-tighter">per night</p>
                             </div>
                         </div>
-                        <div class="flex justify-between items-center pt-4 border-none -white/5">
+                        <div class="flex justify-between items-center pt-4 border-t border-white/5">
                             <div class="flex gap-4">
                                 <div class="flex items-center gap-1 text-gray-500 text-xs"><span class="material-symbols-outlined text-sm">bed</span> ${p.beds}</div>
                                 <div class="flex items-center gap-1 text-gray-500 text-xs"><span class="material-symbols-outlined text-sm">bathtub</span> ${p.baths}</div>
                             </div>
                             <button class="text-primary font-bold text-sm hover:underline italic uppercase tracking-widest">Access</button>
                         </div>
-                        <div class="mt-4 p-4 bg-white/10 backdrop-blur-md rounded-[8px] shadow-ambient border-none flex flex-col gap-3">
+                        <div class="mt-4 p-4 bg-white/10 backdrop-blur-md rounded-[8px] shadow-ambient border flex flex-col gap-3">
                             <div class="flex justify-between items-center">
                                 <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Compliance Engine</p>
-                                <span class="px-2 py-1 text-[10px] font-black uppercase rounded-[8px] bg-green-500/20 text-green-600 shadow-ambient backdrop-blur-[20px] border-none">${p.county || 'Pasco'}</span>
+                                <span class="px-2 py-1 text-[10px] font-black uppercase rounded-[8px] bg-green-500/20 text-green-600 shadow-ambient backdrop-blur-[20px] border">${p.county || 'Pasco'}</span>
                             </div>
                             <div class="flex justify-between items-center">
                                 <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Listing Sync</p>
                                 <div class="flex items-center gap-2">
-                                    <span class="px-2 py-1 text-[10px] font-black uppercase rounded-[8px] bg-white/10 backdrop-blur-[20px] text-teal-600 shadow-ambient border-none flex items-center gap-1">Airbnb <span class="material-symbols-outlined text-[12px] text-green-500">sync</span></span>
-                                    <span class="px-2 py-1 text-[10px] font-black uppercase rounded-[8px] bg-white/10 backdrop-blur-[20px] text-indigo-600 shadow-ambient border-none flex items-center gap-1">VRBO <span class="material-symbols-outlined text-[12px] text-green-500">sync</span></span>
+                                    <span class="px-2 py-1 text-[10px] font-black uppercase rounded-[8px] bg-white/10 backdrop-blur-[20px] text-teal-600 shadow-ambient border flex items-center gap-1">Airbnb <span class="material-symbols-outlined text-[12px] text-green-500">sync</span></span>
+                                    <span class="px-2 py-1 text-[10px] font-black uppercase rounded-[8px] bg-white/10 backdrop-blur-[20px] text-indigo-600 shadow-ambient border flex items-center gap-1">VRBO <span class="material-symbols-outlined text-[12px] text-green-500">sync</span></span>
                                 </div>
                             </div>
 
                             <!-- FEAT-005 visible: Automated Permit Application Generator -->
-                            <button class="mt-2 w-full px-4 py-2 bg-primary/10 text-primary hover:bg-primary/20 backdrop-blur-[20px] rounded-[8px] border-none font-bold text-xs uppercase tracking-widest transition-colors flex items-center justify-center gap-2 shadow-ambient" onclick="generatePermit(event, '${p.id}')">
+                            <button class="mt-2 w-full px-4 py-2 bg-primary/10 text-primary hover:bg-primary/20 backdrop-blur-[20px] rounded-[8px] border font-bold text-xs uppercase tracking-widest transition-colors flex items-center justify-center gap-2 shadow-ambient" onclick="generatePermit(event, '${p.id}')">
                                 <span class="material-symbols-outlined text-sm">description</span>
                                 Generate Permit Application
                             </button>
 
                             <!-- FEAT-006: Listing Optimization Recommendation Engine -->
-                            <div class="mt-2 p-3 bg-white/10 backdrop-blur-[20px] shadow-ambient border-none backdrop-blur-[20px] rounded-[8px] border-none shadow-ambient recommendations-container" data-property-id="${p.id}">
+                            <div class="mt-2 p-3 bg-white/10 backdrop-blur-[20px] shadow-ambient border backdrop-blur-[20px] rounded-[8px] border shadow-ambient recommendations-container" data-property-id="${p.id}">
                                 <div class="flex items-center justify-between mb-2">
                                     <div class="flex items-center gap-2">
                                         <span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">lightbulb</span>
@@ -770,12 +764,12 @@ tailwind.config = {
         }
 
         function getStatusBadge(status) {
-            const base = "px-3 py-1 text-xs font-black uppercase rounded-[8px] shadow-ambient backdrop-blur-[20px] border-none flex items-center gap-1 ";
+            const base = "px-3 py-1 text-xs font-black uppercase rounded-[8px] shadow-ambient backdrop-blur-[20px] border flex items-center gap-1 ";
             switch(status) {
                 case 'Compliant': return `<span class="${base} bg-green-500/20 text-green-600"><span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">verified_user</span>Compliant</span>`;
                 case 'Pending': return `<span class="${base} bg-yellow-500/20 text-yellow-600"><span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">pending</span>Pending</span>`;
                 case 'Violation': return `<span class="${base} bg-red-500/20 text-red-600 animate-pulse"><span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">warning</span>Violation</span>`;
-                default: return `<span class="${base} bg-white/10 backdrop-blur-[20px] shadow-ambient border-none text-white text-gray-500">Unknown</span>`;
+                default: return `<span class="${base} bg-white/10 backdrop-blur-[20px] shadow-ambient border text-white text-gray-500">Unknown</span>`;
             }
         }
 

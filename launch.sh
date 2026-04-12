@@ -10,4 +10,4 @@ export OPENCLAW_PLUGINS_DIR="/home/rdogen/OpenClaw_Factory/openclaw/dist/extensi
 
 echo "🚀 Helicarrier Launching on Native Port..."
 
-exec /usr/bin/node /home/rdogen/OpenClaw_Factory/openclaw/dist/index.js gateway
+NODE_OPTIONS="--dns-result-order=ipv4first" /usr/bin/node /home/rdogen/OpenClaw_Factory/openclaw/dist/index.js gateway

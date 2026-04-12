@@ -6,3 +6,15 @@
   "vram_recovered_mb": 0,
   "message": "Listen up idiots. Stark's opencode session didn't stall out of memory, it was blasted by the ACPX runtime. Permission denied on write/exec in a non-interactive session. The acpx permissionMode is malformed scrap. Systemic fix: configure plugins.entries.acpx.config.permissionMode to approve-all in openclaw.json. Fix your configs before deploying your fancy harnesses."
 }
+
+
+<!-- --- MERGED FROM DUPLICATE DIRECTORY --- -->
+
+{
+  "timestamp": "2026-04-09T23:55:00Z",
+  "system_status": "ACPX_RUNTIME_FAILURE",
+  "action_taken": "DIAGNOSTIC_SWEEP_COMPLETED",
+  "offending_agent": "AGENT-04-ARCHITECT (Tony Stark / opencode)",
+  "vram_recovered_mb": 0,
+  "message": "Analyzed ghost response in opencode session 428ec99a. Found 0-token hallucination due to acpx silent failure. Appended diagnostic report to ledger recommending subagent runtime."
+}

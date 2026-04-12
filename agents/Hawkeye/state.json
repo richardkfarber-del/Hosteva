@@ -1,9 +1,0 @@
-{
-  "timestamp": "2026-04-09T19:05:00Z",
-  "board_updated": true,
-  "new_ticket_ids": ["TECH-001", "TECH-002", "STORY-005", "STORY-006"],
-  "ticket_type": "Mixed (Tech & User Stories)",
-  "formatting_check": "Verified 3rd-person Gherkin AC for Stories. Verified bulleted list for Tech. No 1st-person phrasing.",
-  "resumption_point_set": "TECH-001",
-  "action_taken": "SPRINT_PLAN_CREATED_AND_LEDGER_UPDATED"
-}

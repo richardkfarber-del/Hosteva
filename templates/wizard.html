@@ -52,12 +52,6 @@
 {% block header_title %}Eligibility Audit{% endblock %}
 
 {% block content %}
-<nav class="flex items-center justify-between max-w-4xl mx-auto mb-8">
-    <a href="/" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
-        <img src="/static/img/hosteva_logo.png" alt="Hosteva" class="h-20 w-20 object-contain">
-    </a>
-    <a href="/dashboard" class="text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors">Go to Dashboard &rarr;</a>
-</nav>
 
 <div class="max-w-4xl mx-auto glass-panel rounded-2xl overflow-hidden border border-white/50 flex flex-col md:flex-row min-h-[600px] relative">
     
@@ -201,7 +195,7 @@
         document.getElementById('auditBtn').disabled = true;
 
         try {
-            const response = await fetch('/wizard/audit', {
+            const response = await fetch('/api/eligibility/check', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ address })
@@ -210,12 +204,16 @@
             const data = await response.json();
             
             // Populate Data
-            document.getElementById('resultMessage').innerText = data.message;
+            document.getElementById('resultMessage').innerText = data.conditions || data.plain_english_conditions || data.reason || 'No details available.';
             
             const badge = document.getElementById('resultBadge');
-            if(data.status === 'Pass') {
+            const statusUpper = (data.status || data.eligibility_status || '').toUpperCase();
+            if(statusUpper === 'GREEN') {
                 badge.innerText = 'Eligible';
                 badge.className = 'px-3 py-1 text-xs font-bold uppercase rounded-full shadow-sm tracking-wider bg-tertiary-fixed text-on-surface border border-[#52aecd]/20';
+            } else if(statusUpper === 'YELLOW') {
+                badge.innerText = 'Review Required';
+                badge.className = 'px-3 py-1 text-xs font-bold uppercase rounded-full shadow-sm tracking-wider bg-yellow-100 text-yellow-700 border border-yellow-200';
             } else {
                 badge.innerText = 'Action Required';
                 badge.className = 'px-3 py-1 text-xs font-bold uppercase rounded-full shadow-sm tracking-wider bg-red-100 text-red-700 border border-red-200 animate-pulse';
@@ -223,7 +221,11 @@
 
             const detailsList = document.getElementById('resultDetails');
             detailsList.innerHTML = '';
-            data.details.forEach(detail => {
+            
+            const items = data.components || [];
+            if (data.jurisdiction) items.unshift('Jurisdiction: ' + data.jurisdiction);
+            
+            items.forEach(detail => {
                 const li = document.createElement('li');
                 li.className = 'flex items-start text-sm text-on-surface-variant font-medium';
                 li.innerHTML = `<span class="material-symbols-outlined text-primary mr-3 shrink-0" style="font-size: 20px;">check_circle</span> ${detail}`;
