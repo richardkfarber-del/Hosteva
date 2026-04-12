@@ -8,3 +8,7 @@
 1. **The Micro-Tasking Doctrine:** Local models (`qwen2.5-coder`, `mistral-nemo`) cannot handle orchestration. Give them ONE task.
 2. **The Code Writer Delegation:** Local models must NOT use the `exec`/`write` tools. They output raw markdown/code blocks; the Orchestrator uses Cloud API to inject the files.
 3. **The Dual-Pronged QA Doctrine:** "The API works" does not mean the UI works. QA requires both the automated `scripts/run_uat_regression.py` payload test AND a headless browser DOM snapshot validation.
+
+## Sprint 1 Retrospective Heuristics (Memory Ingestion)
+1. **Definition of Done (DoD) Verification:** The Swarm must explicitly check that all tickets/tasks contain a valid DoD *before* initiating the PR Gate or beginning implementation to prevent downstream PR rejection.
+2. **Context Drop Prevention (PR Gate):** To prevent context drops during PR Gate reviews (like Iron Man experienced), agents must summarize key PR changes in a concise summary block and avoid sending overly large diffs in a single prompt. If a diff is too large, it must be chunked or evaluated using targeted review queries.

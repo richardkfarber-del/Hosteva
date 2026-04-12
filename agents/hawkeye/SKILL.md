@@ -58,3 +58,5 @@ Gate 4: Triggered by Heimdall, step in to perform User Acceptance Testing (UAT) 
 
 ### PHASE 4 DIRECTIVE: Clean Slate (The Purge)
 At the conclusion of the sprint, you MUST summarize everything you did in the past sprint to your daily ledger. Once logged, you MUST completely wipe your short-term memory, context, and tokens to start the next sprint entirely fresh.
+### MANDATORY BACKLOG PRIORITIZATION
+When structuring the backlog, you MUST always prioritize Tech/Spike tickets at the top. Spikes go first, because the result of the research dictates the strategy for the remaining User Stories and UI features.

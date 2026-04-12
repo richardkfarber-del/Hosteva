@@ -108,9 +108,10 @@ tailwind.config = {
                         <div class="w-8 h-8 rounded-full bg-gradient-to-r from-[#75fbbf] to-[#52aecd] flex items-center justify-center font-bold text-on-surface text-sm">JS</div>
                         <div>
                             <p class="text-sm font-bold text-slate-800">John Smith</p>
-                            <p class="text-xs text-[#52aecd]">Pro Host</p>
+                            <p class="text-xs text-[#52aecd]">Free Tier</p>
                         </div>
                     </div>
+                    <button onclick="upgradeToPro()" class="w-full mt-2 px-4 py-2 bg-gradient-to-br from-primary to-primary-container text-on-surface font-bold text-xs rounded-[8px] uppercase tracking-widest hover:opacity-90 transition-opacity">Upgrade to Pro</button>
                 </div>
             </div>
         </aside>
@@ -317,10 +318,15 @@ tailwind.config = {
                         <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">folder_secure</span>
                         Document Vault
                     </h3>
-                    <div class="border rounded-[8px] p-8 flex flex-col items-center justify-center bg-white/10 backdrop-blur-[20px] shadow-ambient border hover:bg-gray-50 transition-colors cursor-pointer h-full max-h-[160px]">
-                        <span class="material-symbols-outlined text-4xl text-gray-400 mb-2">cloud_upload</span>
-                        <p class="text-on-surface font-bold font-headline tracking-tight">Upload Compliance Documents</p>
-                        <p class="text-gray-500 text-sm mt-1 text-center">Drag and drop PDFs or click to browse</p>
+                    <div class="flex gap-4 h-full max-h-[160px]">
+                        <div class="border rounded-[8px] p-4 flex flex-col items-center justify-center bg-white/10 backdrop-blur-[20px] shadow-ambient border hover:bg-gray-50 transition-colors cursor-pointer flex-1">
+                            <span class="material-symbols-outlined text-4xl text-gray-400 mb-2">cloud_upload</span>
+                            <p class="text-on-surface font-bold font-headline tracking-tight text-center text-sm">Upload Documents</p>
+                        </div>
+                        <div onclick="generateCompliancePDF()" class="border border-teal-200 rounded-[8px] p-4 flex flex-col items-center justify-center bg-teal-50/50 hover:bg-teal-50 transition-colors cursor-pointer flex-1 shadow-ambient">
+                            <span class="material-symbols-outlined text-4xl text-teal-600 mb-2">picture_as_pdf</span>
+                            <p class="text-on-surface font-bold font-headline tracking-tight text-center text-sm text-teal-800">Generate Compliance PDF</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -797,6 +803,47 @@ tailwind.config = {
                     document.querySelector('.active-alerts').innerText = '01';
                 });
         });
+
+        async function upgradeToPro() {
+            try {
+                const response = await fetch('/api/subscriptions/checkout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ tier: 'pro' })
+                });
+                if (!response.ok) throw new Error('Checkout failed');
+                const data = await response.json();
+                if (data.checkout_url) {
+                    window.location.href = data.checkout_url;
+                } else if (data.message) {
+                    alert('Subscription initiated: ' + data.message);
+                } else {
+                    alert('Redirecting to checkout...');
+                }
+            } catch (error) {
+                console.error('Error initiating subscription:', error);
+                alert('Failed to start checkout process.');
+            }
+        }
+
+        async function generateCompliancePDF() {
+            try {
+                const response = await fetch('/api/documents/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        property_address: '123 Hosteva Way, Cloud City, FL 33000',
+                        county: 'Cloud County'
+                    })
+                });
+                if (!response.ok) throw new Error('PDF generation failed');
+                const data = await response.json();
+                alert('PDF Generation Status: ' + (data.status || 'Pending') + '\\nTask ID: ' + (data.task_id || 'N/A') + '\\nMessage: ' + (data.message || ''));
+            } catch (error) {
+                console.error('Error generating PDF:', error);
+                alert('Failed to initiate PDF generation.');
+            }
+        }
     </script>
 </body>
 </html>

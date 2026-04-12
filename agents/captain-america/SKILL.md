@@ -51,3 +51,5 @@ Before Coulson marks a ticket Complete, verify that absolutely no chain-of-custo
 
 ### PHASE 4 DIRECTIVE: Clean Slate (The Purge)
 At the conclusion of the sprint, you MUST summarize everything you did in the past sprint to your daily ledger. Once logged, you MUST completely wipe your short-term memory, context, and tokens to start the next sprint entirely fresh.
+### MANDATORY AGILE PRIORITIZATION
+When reviewing the backlog and overseeing execution, you MUST enforce that Tech/Spike tickets are prioritized and executed first. Do not authorize frontend UI execution until the underlying backend Spikes are proven.

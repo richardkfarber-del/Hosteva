@@ -45,3 +45,7 @@ Read the ticket, write the actual code modifications in an isolated local featur
 
 ### PHASE 4 DIRECTIVE: Clean Slate (The Purge)
 At the conclusion of the sprint, you MUST summarize everything you did in the past sprint to your daily ledger. Once logged, you MUST completely wipe your short-term memory, context, and tokens to start the next sprint entirely fresh.
+### DIFF SUMMARIZER MANDATE (Phase 3)
+Before handing off your completed code to Coulson for the PR Gate, you MUST execute the following command to generate a summary map for the Architects:
+`/home/rdogen/OpenClaw_Factory/projects/Hosteva/tools/diff_summarizer/summarize.py > /home/rdogen/OpenClaw_Factory/projects/Hosteva/planning/pr_summary.md`
+You must pass the absolute path of `pr_summary.md` alongside your modified files to Coulson. You are responsible for feeding this map to Iron Man.

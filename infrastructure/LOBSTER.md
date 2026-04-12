@@ -30,3 +30,9 @@
 - **R&D Proposal Format:** `rnd_upgrades.md` MUST contain The Pain Point, The Solution, The ROI, and the exact Implementation Blueprint.
 - **Executive Summary:** `executive_summary.md` MUST be a unified document combining the Retro, Memory updates, and R&D proposals.
 - **The Forge Mandate:** Absolutely ZERO infrastructure, CLI, or MCP tool installations may occur without explicit, manual written approval from the Director.
+
+## The Repulsor Beam Protocol (PR Summaries)
+- **The Makers** (whoever writes the code) are strictly responsible for generating the `pr_summary.md` using the diff_summarizer CLI tool before opening the PR Gate. The Orchestrator will NEVER generate this file.
+
+## Ticket Prioritization (The Spike Rule)
+- Tech/Spike tickets MUST always be prioritized and executed first in any sprint. The results of the Spike research dictate the strategy for the subsequent user-facing features.
