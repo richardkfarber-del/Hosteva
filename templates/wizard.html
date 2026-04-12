@@ -12,7 +12,7 @@
     }
     
     .insight-prism {
-        border-none-left: 3px solid #75fbbf;
+        border-left: 3px solid #75fbbf;
     }
     
     .glass-input:focus {
@@ -27,72 +27,107 @@
         left: 0;
         right: 0;
         margin-top: 4px;
-        border-none-radius: 0 0 8px 8px;
+        border-radius: 0 0 8px 8px;
         background: rgba(255, 255, 255, 0.95);
         backdrop-filter: blur(12px);
-        box-shadow: 0 20px 40px rgba(0, 28, 55, 0.12);
+        box-shadow: 0 10px 25px rgba(0, 28, 55, 0.1);
         z-index: 60;
-        max-height: 280px;
+        max-height: 250px;
         overflow-y: auto;
     }
     .autocomplete-dropdown div {
         padding: 12px 16px;
         cursor: pointer;
-        border-none-bottom: 1px solid rgba(0, 0, 0, 0.04);
+        border-bottom: 1px solid rgba(0, 0, 0, 0.04);
         transition: background-color 0.15s ease;
         font-size: 14px;
         color: #001c37;
     }
     .autocomplete-dropdown div:hover {
-        background: rgba(0, 101, 118, 0.08);
+        background: rgba(0, 101, 118, 0.06);
     }
 </style>
 {% endblock %}
 
+{% block header_title %}Eligibility Audit{% endblock %}
+
 {% block content %}
-<header class="fixed top-0 left-[260px] right-0 h-16 glass-panel z-40 flex justify-between items-center px-8">
-    <div class="flex items-center gap-4">
-        <h2 class="font-headline font-bold text-xl tracking-[-0.02em] text-primary">Permit Readiness Audit</h2>
-    </div>
-</header>
+<nav class="flex items-center justify-between max-w-4xl mx-auto mb-8">
+    <a href="/" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
+        <img src="/static/img/hosteva_logo.png" alt="Hosteva" class="h-20 w-20 object-contain">
+    </a>
+    <a href="/dashboard" class="text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors">Go to Dashboard &rarr;</a>
+</nav>
 
-<div class="pt-24 pb-12 px-8 max-w-4xl mx-auto">
-    <div class="mb-8 glass-panel p-6 rounded-[16px] flex items-center gap-4">
-        <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-            <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">assistant</span>
-        </div>
-        <div>
-            <h3 class="font-headline font-bold text-primary text-lg">Your Digital Concierge</h3>
-            <p class="text-on-surface opacity-70 text-sm">I'll guide you through the permit readiness audit. Enter your address to begin.</p>
-        </div>
-    </div>
+<div class="max-w-4xl mx-auto glass-panel rounded-2xl overflow-hidden border border-white/50 flex flex-col md:flex-row min-h-[600px] relative">
     
-    <div class="glass-panel p-10 rounded-[16px]">
-        <h3 class="text-3xl font-display font-black text-primary mb-2 tracking-tight">Eligibility Wizard</h3>
-        <p class="text-on-surface opacity-80 mb-8 font-body">Enter your property address below to receive an instant Permit Readiness Audit and safety checklist.</p>
-        
-        <form id="wizardForm" class="space-y-6">
-            <div class="relative">
-                <label class="block text-sm font-bold text-primary uppercase tracking-widest mb-2">Property Address</label>
-                <input type="text" id="address" name="address" class="w-full p-4 bg-white/10 backdrop-blur-[20px] shadow-ambient border-none glass-input rounded-[8px] font-medium border-none" placeholder="e.g. 123 Ocean Drive, Miami, FL 33139" required>
-                <div id="autocomplete-dropdown" class="autocomplete-dropdown hidden"></div>
-            </div>
+    <!-- Decorative background element inside card -->
+    <div class="absolute top-0 right-0 w-96 h-96 bg-primary-container opacity-5 rounded-full blur-[80px] pointer-events-none"></div>
 
-            <button type="submit" class="w-full py-4 primary-gradient text-white font-black uppercase tracking-widest rounded-[8px] shadow-ambient hover:opacity-90 transition-opacity">
-                Run Audit
-            </button>
-        </form>
+    <!-- Left Panel: Input -->
+    <div class="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center relative z-10 bg-white/40">
+        <div class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-white shadow-sm text-primary mb-6 border border-outline-variant/20">
+            <span class="material-symbols-outlined">shield_with_house</span>
+        </div>
+        <h2 class="font-headline text-3xl font-extrabold mb-4 tracking-tight text-on-surface">Eligibility Audit</h2>
+        <p class="text-on-surface-variant mb-8 leading-relaxed">Enter the property address to verify local zoning constraints and state permit requirements.</p>
 
-        <div id="result" class="mt-12 hidden">
-            <div id="insightCard" class="glass-panel insight-prism p-8 rounded-[12px]">
-                <div class="flex items-center gap-3 mb-4">
-                    <span class="material-symbols-outlined text-primary">auto_awesome</span>
-                    <h4 class="text-xl font-headline font-bold text-primary">The Insight Prism</h4>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-bold text-on-surface mb-2 font-headline">Property Address</label>
+                <div class="relative">
+                    <span class="material-symbols-outlined absolute left-4 top-3.5 text-outline">location_on</span>
+                    <input type="text" id="addressInput" placeholder="e.g. 123 Ocean Drive, Miami FL" 
+                        class="w-full bg-white/80 border border-outline-variant/30 rounded-xl pl-12 pr-4 py-3.5 text-on-surface placeholder:text-outline glass-input transition-all">
+                    <!-- Dropdown for autocomplete suggestions -->
+                    <div id="autocomplete-dropdown" class="autocomplete-dropdown hidden"></div>
                 </div>
-                <div id="resultOutput" class="font-body text-on-surface"></div>
-                <ul id="detailsList" class="mt-4 list-disc list-inside font-body text-sm text-on-surface opacity-80 space-y-1 hidden">
-                </ul>
             </div>
+            
+            <button id="auditBtn" class="w-full primary-gradient text-on-primary font-bold rounded-xl px-4 py-3.5 shadow-ambient-light hover:shadow-ambient transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2">
+                <span>Run Compliance Audit</span>
+                <span class="material-symbols-outlined text-sm">arrow_forward</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Right Panel: Results (The Insight Prism) -->
+    <div class="w-full md:w-1/2 bg-surface/50 border-l border-white/40 p-8 md:p-12 flex flex-col justify-center relative overflow-hidden z-10" id="resultsPanel">
+        
+        <!-- Default State -->
+        <div id="defaultState" class="text-center">
+            <div class="w-20 h-20 rounded-full bg-white/60 mx-auto flex items-center justify-center mb-6 shadow-sm border border-white">
+                <span class="material-symbols-outlined text-outline" style="font-size: 32px;">search</span>
+            </div>
+            <p class="text-on-surface-variant font-medium">Awaiting address input...</p>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="hidden flex-col items-center text-center">
+            <div class="w-12 h-12 border-4 border-surface-container-high border-t-primary rounded-full animate-spin mb-6 shadow-sm"></div>
+            <p class="text-primary font-bold tracking-tight animate-pulse font-headline">Querying municipal databases...</p>
+        </div>
+
+        <!-- Result State -->
+        <div id="dataState" class="hidden flex-col h-full insight-prism pl-6">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="font-headline text-xl font-extrabold text-on-surface">Audit Results</h3>
+                <span id="resultBadge" class="px-3 py-1 text-xs font-bold uppercase rounded-full shadow-sm tracking-wider"></span>
+            </div>
+
+            <div class="bg-white/80 rounded-xl p-5 mb-8 border border-white shadow-sm">
+                <p id="resultMessage" class="text-on-surface-variant leading-relaxed font-medium"></p>
+            </div>
+
+            <h4 class="text-xs font-bold text-outline uppercase tracking-widest mb-4">Regulatory Checklist</h4>
+            <ul id="resultDetails" class="space-y-4">
+                <!-- Populated via JS -->
+            </ul>
+
+            <button class="mt-auto w-full bg-white border border-outline-variant/30 text-primary font-bold rounded-xl px-4 py-3.5 hover:bg-surface transition-all shadow-sm flex items-center justify-center gap-2 group">
+                <span>Generate Permit Application</span>
+                <span class="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">description</span>
+            </button>
         </div>
     </div>
 </div>
@@ -100,18 +135,11 @@
 
 {% block scripts %}
 <script>
+    // Hosteva V2 Autocomplete implementation (Internal DB search over Google)
     let sessionToken = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2);
     let debounceTimer;
 
-    (function() {
-        const params = new URLSearchParams(window.location.search);
-        const addressParam = params.get('address');
-        if (addressParam) {
-            document.getElementById('address').value = addressParam;
-        }
-    })();
-    
-    const addressInput = document.getElementById('address');
+    const addressInput = document.getElementById('addressInput');
     const autocompleteDropdown = document.getElementById('autocomplete-dropdown');
 
     addressInput.addEventListener('input', (e) => {
@@ -120,8 +148,10 @@
             autocompleteDropdown.classList.add('hidden');
             return;
         }
+        
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => {
+            // Call the internal FastAPI autocomplete endpoint
             fetch(`/api/eligibility/autocomplete?input=${encodeURIComponent(val)}&sessiontoken=${sessionToken}`)
                 .then(r => r.json())
                 .then(data => {
@@ -136,70 +166,83 @@
                         autocompleteDropdown.classList.add('hidden');
                     }
                 })
-                .catch(err => console.error('Autocomplete error:', err));
+                .catch(err => console.error('Autocomplete fetch error:', err));
         }, 300);
     });
 
+    // Hide dropdown when clicking outside
     document.addEventListener('click', (e) => {
         if (!addressInput.contains(e.target) && !autocompleteDropdown.contains(e.target)) {
             autocompleteDropdown.classList.add('hidden');
         }
     });
 
+    // Handle suggestion selection
     autocompleteDropdown.addEventListener('click', (e) => {
         const item = e.target.closest('.suggestion-item');
         if (item) {
-            const description = item.dataset.description;
-            addressInput.value = description;
+            addressInput.value = item.dataset.description;
             autocompleteDropdown.classList.add('hidden');
+            // Reset session token after a selection is made
+            sessionToken = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2);
         }
     });
 
-    document.getElementById('wizardForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const resultDiv = document.getElementById('result');
-        const resultOutput = document.getElementById('resultOutput');
-        const detailsList = document.getElementById('detailsList');
-        
-        resultDiv.classList.remove('hidden');
-        resultOutput.innerHTML = '<span class="animate-pulse">Analyzing permit readiness...</span>';
-        detailsList.classList.add('hidden');
-        detailsList.innerHTML = '';
+    // Existing Audit Logic
+    document.getElementById('auditBtn').addEventListener('click', async () => {
+        const address = addressInput.value;
+        if (!address) return;
+
+        // UI Transitions
+        document.getElementById('defaultState').classList.add('hidden');
+        document.getElementById('dataState').classList.add('hidden');
+        document.getElementById('loadingState').classList.remove('hidden');
+        document.getElementById('loadingState').classList.add('flex');
+        document.getElementById('auditBtn').disabled = true;
 
         try {
-            const payload = {
-                address: document.getElementById('address').value
-            };
-            
             const response = await fetch('/wizard/audit', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(payload)
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ address })
             });
-            const result = await response.json();
             
-            let htmlContent = `
-                <div class="mb-4">
-            <span class="px-3 py-1 text-xs font-black uppercase rounded-[8px] shadow-ambient backdrop-blur-[20px] border-none ${result.status === 'Pass' ? 'bg-green-500/20 text-green-600' : 'bg-red-500/20 text-red-600 animate-pulse'}">
-                ${result.status}
-            </span>
-        </div>
-                <p class="mb-4">${result.message}</p>
-            `;
-            resultOutput.innerHTML = htmlContent;
-
-            if (result.details && result.details.length > 0) {
-                detailsList.classList.remove('hidden');
-                result.details.forEach(detail => {
-                    const li = document.createElement('li');
-                    li.textContent = detail;
-                    detailsList.appendChild(li);
-                });
+            const data = await response.json();
+            
+            // Populate Data
+            document.getElementById('resultMessage').innerText = data.message;
+            
+            const badge = document.getElementById('resultBadge');
+            if(data.status === 'Pass') {
+                badge.innerText = 'Eligible';
+                badge.className = 'px-3 py-1 text-xs font-bold uppercase rounded-full shadow-sm tracking-wider bg-tertiary-fixed text-on-surface border border-[#52aecd]/20';
+            } else {
+                badge.innerText = 'Action Required';
+                badge.className = 'px-3 py-1 text-xs font-bold uppercase rounded-full shadow-sm tracking-wider bg-red-100 text-red-700 border border-red-200 animate-pulse';
             }
+
+            const detailsList = document.getElementById('resultDetails');
+            detailsList.innerHTML = '';
+            data.details.forEach(detail => {
+                const li = document.createElement('li');
+                li.className = 'flex items-start text-sm text-on-surface-variant font-medium';
+                li.innerHTML = `<span class="material-symbols-outlined text-primary mr-3 shrink-0" style="font-size: 20px;">check_circle</span> ${detail}`;
+                detailsList.appendChild(li);
+            });
+
+            // Show Results
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('loadingState').classList.remove('flex');
+            document.getElementById('dataState').classList.remove('hidden');
+            document.getElementById('dataState').classList.add('flex');
+
         } catch (err) {
-            resultOutput.innerHTML = '<p class="text-red-500">Error: ' + err.message + '</p>';
+            alert('Audit failed to run.');
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('loadingState').classList.remove('flex');
+            document.getElementById('defaultState').classList.remove('hidden');
+        } finally {
+            document.getElementById('auditBtn').disabled = false;
         }
     });
 </script>
