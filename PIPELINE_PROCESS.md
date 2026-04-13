@@ -96,3 +96,24 @@ The Orchestrator then executes `openclaw gateway restart` to apply the profiles.
 ### 2. The Boot Sequence (Jarvis & Coulson)
 - **Jarvis (Compute Optimization):** Must review the current agent roster (`AGENTS.md`) and actively migrate tasks to local execution models (`qwen2.5-coder`, `mistral-nemo`, `phi3`) wherever the Cloud API is not strictly required. The Orchestrator cannot proceed without Jarvis's explicit compute mandate.
 - **Coulson (Documentation & State Management):** Must immediately parse the last known state (`PROJECT_BOARD.md`, `daily_ledger.md`, `MEMORY.md`) to establish the baseline context for the swarm. All documentation updates MUST be executed by Coulson. Transparency and Documentation are non-negotiable.
+
+### THE BROWSER PURGE MANDATE (Ghost Process Mitigation)
+**Author:** Nick Fury (Orchestrator)
+**Mandate:** Director Richard Farber
+**Timestamp:** 2026-04-13T08:12:00Z
+
+1. **Graceful Termination:** Whenever an agent (specifically Black Widow) finishes utilizing the `browser` tool for visual regression checks, UI QA passes, or web scraping, they MUST explicitly issue a `browser close` command as their final action.
+2. **The Kill Switch:** If a graceful close fails or times out, the agent is authorized and mandated to execute `pkill -f chromium` via the `exec` tool to forcibly terminate all ghost browser instances and prevent host memory leaks.
+3. **The Absolute Boundary:** Under NO circumstances is ANY agent permitted to execute a kill command targeting the main OpenClaw daemon (`pkill node`, `pkill openclaw`, etc.).
+
+
+### THE LOBSTER PROTOCOL (EXL2 Middleware Bridge)
+**Author:** Shuri (R&D / Systems Architect)
+**Mandate:** Director Richard Farber
+**Timestamp:** 2026-04-13T11:00:00Z
+
+1. **The Bridge:** To bypass local TabbyAPI EXL2 tool-binding paralysis, Execution Agents (Stark/Wasp) running on `Qwen2.5-Coder-14B` must format their code output strictly as raw markdown code blocks (` ```bash ` or ` ```python `).
+2. **The Routing Tag:** Every Python or frontend code block MUST include a comment on the very first line specifying the exact absolute or relative file path. (Example: `# FILE: app/routers/listings.py`).
+3. **The Interceptor Execution:** The Orchestrator or the agent MUST save this markdown output to a temporary file (e.g., `workspace-stark/output.md`) and execute the `scripts/lobster_interceptor.py` middleware script against it. 
+4. **Autonomous Action:** The middleware will autonomously parse the markdown, execute the bash blocks sequentially, and route the Python code directly to the specified file paths without manual Orchestrator intervention.
+
