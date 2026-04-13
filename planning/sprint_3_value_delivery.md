@@ -4,6 +4,35 @@
 **Current Behavior:** The Dashboard navigation button is completely missing from the UI on the root and `/wizard` endpoints.
 **Expected Behavior:** The web application must contain a visible and functional navigation link or button on the root (`/`) and wizard (`/wizard`) pages that successfully routes the user to the `/dashboard` endpoint.
 
+[FEEDBACK - Iron Man]
+**Diagnosis:** The live server is returning a static file response for the root route instead of processing the Jinja2 template. In `app/main.py`, the `@app.get("/")` route currently returns `FileResponse("templates/landing.html")`. Because it is served as a static file, Jinja2 template parsing is skipped, causing `href="{{ url_for('dashboard') }}"` to be rendered literally on the client side, leading to a broken `/%7B%7B%20url_for('dashboard')%20%7D%7D` route (404 error).
+**Backend Fix for The Hulk:** Update the `@app.get("/")` endpoint in `app/main.py` to return a `TemplateResponse` using the `Jinja2Templates` instance. 
+Change it to:
+```python
+@app.get("/", include_in_schema=False)
+def read_root(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="landing.html", 
+        context={"request": request}
+    )
+```
+
+
+[FEEDBACK - Iron Man]
+**Diagnosis:** Hawkeye's UAT FAILED. The live server is returning an Internal Server Error because the Jinja2 engine encountered `{{ url_for('dashboard') }}` in `landing.html` but threw `starlette.routing.NoMatchFound: No route exists for name "dashboard" and params ""`. In FastAPI/Starlette, `url_for` looks up routes by their `name` parameter or their function name. The dashboard route in `app/main.py` is defined as `@app.get('/dashboard')` with the function name `read_dashboard`, so `url_for('dashboard')` fails to match it.
+**Backend Fix for The Hulk:** Update the dashboard route in `app/main.py` to explicitly name the route "dashboard".
+Change it to:
+```python
+@app.get('/dashboard', name="dashboard")
+def read_dashboard(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="dashboard.html", 
+        context={"request": request, "google_maps_api_key": os.getenv("GOOGLE_MAPS_API_KEY", ""), "active_page": "dashboard"}
+    )
+```
+
 ## MANDATORY SPIKES FIRST
 
 ### Ticket: TCK-301 [SPIKE] Research & Define Backend Architecture for Airbnb & VRBO Integrations
@@ -77,3 +106,7 @@ Feature: Listing Generation and Asynchronous Platform Integration
 [SEALED - Captain America]
 \n[APPROVED - Vision] No database or schema changes required for UI navigation link.
 \n[SEALED - Captain America]
+
+[FEEDBACK - Iron Man]
+**Diagnosis:** The dashboard UI route physically exists directly in `app/main.py` at line 62 as `@app.get('/dashboard', name="dashboard")`. It is NOT imported via `app.include_router(dashboard_api.router)`. The reason UAT continues to fail with `NoMatchFound` is because Hawkeye's `run_uat_regression.py` script executes tests against the live production environment (`https://hosteva.onrender.com`), but the recent codebase fix adding `name="dashboard"` has not yet been deployed to Render. Locally, the application resolves `url_for('dashboard')` perfectly and returns a 200 OK.
+**Backend Fix for The Hulk:** No further code changes are needed in `main.py` or `dashboard_api.py`. The Hulk simply needs to trigger a deployment of the `main` branch to Render so the production server picks up the updated `@app.get('/dashboard', name="dashboard")` route. Once the live server is updated, the Jinja2 template will successfully resolve the `dashboard` URL and the UAT regression script will pass.
