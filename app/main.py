@@ -5,6 +5,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy import text
 from app.database import engine, Base
 from app.routers import listings, ordinances, zoning, compliance, hosts, properties, notifications, dashboard_api, eligibility, florida_compliance, listing_optimizer, permit_generator, recommendations, subscriptions, documents
+from app.integrations.ota_routes import router as ota_router
 from app.schemas.dashboard import HostDashboardResponse
 import os
 import traceback
@@ -41,6 +42,7 @@ app.include_router(permit_generator.router)
 app.include_router(recommendations.router)
 app.include_router(subscriptions.router, prefix="/api")
 app.include_router(documents.router, prefix="/api")
+app.include_router(ota_router)
 
 @app.get("/", include_in_schema=False)
 def read_root(request: Request):
