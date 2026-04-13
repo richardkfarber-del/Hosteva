@@ -1,0 +1,5 @@
+# Exclude Swarm Infrastructure and Agents from Hosteva Production Build
+src/swarm/
+scripts/lobster*
+agents/
+.dockerignore
