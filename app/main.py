@@ -42,8 +42,12 @@ app.include_router(subscriptions.router, prefix="/api")
 app.include_router(documents.router, prefix="/api")
 
 @app.get("/", include_in_schema=False)
-def read_root():
-    return FileResponse("templates/landing.html")
+def read_root(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="landing.html", 
+        context={"request": request}
+    )
 
 @app.get("/wizard", include_in_schema=False)
 def read_wizard(request: Request):
