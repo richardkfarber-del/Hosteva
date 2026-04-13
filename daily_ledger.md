@@ -95,3 +95,20 @@
 - **Result:** PASS. Verified that the local regression tests and startup tests have successfully executed.
 - **Routing:** Pipeline status updated. Formally routed to Gate 3 (Production Deployment).
 - **Status:** Ready for Orchestrator to deploy final deployment agents (War Machine & Ant-Man).
+
+## Phase 1: Backlog Refinement - BUG-004
+- **Ticket audited:** `planning/BUG-004_dockerfile_expose.md`
+- **Result:** PASS. The ticket strictly follows Phase 1 formatting rules for Bug Tickets (Expected Behavior is a bullet list, absolutely NO Gherkin syntax).
+- **Status:** Approved for Swarm Review.
+
+## Phase 1, Step 4: Swarm Review Completion (BUG-004)
+- **Ticket:** BUG-004 (Dockerfile Hardcoded Port Violation)
+- **Status:** Swarm Review Complete. The ticket has been logged as 'Ready' in `PROJECT_BOARD.md` and is now cleared for Execution.
+
+## Phase 3, Step 1: Execution Commit & Gate 1 Handoff (BUG-004)
+- **Ticket:** BUG-004 (Dockerfile Hardcoded Port Violation)
+- **Target File:** `Dockerfile`
+- **State:** Execution committed.
+- **Routing:** Formally routed to QA Gate 1:
+  - **Ant-Man:** Re-validate Dockerfile rules.
+- **Status:** Ready for Orchestrator to deploy Ant-Man.
