@@ -85,3 +85,17 @@
 **Domain:** Engineering / Development
 **Status:** **READY FOR EXECUTION**
 **Description:** Resolve the missing OTA router import in `app/main.py` causing 404 errors on `/api/v1/integrations/ota` routes, as detailed in `planning/BUG-003_ota_router_import.md`.
+
+### BUG-004: Dockerfile Hardcoded Port Violation
+**Domain:** Engineering / DevOps
+**Status:** **READY FOR EXECUTION**
+**Description:** Remove hardcoded EXPOSE directive from Dockerfile to resolve Render deployment conflict as detailed in `planning/BUG-004_dockerfile_expose.md`.
+
+### CHORE-001: Resolve Pydantic V2 Deprecation Warnings
+**Domain:** Engineering / Tech Debt
+**Feature:** Dependency Upgrade & Refactor
+**Scenario:** Engineering Implementation
+**Given** the application initializes with Pydantic V2 deprecation warnings
+**When** the server boots up or tests run
+**Then** the codebase must be refactored to replace legacy `orm_mode` flags with `from_attributes`
+**And** all other V1 syntax must be updated to ensure clean log outputs.
