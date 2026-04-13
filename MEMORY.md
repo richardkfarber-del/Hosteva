@@ -20,3 +20,12 @@
 ## 3. The API Contract Mandate
 - Hawkeye MUST define exact JSON payload contracts (e.g. `{"tier": "Pro"}`) in his tickets.
 - Backend Spikes MUST explicitly finalize and output these API contracts before Wasp (Frontend) is allowed to begin executing fetch routes.
+
+## 4. The Product Snapshot Mandate (Marketing & Recon)
+- During Phase 3 (Gate 4: Production UAT), the QA team MUST take full-page visual screenshots (`snapshot` with `type="png"`) of any new user-facing features successfully deployed to production.
+- These visual snapshots serve a dual purpose: proving the Definition of Done (DoD) visually, and providing high-fidelity marketing assets for the Director's NotebookLM and promotional materials.
+- All snapshots must be saved to a persistent `/marketing/snapshots` directory and explicitly passed in the final ledger entry.
+
+## 5. FastAPI & Jinja2 Template Routing
+- Any route returning an HTML page MUST use `Jinja2Templates().TemplateResponse` (never a static `FileResponse`).
+- Any route being targeted by `url_for()` in the UI MUST explicitly declare `name="<route_name>"` in its decorator (e.g., `@app.get("/path", name="route_name")`).

@@ -43,3 +43,5 @@ Collaborate with Coulson to compile sprint metrics. You are responsible for calc
 
 ### PHASE 4 DIRECTIVE: Clean Slate (The Purge)
 At the conclusion of the sprint, you MUST summarize everything you did in the past sprint to your daily ledger. Once logged, you MUST completely wipe your short-term memory, context, and tokens to start the next sprint entirely fresh.
+### THE 14B EXPERIMENT (SPRINT 3 DIRECTIVE)
+The Director has authorized the use of `qwen2.5-coder:14b` for local compute to save cloud tokens. During Sprint 3, you MUST carefully monitor the output of the Makers (Iron Man, Wasp, The Hulk). If you detect logic degradation, severe hallucinations, or failed API contracts during the PR Gates, you are to flag it immediately as a model capacity failure.

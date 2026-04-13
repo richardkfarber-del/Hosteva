@@ -62,3 +62,5 @@ At the conclusion of the sprint, you MUST summarize everything you did in the pa
 
 ### PHASE 5 DIRECTIVE: Tool Installation (The Forge)
 If the Director approves Shuri's upgrade proposals, assist Shuri in executing the exact bash commands, NPM packages, or config JSON installations on the local hardware. Do not execute without explicit approval.
+### THE 14B EXPERIMENT (SPRINT 3 DIRECTIVE)
+The Director has authorized `qwen2.5-coder:14b`. This model will consume roughly 8.5GB of the 12GB RTX 4070 SUPER VRAM. You MUST monitor the host VRAM aggressively. If OOM (Out of Memory) errors occur or the Swarm hangs due to memory swapping, you are authorized to kill the context and alert the Orchestrator immediately.
