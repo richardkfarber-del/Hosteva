@@ -4,7 +4,7 @@ from fastapi.responses import FileResponse, PlainTextResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import text
 from app.database import engine, Base
-from app.routers import ordinances, zoning, compliance, hosts, properties, notifications, dashboard_api, eligibility, florida_compliance, listing_optimizer, permit_generator, recommendations, subscriptions, documents
+from app.routers import listings, ordinances, zoning, compliance, hosts, properties, notifications, dashboard_api, eligibility, florida_compliance, listing_optimizer, permit_generator, recommendations, subscriptions, documents
 from app.schemas.dashboard import HostDashboardResponse
 import os
 import traceback
@@ -26,6 +26,7 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 async def global_exception_handler(request: Request, exc: Exception):
     return PlainTextResponse(str(traceback.format_exc()), status_code=500)
 
+app.include_router(listings.router)
 app.include_router(zoning.router)
 app.include_router(ordinances.router)
 app.include_router(compliance.router)
