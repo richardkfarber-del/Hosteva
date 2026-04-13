@@ -6,3 +6,4 @@ psycopg[binary]
 pgvector
 jinja2
 requests
+celery
