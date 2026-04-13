@@ -59,7 +59,7 @@ def read_wizard(request: Request):
 
 
 
-@app.get('/dashboard')
+@app.get('/dashboard', name="dashboard")
 def read_dashboard(request: Request):
     return templates.TemplateResponse(
         request=request,
