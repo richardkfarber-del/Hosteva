@@ -89,14 +89,14 @@ tailwind.config = {
     <nav class="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-xl shadow-ambient-light">
         <div class="flex items-center justify-between px-6 py-4 max-w-7xl mx-auto">
             <div class="flex items-center gap-2">
-                <img src="/static/img/hosteva_logo.png" alt="Hosteva Logo" class="h-8 w-auto">
+                <img src="{{ url_for('static', path='img/hosteva_logo.png') }}" alt="Hosteva Logo" class="h-8 w-auto">
             </div>
             <div class="hidden md:flex items-center gap-8">
                 <a class="text-primary font-semibold border-b-2  py-1" href="/">Home</a>
                 <a class="text-slate-600 font-medium hover:text-primary transition-all duration-300" href="/wizard">Compliance Wizard</a>
                 <a class="text-slate-600 font-medium hover:text-primary transition-all duration-300" href="{{ url_for('dashboard') }}">Dashboard</a>
-                <a class="text-slate-600 font-medium hover:text-primary transition-all duration-300 opacity-50 cursor-not-allowed" href="javascript:void(0)">Insights</a>
-                <a class="text-slate-600 font-medium hover:text-primary transition-all duration-300 opacity-50 cursor-not-allowed" href="javascript:void(0)">Support</a>
+                <a class="text-slate-600 font-medium hover:text-primary transition-all duration-300 opacity-50 cursor-not-allowed" href="#">Insights</a>
+                <a class="text-slate-600 font-medium hover:text-primary transition-all duration-300 opacity-50 cursor-not-allowed" href="#">Support</a>
             </div>
             <div class="flex items-center gap-4">
                 <a href="{{ url_for('dashboard') }}" class="md:hidden text-primary font-semibold text-sm hover:text-primary-container transition-colors">Dashboard</a>
@@ -126,7 +126,7 @@ tailwind.config = {
                             <input id="homeAddress" class="w-full bg-transparent outline-none focus:ring-0 text-on-surface font-medium placeholder:text-outline" placeholder="Enter property address..." type="text"/>
                             <div id="autocomplete-dropdown" class="autocomplete-dropdown hidden"></div>
                         </div>
-                        <a href="javascript:void(0)" onclick="goToWizard()" class="primary-gradient text-on-primary px-8 py-4 rounded-[8px] font-bold text-sm whitespace-nowrap transition-transform active:scale-95 text-center">
+                        <a href="#" onclick="goToWizard()" class="primary-gradient text-on-primary px-8 py-4 rounded-[8px] font-bold text-sm whitespace-nowrap transition-transform active:scale-95 text-center">
                             Check Compliance
                         </a>
                     </div>
@@ -233,9 +233,9 @@ tailwind.config = {
                 <p class="font-inter text-xs tracking-wide uppercase text-slate-500">© 2026 Hosteva AI. Hosteva Intelligence.</p>
             </div>
             <div class="flex flex-wrap justify-center gap-8">
-                <a class="font-inter text-xs tracking-wide uppercase text-slate-500 hover:text-on-surface font-headline tracking-tight hover:underline transition-all opacity-50 cursor-not-allowed" href="javascript:void(0)">Privacy Policy</a>
-                <a class="font-inter text-xs tracking-wide uppercase text-slate-500 hover:text-on-surface font-headline tracking-tight hover:underline transition-all opacity-50 cursor-not-allowed" href="javascript:void(0)">Terms of Service</a>
-                <a class="font-inter text-xs tracking-wide uppercase text-slate-500 hover:text-on-surface font-headline tracking-tight hover:underline transition-all opacity-50 cursor-not-allowed" href="javascript:void(0)">Contact Support</a>
+                <a class="font-inter text-xs tracking-wide uppercase text-slate-500 hover:text-on-surface font-headline tracking-tight hover:underline transition-all opacity-50 cursor-not-allowed" href="#">Privacy Policy</a>
+                <a class="font-inter text-xs tracking-wide uppercase text-slate-500 hover:text-on-surface font-headline tracking-tight hover:underline transition-all opacity-50 cursor-not-allowed" href="#">Terms of Service</a>
+                <a class="font-inter text-xs tracking-wide uppercase text-slate-500 hover:text-on-surface font-headline tracking-tight hover:underline transition-all opacity-50 cursor-not-allowed" href="#">Contact Support</a>
             </div>
         </div>
     </footer>

@@ -69,7 +69,7 @@ tailwind.config = {
         <!-- Sidebar Navigation -->
         <aside class="hidden md:flex w-[260px] h-screen fixed left-0 top-0 bg-white/80 backdrop-blur-xl border-r border-slate-200/60 shadow-2xl flex-col py-8 px-4 gap-2 z-50 mobile-hidden">
             <div class="flex flex-col justify-center items-center mb-8 px-2">
-                <img src="/static/img/hosteva_logo.png" alt="Hosteva Logo" class="h-20 w-20 object-contain">
+                <img src="{{ url_for('static', path='img/hosteva_logo.png') }}" alt="Hosteva Logo" class="h-20 w-20 object-contain">
                 <p class="text-[#52aecd] text-xs font-medium uppercase tracking-widest opacity-80 mt-1 font-body">Hosteva Intelligence</p>
             </div>
             <nav class="flex flex-col gap-1">
@@ -85,9 +85,14 @@ tailwind.config = {
                     <span class="material-symbols-outlined">dashboard</span>
                     <span>Host Dashboard</span>
                 </a>
+
+                <a class="flex items-center gap-3 py-3 px-4 text-slate-600 opacity-90 hover:bg-[#52aecd]/20 hover:opacity-100 transition-all font-medium rounded-lg {% if active_page == 'integrations' %}bg-[#52aecd] text-white{% endif %}" href="/integrations">
+                    <span class="material-symbols-outlined">extension</span>
+                    <span>Integrations</span>
+                </a>
                 
                 <div class="mt-8 mb-2 px-4 text-xs font-bold uppercase tracking-widest text-[#52aecd]/50">Insights</div>
-                <a class="flex items-center gap-3 py-3 px-4 text-slate-600 font-medium rounded-lg opacity-50 cursor-not-allowed" href="javascript:void(0)">
+                <a class="flex items-center gap-3 py-3 px-4 text-slate-600 font-medium rounded-lg opacity-50 cursor-not-allowed" href="#">
                     <span class="material-symbols-outlined">analytics</span>
                     <span>Analytics</span>
                 </a>
@@ -95,11 +100,11 @@ tailwind.config = {
             
             <div class="mt-auto px-4">
                 <div class="bg-black/20 rounded-xl p-4 border border-white/5">
-                    <div class="flex items-center gap-3 mb-2">
-                        <div class="w-8 h-8 rounded-full bg-gradient-to-r from-[#75fbbf] to-[#52aecd] flex items-center justify-center font-bold text-on-surface text-sm">JS</div>
+                    <div class="flex items-center gap-3 mb-2" id="sidebar-user-container">
+                        <div class="w-8 h-8 rounded-full bg-gradient-to-r from-[#75fbbf] to-[#52aecd] flex items-center justify-center font-bold text-on-surface text-sm" id="sidebar-user-initials">JS</div>
                         <div>
-                            <p class="text-sm font-bold text-slate-800">John Smith</p>
-                            <p class="text-xs text-[#52aecd]">Pro Host</p>
+                            <p class="text-sm font-bold text-slate-800" id="sidebar-user-name">John Smith</p>
+                            <p class="text-xs text-[#52aecd]" id="sidebar-user-tier">Pro Host</p>
                         </div>
                     </div>
                 </div>
@@ -131,5 +136,24 @@ tailwind.config = {
     </div>
     
     {% block scripts %}{% endblock %}
+
+    <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        try {
+            const token = localStorage.getItem('access_token');
+            const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+            const res = await fetch('/users/me', { headers });
+            if (res.ok) {
+                const user = await res.json();
+                const name = user.full_name || user.email || 'User';
+                document.getElementById('sidebar-user-name').textContent = name;
+                document.getElementById('sidebar-user-initials').textContent = name.substring(0, 2).toUpperCase();
+                document.getElementById('sidebar-user-tier').textContent = user.tier || 'Free Tier';
+            }
+        } catch (err) {
+            console.error('Failed to load user profile', err);
+        }
+    });
+    </script>
 </body>
 </html>
