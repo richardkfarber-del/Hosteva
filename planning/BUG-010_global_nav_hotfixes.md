@@ -10,3 +10,8 @@ The application navigation requires immediate remediation based on Recon team fi
 - Given a user is logged into the application, when they view the navigation menu, then they will see the Integrations link.
 - Given a user views any page with the global navigation, when the navigation loads, then the Hosteva Logo will display correctly.
 - Given a specific user logs in, when the application loads the user state, then the dynamic user name will be displayed instead of a static "John Smith".
+
+## Wasp Review
+- **Feasibility:** UI/UX changes are straightforward and highly feasible. 
+- **Actionable Feedback:** Ensure the logo asset is correctly loaded and falls back gracefully. Verify that the dynamic user state does not cause layout shifts during loading.
+- **Status:** Approved
