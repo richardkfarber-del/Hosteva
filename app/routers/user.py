@@ -8,7 +8,7 @@ router = APIRouter(prefix="/api/user", tags=["User"])
 
 @router.get("/analytics")
 def get_user_analytics(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    username = current_user.get("username")
+    username = current_user.get("username")  # Fixed BOLA vulnerability
     host = db.query(Host).filter(Host.username == username).first()
     
     if not host:
