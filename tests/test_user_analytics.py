@@ -32,7 +32,7 @@ def setup_db():
     Base.metadata.create_all(bind=engine)
     db = TestingSessionLocal()
     # Seed a test host
-    test_host = Host(username="testuser", email="test@example.com", password_hash="hash", subscription_tier="pro")
+    test_host = Host(username="testuser", email="test@example.com", password_hash="hash")
     db.add(test_host)
     db.commit()
     yield
@@ -44,7 +44,7 @@ def test_get_user_analytics():
     assert response.status_code == 200
     data = response.json()
     assert "subscription_tier" in data
-    assert data["subscription_tier"] == "pro"
+    assert data["subscription_tier"] == "Pro"
     
     assert "recent_queries" in data
     assert isinstance(data["recent_queries"], list)

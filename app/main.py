@@ -4,7 +4,7 @@ from fastapi.responses import FileResponse, PlainTextResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import text
 from app.database import engine, Base
-from app.routers import listings, ordinances, zoning, compliance, hosts, properties, notifications, dashboard_api, eligibility, florida_compliance, listing_optimizer, permit_generator, recommendations, subscriptions, documents
+from app.routers import user, listings, ordinances, zoning, compliance, hosts, properties, notifications, dashboard_api, eligibility, florida_compliance, listing_optimizer, permit_generator, recommendations, subscriptions, documents
 from app.integrations.ota_routes import router as ota_router
 from app.schemas.dashboard import HostDashboardResponse
 import os
@@ -32,6 +32,7 @@ app.include_router(zoning.router)
 app.include_router(ordinances.router)
 app.include_router(compliance.router)
 app.include_router(hosts.router)
+app.include_router(user.router)
 app.include_router(properties.router)
 app.include_router(notifications.router)
 app.include_router(dashboard_api.router)
