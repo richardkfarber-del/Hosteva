@@ -150,11 +150,11 @@
                 .then(r => r.json())
                 .then(data => {
                     if (data.predictions && data.predictions.length > 0) {
-                        autocompleteDropdown.innerHTML = data.predictions.map(p => `
+                        autocompleteDropdown.innerHTML = DOMPurify.sanitize(data.predictions.map(p => `
                             <div class="suggestion-item" data-place-id="${p.place_id}" data-description="${p.description.replace(/"/g, '&quot;')}">
                                 ${p.description}
                             </div>
-                        `).join('');
+                        `).join(''));
                         autocompleteDropdown.classList.remove('hidden');
                     } else {
                         autocompleteDropdown.classList.add('hidden');
@@ -228,7 +228,7 @@
             items.forEach(detail => {
                 const li = document.createElement('li');
                 li.className = 'flex items-start text-sm text-on-surface-variant font-medium';
-                li.innerHTML = `<span class="material-symbols-outlined text-primary mr-3 shrink-0" style="font-size: 20px;">check_circle</span> ${detail}`;
+                li.innerHTML = DOMPurify.sanitize(`<span class="material-symbols-outlined text-primary mr-3 shrink-0" style="font-size: 20px;">check_circle</span> ${detail}`);
                 detailsList.appendChild(li);
             });
 
