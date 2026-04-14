@@ -111,10 +111,10 @@ tailwind.config = {
             <div class="mt-auto px-4">
                 <div class="bg-black/20 rounded-xl p-4 border border-white/5">
                     <div class="flex items-center gap-3 mb-2">
-                        <div class="w-8 h-8 rounded-full bg-gradient-to-r from-[#75fbbf] to-[#52aecd] flex items-center justify-center font-bold text-on-surface text-sm">JS</div>
+                        <div class="w-8 h-8 rounded-full bg-gradient-to-r from-[#75fbbf] to-[#52aecd] flex items-center justify-center font-bold text-on-surface text-sm" id="sidebar-user-initials">--</div>
                         <div>
-                            <p class="text-sm font-bold text-slate-800">John Smith</p>
-                            <p class="text-xs text-[#52aecd]">Free Tier</p>
+                            <p class="text-sm font-bold text-slate-800" id="sidebar-user-name">Loading...</p>
+                            <p class="text-xs text-[#52aecd]" id="sidebar-user-tier">...</p>
                         </div>
                     </div>
                     <button onclick="upgradeToPro()" class="w-full mt-2 px-4 py-2 bg-gradient-to-br from-primary to-primary-container text-on-surface font-bold text-xs rounded-[8px] uppercase tracking-widest hover:opacity-90 transition-opacity">Upgrade to Pro</button>
@@ -576,7 +576,7 @@ tailwind.config = {
             
             try {
                 button.disabled = true;
-                button.innerHTML = '<span class="material-symbols-outlined text-sm animate-spin">progress_activity</span> Generating...';
+                button.innerHTML = DOMPurify.sanitize('<span class="material-symbols-outlined text-sm animate-spin">progress_activity</span> Generating...');
                 
                 const response = await fetch('/api/permit-generator/generate', {
                     method: 'POST',
@@ -598,7 +598,7 @@ tailwind.config = {
                 alert('Failed to generate permit application. Please try again.');
             } finally {
                 button.disabled = false;
-                button.innerHTML = originalText;
+                button.innerHTML = DOMPurify.sanitize(originalText);
             }
         }
 
@@ -609,7 +609,7 @@ tailwind.config = {
             const contentDiv = container.querySelector('.recommendations-content');
             
             try {
-                contentDiv.innerHTML = '<p class="text-xs text-gray-500 animate-pulse">Loading recommendations...</p>';
+                contentDiv.innerHTML = DOMPurify.sanitize('<p class="text-xs text-gray-500 animate-pulse">Loading recommendations...</p>');
                 
                 const response = await fetch('/api/recommendation-engine/generate', {
                     method: 'POST',
@@ -644,12 +644,12 @@ tailwind.config = {
                         ${data.recommendations.length > 3 ? `<p class="text-xs text-gray-500 mt-2">+${data.recommendations.length - 3} more recommendations</p>` : ''}
                     `);
                 } else {
-                    contentDiv.innerHTML = '<p class="text-xs text-gray-600">No recommendations available. Property is optimized!</p>';
+                    contentDiv.innerHTML = DOMPurify.sanitize('<p class="text-xs text-gray-600">No recommendations available. Property is optimized!</p>');
                 }
                 
             } catch (error) {
                 console.error('Error loading recommendations:', error);
-                contentDiv.innerHTML = '<p class="text-xs text-red-600">Failed to load recommendations</p>';
+                contentDiv.innerHTML = DOMPurify.sanitize('<p class="text-xs text-red-600">Failed to load recommendations</p>');
             }
         }
 
@@ -668,7 +668,36 @@ tailwind.config = {
                             <h2>History</h2>
                             <ul>${data.history.map(h => `<li>${h.date} - ${h.action} (${h.status})</li>`).join('')}</ul>
                             ${data.violations.length > 0 ? `<h2 style="color:red;">Violations</h2><ul>${data.violations.map(v => `<li>${v.date} - ${v.type}: ${v.description}</li>`).join('')}</ul>` : ''}
-                        </body>
+                        <script>
+    document.addEventListener("DOMContentLoaded", async function() {
+        try {
+            const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+            let userName = "Guest";
+            let userTier = "Free Tier";
+            let userInitials = "G";
+            
+            if (token) {
+                const response = await fetch("/api/v1/users/me", {
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    userName = data.full_name || data.username || "User";
+                    userTier = data.tier || "Free Tier";
+                    userInitials = userName.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
+                }
+            }
+            document.getElementById("sidebar-user-name").textContent = userName;
+            document.getElementById("sidebar-user-tier").textContent = userTier;
+            document.getElementById("sidebar-user-initials").textContent = userInitials;
+        } catch (e) {
+            document.getElementById("sidebar-user-name").textContent = "Guest";
+            document.getElementById("sidebar-user-tier").textContent = "Free Tier";
+            document.getElementById("sidebar-user-initials").textContent = "G";
+        }
+    });
+    </script>
+</body>
                         </html>
                     `;
                     printWindow.document.write(html);
@@ -851,6 +880,35 @@ tailwind.config = {
                 alert('Failed to initiate PDF generation.');
             }
         }
+    </script>
+<script>
+    document.addEventListener("DOMContentLoaded", async function() {
+        try {
+            const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+            let userName = "Guest";
+            let userTier = "Free Tier";
+            let userInitials = "G";
+            
+            if (token) {
+                const response = await fetch("/api/v1/users/me", {
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    userName = data.full_name || data.username || "User";
+                    userTier = data.tier || "Free Tier";
+                    userInitials = userName.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
+                }
+            }
+            document.getElementById("sidebar-user-name").textContent = userName;
+            document.getElementById("sidebar-user-tier").textContent = userTier;
+            document.getElementById("sidebar-user-initials").textContent = userInitials;
+        } catch (e) {
+            document.getElementById("sidebar-user-name").textContent = "Guest";
+            document.getElementById("sidebar-user-tier").textContent = "Free Tier";
+            document.getElementById("sidebar-user-initials").textContent = "G";
+        }
+    });
     </script>
 </body>
 </html>
