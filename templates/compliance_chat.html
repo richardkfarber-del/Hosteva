@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 max-w-4xl relative">
+    <h1 class="text-3xl font-bold mb-6 text-gray-800">Compliance Wizard Chat</h1>
+    
+    <div class="bg-white shadow-lg rounded-lg overflow-hidden flex flex-col h-[600px] relative">
+        <!-- Chat History -->
+        <div id="chat-history" class="flex-1 p-6 overflow-y-auto bg-gray-50 flex flex-col gap-4">
+            <div class="bg-blue-100 p-4 rounded-lg max-w-[80%] self-start text-gray-800">
+                Hello! I'm your Compliance Assistant. Ask me anything about Short-Term Rental regulations, zoning codes, and compliance requirements.
+            </div>
+        </div>
+
+        <!-- Loading Indicator (Hidden by default) -->
+        <div id="loading-indicator" class="hidden p-4 text-center text-gray-500 bg-gray-50">
+            <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900 mr-2"></div>
+            Analyzing regulations...
+        </div>
+
+        <!-- Input Area -->
+        <div class="p-4 bg-white border-t">
+            <form id="chat-form" class="flex gap-2">
+                <input type="text" id="chat-input" 
+                       class="flex-1 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                       placeholder="E.g., What are the STR noise ordinances in Austin?" 
+                       required>
+                <button type="submit" 
+                        class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition font-medium disabled:opacity-50"
+                        id="submit-button">
+                    Send
+                </button>
+            </form>
+            <div id="error-message" class="text-red-500 text-sm mt-2 hidden"></div>
+        </div>
+
+        {% if not is_premium %}
+        <!-- Locked State Overlay -->
+        <div class="absolute inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50">
+            <div class="bg-white p-8 rounded-lg text-center max-w-md shadow-xl">
+                <h2 class="text-2xl font-bold mb-4 text-gray-800">Premium Feature</h2>
+                <p class="text-gray-600 mb-6">The AI Compliance Wizard is available exclusively to Hosteva Premium members. Upgrade now to get instant answers about regulations and zoning.</p>
+                <form action="/api/stripe/create-checkout-session" method="POST">
+                    <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg w-full transition shadow-lg">
+                        Upgrade to Premium
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Marked.js for Markdown parsing -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<!-- DOMPurify for XSS Sanitization -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const chatForm = document.getElementById('chat-form');
+        const chatInput = document.getElementById('chat-input');
+        const chatHistory = document.getElementById('chat-history');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const submitButton = document.getElementById('submit-button');
+        const errorMessage = document.getElementById('error-message');
+
+        const appendMessage = (text, sender, isMarkdown = false) => {
+            const msgDiv = document.createElement('div');
+            const isUser = sender === 'user';
+            
+            msgDiv.className = `p-4 rounded-lg max-w-[80%] ${isUser ? 'bg-blue-600 text-white self-end' : 'bg-white border text-gray-800 self-start'} shadow-sm`;
+            
+            if (isMarkdown && !isUser) {
+                msgDiv.innerHTML = DOMPurify.sanitize(marked.parse(text));
+                msgDiv.classList.add('prose', 'prose-sm', 'max-w-none');
+            } else {
+                msgDiv.textContent = text;
+            }
+            
+            chatHistory.appendChild(msgDiv);
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+        };
+
+        const setLoading = (isLoading) => {
+            if (isLoading) {
+                loadingIndicator.classList.remove('hidden');
+                submitButton.disabled = true;
+                chatInput.disabled = true;
+                errorMessage.classList.add('hidden');
+            } else {
+                loadingIndicator.classList.add('hidden');
+                submitButton.disabled = false;
+                chatInput.disabled = false;
+                chatInput.focus();
+            }
+        };
+
+        if (chatForm) {
+            chatForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const query = chatInput.value.trim();
+                if (!query) return;
+
+                appendMessage(query, 'user');
+                chatInput.value = '';
+                
+                setLoading(true);
+
+                try {
+                    const response = await fetch('/api/compliance/rag/query', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ query: query, address: "N/A" })
+                    });
+
+                    if (response.status === 403) {
+                        errorMessage.textContent = `Premium required. Please upgrade to use this feature.`;
+                        errorMessage.classList.remove('hidden');
+                        return;
+                    }
+
+                    if (!response.ok) {
+                        throw new Error(`Server returned ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    const answer = data.answer || data.response || data.text || "I'm sorry, I couldn't generate a response.";
+                    
+                    appendMessage(answer, 'assistant', true);
+                    
+                } catch (err) {
+                    console.error("Chat error:", err);
+                    errorMessage.textContent = `Network error: Could not reach the compliance RAG service. Please try again. (${err.message})`;
+                    errorMessage.classList.remove('hidden');
+                } finally {
+                    setLoading(false);
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}
