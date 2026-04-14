@@ -5,10 +5,12 @@
 *   **Sprint 10: UI Remediation & Security**
     *   [BUG-010] Global Nav/UI Fixes - **READY FOR EXECUTION**
     *   [BUG-009] Dashboard BOLA/XSS - **READY FOR EXECUTION**
+    *   [SPIKE-002] RAG Security - **COMPLETE**
     *   [SPIKE-004] Dashboard Metrics - **READY FOR EXECUTION**
     *   [SPIKE-005] Florida DBPR Forms - **READY FOR EXECUTION**
     *   [SPIKE-006] Municode/eCode360 APIs - **READY FOR EXECUTION**
     *   [SPIKE-007] HOA Data - **READY FOR EXECUTION**
+    *   [SPIKE_queue_persistence] Queue Persistence - **ROUTED TO IRON MAN (PHASE 3: EXECUTION)**
 
 *   **Sprint 11:** Native Dashboard Metrics (FEAT-016)
 *   **Sprint 12:** Automated Form Engine (FEAT-017)
