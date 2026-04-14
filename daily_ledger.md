@@ -112,3 +112,13 @@
 - **Routing:** Formally routed to QA Gate 1:
   - **Ant-Man:** Re-validate Dockerfile rules.
 - **Status:** Ready for Orchestrator to deploy Ant-Man.
+
+## Phase 3, Step 1: Execution Commit & Gate 1 Handoff (BUG-009)
+- **Ticket:** BUG-009 (Dashboard BOLA vulnerability)
+- **Target Files:** `app/routers/user.py`
+- **State:** Execution committed.
+- **Routing:** Formally routed to QA Gate 1:
+  - **Black Widow:** Security audit (hunt for edge-case logical bugs and exploits).
+  - **She-Hulk:** Logic and compliance audit.
+  - **Captain America:** Automated test execution.
+- **Status:** Ready for QA.
