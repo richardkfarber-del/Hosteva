@@ -558,13 +558,13 @@ tailwind.config = {
                         fillOpacity: 0.8
                     }).addTo(parcelMap);
                     
-                    marker.bindPopup(`
+                    marker.bindPopup(DOMPurify.sanitize(`
                         <div class="p-2">
                             <strong class="text-on-surface font-headline tracking-tight">${p.name}</strong><br>
                             <span class="text-gray-500 text-sm">${p.location}</span><br>
                             <span class="text-xs font-bold ${p.zoning_status === 'Violation' ? 'text-red-500' : p.zoning_status === 'Pending' ? 'text-yellow-500' : 'text-teal-500'}">${p.zoning_status}</span>
                         </div>
-                    `);
+                    `));
                 }
             });
         }

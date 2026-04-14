@@ -153,11 +153,11 @@ tailwind.config = {
                     .then(r => r.json())
                     .then(data => {
                         if (data.predictions && data.predictions.length > 0) {
-                            autocompleteDropdown.innerHTML = data.predictions.map(p => `
+                            autocompleteDropdown.innerHTML = DOMPurify.sanitize(data.predictions.map(p => `
                                 <div class="suggestion-item" data-place-id="${p.place_id}" data-description="${p.description.replace(/"/g, '&quot;')}">
                                     ${p.description}
                                 </div>
-                            `).join('');
+                            `).join(''));
                             autocompleteDropdown.classList.remove('hidden');
                         } else {
                             autocompleteDropdown.classList.add('hidden');
