@@ -6,6 +6,13 @@ services:
       - "8000:8000"
     volumes:
       - .:/app/workspace/Hosteva
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
+      - OTEL_SERVICE_NAME=hosteva-api
+      - OTEL_TRACES_EXPORTER=otlp
+    depends_on:
+      - jaeger
+
   db:
     image: pgvector/pgvector:pg16
     ports:
@@ -14,3 +21,12 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: hosteva
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    ports:
+      - "16686:16686" # Jaeger Web UI
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP

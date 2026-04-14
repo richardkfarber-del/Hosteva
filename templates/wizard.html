@@ -185,7 +185,10 @@
     // Existing Audit Logic
     document.getElementById('auditBtn').addEventListener('click', async () => {
         const address = addressInput.value;
-        if (!address) return;
+        if (!address) {
+            alert('Please enter a property address to run the audit.');
+            return;
+        }
 
         // UI Transitions
         document.getElementById('defaultState').classList.add('hidden');

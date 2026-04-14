@@ -1,0 +1,14 @@
+# Global OpenClaw Ignore File
+# Prevents subagents from causing context blowouts by reading hidden or binary directories.
+.openclaw/
+venv/
+.venv/
+env/
+.git/
+__pycache__/
+node_modules/
+.pytest_cache/
+.coverage
+*.log
+*.sqlite3
+*.db

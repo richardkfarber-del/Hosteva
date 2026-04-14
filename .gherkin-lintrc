@@ -1,0 +1,10 @@
+{
+  "no-restricted-patterns": [
+    "on",
+    {
+      "Global": [
+        "\\b(i|me|my|mine|myself|we|us|our|ours|ourselves)\\b"
+      ]
+    }
+  ]
+}
