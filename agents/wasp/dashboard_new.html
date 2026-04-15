@@ -1,46 +1,9 @@
-<!DOCTYPE html>
-<html class="light" lang="en">
-<head>
-    <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>Hosteva | Dashboard</title>
-    <link href="https://fonts.googleapis.com" rel="preconnect"/>
-    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+{% extends "base.html" %}
 
-<script>
-tailwind.config = {
-  theme: {
-    extend: {
-      colors: {
-        'surface': '#f8f9ff',
-        'surface-container-low': '#eff4ff',
-        'surface-container-lowest': '#ffffff',
-        'surface-container-high': '#dce9ff',
-        'primary': '#006576',
-        'primary-container': '#1c7f92',
-        'on-surface': '#001c37',
-        'outline-variant': '#bec8cc',
-        'tertiary-fixed': '#75fbbf'
-      },
-      fontFamily: {
-        'display': ['Manrope', 'sans-serif'],
-        'headline': ['Manrope', 'sans-serif'],
-        'body': ['Inter', 'sans-serif']
-      },
-      boxShadow: {
-        'ambient': '0 20px 40px rgba(0, 28, 55, 0.08)',
-        'ambient-light': '0 20px 40px rgba(0, 28, 55, 0.04)'
-      }
-    }
-  }
-}
-</script>
+{% block title %}Hosteva | Dashboard{% endblock %}
 
-
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         .material-symbols-outlined {
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
@@ -75,58 +38,20 @@ tailwind.config = {
         }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.5/purify.min.js"></script>
-</head>
-<body class="bg-white/10 font-body text-gray-800 antialiased min-h-screen">
-    <aside class="hidden md:flex w-[260px] h-screen fixed left-0 top-0 bg-white/80 border-r border-slate-200/60 shadow-2xl flex-col py-8 px-4 gap-2 z-50 mobile-hidden">
-            <div class="flex flex-col justify-center items-center mb-8 px-2">
-                <img src="/static/img/hosteva_logo.png" alt="Hosteva Logo" class="h-20 w-20 object-contain" onerror="this.onerror=null; this.src='https://placehold.co/200x80/006576/ffffff?text=Hosteva';" >
-                <p class="text-[#52aecd] text-xs font-medium uppercase tracking-widest opacity-80 mt-1 font-body">Hosteva Intelligence</p>
-            </div>
-            <nav class="flex flex-col gap-1">
-                <a class="flex items-center gap-3 py-3 px-4 text-slate-600 opacity-90 hover:bg-[#52aecd]/20 hover:opacity-100 transition-all font-medium rounded-lg {% if active_page == 'home' %}bg-[#52aecd] text-white{% endif %}" href="/">
-                    <span class="material-symbols-outlined">home</span>
-                    <span>Home</span>
-                </a>
-                <a class="flex items-center gap-3 py-3 px-4 text-slate-600 opacity-90 hover:bg-[#52aecd]/20 hover:opacity-100 transition-all font-medium rounded-lg {% if active_page == 'compliance' %}bg-[#52aecd] text-white{% endif %}" href="/wizard">
-                    <span class="material-symbols-outlined">rule</span>
-                    <span>Compliance Wizard</span>
-                </a>
-                <a class="flex items-center gap-3 py-3 px-4 text-slate-600 opacity-90 hover:bg-[#52aecd]/20 hover:opacity-100 transition-all font-medium rounded-lg {% if active_page == 'dashboard' %}bg-[#52aecd] text-white{% endif %}" href="/dashboard">
-                    <span class="material-symbols-outlined">dashboard</span>
-                    <span>Host Dashboard</span>
-                </a>
+{% endblock %}
 
-                <a class="flex items-center gap-3 py-3 px-4 text-slate-600 opacity-90 hover:bg-[#52aecd]/20 hover:opacity-100 transition-all font-medium rounded-lg {% if active_page == 'integrations' %}bg-[#52aecd] text-white{% endif %}" href="/integrations">
-                    <span class="material-symbols-outlined">extension</span>
-                    <span>Integrations</span>
-                </a>
-                
-                <div class="mt-8 mb-2 px-4 text-xs font-bold uppercase tracking-widest text-[#52aecd]/50">Insights</div>
-                <a class="flex items-center gap-3 py-3 px-4 text-slate-600 font-medium rounded-lg opacity-50 cursor-not-allowed" href="#">
-                    <span class="material-symbols-outlined">analytics</span>
-                    <span>Analytics</span>
-                </a>
-            </nav>
-            
-            <div class="mt-auto px-4">
-                <div class="bg-black/20 rounded-xl p-4 border-white/5">
-                    <div class="flex items-center gap-3 mb-2">
-                        <div class="w-8 h-8 rounded-full bg-gradient-to-r from-[#75fbbf] to-[#52aecd] flex items-center justify-center font-bold text-on-surface text-sm" id="sidebar-user-initials">--</div>
-                        <div>
-                            <p class="text-sm font-bold text-slate-800" id="sidebar-user-name">Loading...</p>
-                            <p class="text-xs text-[#52aecd]" id="sidebar-user-tier">...</p>
-                        </div>
-                    </div>
-                    <button onclick="upgradeToPro()" class="w-full mt-2 px-4 py-2 bg-gradient-to-br from-primary to-primary-container text-on-surface font-bold text-xs rounded-[8px] uppercase tracking-widest hover:opacity-90 transition-opacity">Upgrade to Pro</button>
-                </div>
-            </div>
-        </aside>
+{% block header_title %}Host Dashboard{% endblock %}
 
-    <header class="md:ml-[260px] ml-0 h-16 flex items-center justify-between px-8 bg-white/10 border/50 sticky top-0 z-40">
+{% block content %}
+<!-- Wait, the dashboard has its own custom search header. Let's see if we should include it. -->
+<!-- Actually, let's just include the modals, header, and main content in the block content. -->
+<!-- But base.html already has a <header>. If we just dump dashboard's header here, it might look weird. -->
+<!-- Let's put everything dashboard had between <header> and </main> -->
+<header class="md:ml-[260px] ml-0 h-16 flex items-center justify-between px-8 bg-white/10 border/50 sticky top-0 z-40">
         <div class="flex items-center gap-4 flex-1">
             <div class="relative w-full max-w-md">
                 <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-lg">search</span>
-                <input id="address-search" class="w-full bg-white/10 text-white rounded-[8px] pl-10 pr-24 py-2 text-sm focus:ring-1 focus:ring-teal-600 transition-all text-gray-800" placeholder="Search address for eligibility..." type="text" autocomplete="off"/>
+                <input id="address-search" class="w-full bg-white/10 rounded-[8px] pl-10 pr-24 py-2 text-sm focus:ring-1 focus:ring-teal-600 transition-all" placeholder="Search address for eligibility..." type="text" autocomplete="off"/>
                 <button id="search-btn" class="absolute right-2 top-1/2 -translate-y-1/2 text-xs bg-gradient-to-br from-primary to-primary-container text-on-surface font-headline tracking-tight px-3 py-1.5 rounded-[8px] font-bold hover:opacity-90 transition-opacity flex items-center gap-1">
                     <span id="search-btn-text">Search</span>
                     <span id="search-spinner" class="hidden material-symbols-outlined animate-spin text-sm">progress_activity</span>
@@ -147,8 +72,7 @@ tailwind.config = {
             </button>
         </div>
     </header>
-
-    <div id="add-property-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center">
+<div id="add-property-modal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center">
         <div class="bg-white/10 rounded-[8px] shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
             <div class="flex items-center justify-between px-6 py-4 bg-white/10">
                 <h3 class="text-xl font-bold text-on-surface font-headline tracking-tight uppercase italic">Add Property</h3>
@@ -171,29 +95,7 @@ tailwind.config = {
                         <input type="text" name="state" required class="w-full px-4 py-2 rounded-[8px] focus:ring-2 focus:ring-teal-600 focus:border-transparent text-gray-800">
                     </div>
                 </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-1">ZIP Code</label>
-                        <input type="text" name="zip_code" class="w-full px-4 py-2 rounded-[8px] focus:ring-2 focus:ring-teal-600 focus:border-transparent text-gray-800">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-1">Property Type</label>
-                        <input type="text" name="property_type" placeholder="e.g., Single Family" class="w-full px-4 py-2 rounded-[8px] focus:ring-2 focus:ring-teal-600 focus:border-transparent text-gray-800">
-                    </div>
-                </div>
-                <div class="flex items-center gap-2">
-                    <input type="checkbox" name="hoa_status" id="hoa_status" class="w-4 h-4 text-primary rounded-[8px] focus:ring-teal-600">
-                    <label for="hoa_status" class="text-sm font-bold text-gray-700">HOA Property</label>
-                </div>
-                <div class="flex justify-end gap-3 pt-4">
-                    <button type="button" onclick="closeAddPropertyModal()" class="px-6 py-2 bg-white/10 text-white text-on-surface font-headline tracking-tight font-bold rounded-[8px] hover:bg-gray-200 transition-colors">Cancel</button>
-                    <button type="submit" class="px-6 py-2 bg-gradient-to-br from-primary to-primary-container text-on-surface font-headline tracking-tight font-bold rounded-[8px] hover:opacity-90 transition-opacity">Add Property</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div id="filter-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center">
+<div id="filter-modal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center">
         <div class="bg-white/10 rounded-[8px] shadow-2xl w-full max-w-md mx-4 overflow-hidden">
             <div class="flex items-center justify-between px-6 py-4 bg-white/10">
                 <h3 class="text-xl font-bold text-on-surface font-headline tracking-tight uppercase italic">Filter Properties</h3>
@@ -225,10 +127,7 @@ tailwind.config = {
                     <button onclick="applyFilters()" class="px-6 py-2 bg-gradient-to-br from-primary to-primary-container text-on-surface font-headline tracking-tight font-bold rounded-[8px] hover:opacity-90 transition-opacity">Apply Filters</button>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <main class="md:ml-[260px] ml-0 p-10">
         <div id="search-results" class="hidden mb-8 p-6 bg-white/10 border-white/80 rounded-[8px]">
             <div class="flex items-center gap-4 mb-4">
                 <h3 class="text-lg font-black text-on-surface font-headline tracking-tight uppercase italic">Eligibility Status</h3>
@@ -418,9 +317,11 @@ tailwind.config = {
                 <div id="parcel-map" class="h-96 rounded-[8px] overflow-hidden"></div>
             </div>
         </section>
-    </main>
+    
+{% endblock %}
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+{% block scripts %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         let sessionToken = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2);
         let debounceTimer;
@@ -734,256 +635,5 @@ tailwind.config = {
                     const html = `
                         <html>
                         <head><title>Compliance Report - ${data.property_name}</title>
-                        <style>body{font-family:system-ui;padding:40px;}h1{color:#0d9488;}</style>    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.5/purify.min.js"><\/script>
-</head>
-                        <body>
-                            <h1>Compliance Report: ${data.property_name}</h1>
-                            <h2>History</h2>
-                            <ul>${data.history.map(h => `<li>${h.date} - ${h.action} (${h.status})</li>`).join('')}</ul>
-                            ${data.violations.length > 0 ? `<h2 style="color:red;">Violations</h2><ul>${data.violations.map(v => `<li>${v.date} - ${v.type}: ${v.description}</li>`).join('')}</ul>` : ''}
-                        <script>
-    document.addEventListener("DOMContentLoaded", async function() {
-        try {
-            const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-            let userName = "Guest";
-            let userTier = "Free Tier";
-            let userInitials = "G";
-            
-            if (token) {
-                const response = await fetch("/api/v1/users/me", {
-                    headers: { "Authorization": `Bearer ${token}` }
-                });
-                if (response.ok) {
-                    const data = await response.json();
-                    userName = data.full_name || data.username || "User";
-                    userTier = data.tier || "Free Tier";
-                    userInitials = userName.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
-                }
-            }
-            document.getElementById("sidebar-user-name").textContent = userName;
-            document.getElementById("sidebar-user-tier").textContent = userTier;
-            document.getElementById("sidebar-user-initials").textContent = userInitials;
-        } catch (e) {
-            document.getElementById("sidebar-user-name").textContent = "Guest";
-            document.getElementById("sidebar-user-tier").textContent = "Free Tier";
-            document.getElementById("sidebar-user-initials").textContent = "G";
-        }
-    });
-    <\/script>
-</body>
-                        </html>
-                    `;
-                    printWindow.document.write(html);
-                    printWindow.document.close();
-                    printWindow.print();
-                });
-        }
-
-        async function fetchProperties(filterStatus = null) {
-            const grid = document.getElementById('property-grid');
-            try {
-                let url = '/api/properties/';
-                if (filterStatus) {
-                    url += `?status=${encodeURIComponent(filterStatus)}`;
-                }
-                const response = await fetch(url);
-                if (!response.ok) throw new Error('Network response was not ok');
-                const properties = await response.json();
-                renderProperties(properties);
-                initParcelMap(properties);
-            } catch (error) {
-                console.error('Failed to fetch properties:', error);
-                renderProperties([
-                    { id: 1, name: "The Obsidian Sanctuary", location: "West Hollywood, CA", price: 1250, beds: 4, baths: 3.5, zoning_status: "Compliant", image_url: "https://lh3.googleusercontent.com/aida-public/AB6AXuDtDfxPMaRsQxdORVLEVnaJqJkfWn-BIXgFNQc-W5TalH7m8KmPsVxzaGJymts4o67euXEuPWg-baUXk4eMJfPEe5BNL4ewYRx5BGIISm6s-VSgn_4yYv07IC2nEmtgMELJXzcESUQg9C8Wd4ktY2bTxOBeFDG9fiGcZVp6tsDSSyt5Noy0pJAbcaZD7TEfNffu00ipN1I6qeoV-KfAp73nAnWN2l8WW7hV8bKR-DY9XH9gD1QXSQZzfO7x5soMp5tvDsIGbgRGAlw" },
-                    { id: 2, name: "The Glass Pavilion", location: "Aspen, CO", price: 2400, beds: 5, baths: 6, zoning_status: "Pending", image_url: "https://lh3.googleusercontent.com/aida-public/AB6AXuBq14jjRyvZzz5UTQ0eMg5f3Tb372I7mv8Yrv6TY6sV_E4IRmFPA9xkERl57KcoDkzf8ltJE710_mWm9ijIJBp9YOOLmP9XuxQmdaJfrn4sqja-Py71hfXYXCpHUpb3lceiSPUTdzYkw_0n2v2n-UO4PvSh56L6oRhsLSfL2X0SP-VMGsDLeIH8Sw1pjKpBSnQQoYGfk5_wZ7qxULyQFOyddN3I7xAgbjPRLZFhFVQNfulIKKZDNVG_Jy01u1swzQDGBbk_ANZ95HE" },
-                    { id: 3, name: "Azure Loft Estate", location: "Miami Beach, FL", price: 850, beds: 3, baths: 3, zoning_status: "Violation", image_url: "https://lh3.googleusercontent.com/aida-public/AB6AXuDNvPJa8r3BvpFcxDHWTuHvngW3w2L31pdYX1LsjjO8rspEk8_0xeqr01EkJ81bgS4QyRXhja146HIbo1pSks32I3W5U6kwhSPBWTMhhp4rhfXNbzGu-oVr3KCs97Co4_kJid2PFPsa_oEa2RpVcq2Hb5wVoxwOee45oOVauEJ_I02eRigIcTrVjre8HFqtFRmn16IwF-yTXMsL5HOXCf9-xWqKHPMMdKPXvQoBbFubq2ne4cxtT36bjDgrYexgaqKAAL8_nNHW0rM" }
-                ]);
-            }
-        }
-
-        
-        function renderProperties(properties) {
-            const grid = document.getElementById('property-grid');
-            grid.innerHTML = '';
-            const template = document.getElementById('property-card-template');
-
-            properties.forEach(p => {
-                const clone = template.content.cloneNode(true);
-                
-                const root = clone.querySelector('.property-card-root');
-                const banner = clone.querySelector('.violation-banner');
-                const imageContainer = clone.querySelector('.property-image-container');
-                const image = clone.querySelector('.property-image');
-                const statusBadge = clone.querySelector('.property-status-badge');
-                const exportBtn = clone.querySelector('.property-export-btn');
-                const name = clone.querySelector('.property-name');
-                const location = clone.querySelector('.property-location');
-                const price = clone.querySelector('.property-price');
-                const beds = clone.querySelector('.property-beds');
-                const baths = clone.querySelector('.property-baths');
-                const county = clone.querySelector('.property-county');
-                const permitBtn = clone.querySelector('.property-permit-btn');
-                const recContainer = clone.querySelector('.recommendations-container');
-                const refreshBtn = clone.querySelector('.property-refresh-btn');
-
-                if (p.zoning_status === 'Violation') {
-                    banner.classList.remove('hidden');
-                    imageContainer.classList.add('mt-10');
-                }
-
-                image.src = p.image_url;
-                image.alt = p.name;
-                
-                statusBadge.appendChild(createStatusBadge(p.zoning_status));
-                
-                exportBtn.addEventListener('click', () => exportPDF(p.id));
-                name.textContent = p.name;
-                location.textContent = p.location;
-                price.textContent = '$' + p.price.toLocaleString();
-                beds.textContent = p.beds;
-                baths.textContent = p.baths;
-                county.textContent = p.county || 'Pasco';
-                
-                permitBtn.addEventListener('click', (event) => generatePermit(event, p.id));
-                
-                recContainer.dataset.propertyId = p.id;
-                refreshBtn.addEventListener('click', (event) => loadRecommendations(event, p.id));
-
-                grid.appendChild(clone);
-            });
-
-            // Auto-load recommendations for each property
-            properties.forEach(p => {
-                setTimeout(() => loadRecommendations(null, p.id), 100);
-            });
-        }
-
-        function createStatusBadge(status) {
-            const span = document.createElement('span');
-            span.className = "px-3 py-1 text-xs font-black uppercase rounded-[8px] flex items-center gap-1 ";
-            
-            const icon = document.createElement('span');
-            icon.className = "material-symbols-outlined text-sm";
-            icon.style.fontVariationSettings = "'FILL' 1";
-            
-            if (status === 'Compliant') {
-                span.className += "bg-green-500/20 text-green-600";
-                icon.textContent = 'verified_user';
-                span.appendChild(icon);
-                span.appendChild(document.createTextNode('Compliant'));
-            } else if (status === 'Pending') {
-                span.className += "bg-yellow-500/20 text-yellow-600";
-                icon.textContent = 'pending';
-                span.appendChild(icon);
-                span.appendChild(document.createTextNode('Pending'));
-            } else if (status === 'Violation') {
-                span.className += "bg-red-500/20 text-red-600 animate-pulse";
-                icon.textContent = 'warning';
-                span.appendChild(icon);
-                span.appendChild(document.createTextNode('Violation'));
-            } else {
-                span.className += "bg-white/10 text-white text-gray-500";
-                span.textContent = 'Unknown';
-            }
-            return span;
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            fetchProperties();
-            
-            // Fetch unified dashboard data for listing health metrics
-            fetch('/api/dashboard/unified')
-                .then(r => r.json())
-                .then(data => {
-                    // Update compliance score
-                    document.querySelector('.compliance-score').innerText = `${data.overall_compliance_score}%`;
-                    
-                    // Update active alerts
-                    const alertsFormatted = String(data.total_active_alerts).padStart(2, '0');
-                    document.querySelector('.active-alerts').innerText = alertsFormatted;
-                    
-                    // Update total properties count if needed
-                    // You could add more dashboard stats here
-                })
-                .catch(err => {
-                    console.error('Failed to fetch dashboard stats:', err);
-                    // Fallback to default values
-                    document.querySelector('.compliance-score').innerText = '99.1%';
-                    document.querySelector('.active-alerts').innerText = '01';
-                });
-        });
-
-        async function upgradeToPro() {
-            try {
-                const response = await fetch('/api/subscriptions/checkout', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ tier: 'pro' })
-                });
-                if (!response.ok) throw new Error('Checkout failed');
-                const data = await response.json();
-                if (data.checkout_url) {
-                    window.location.href = data.checkout_url;
-                } else if (data.message) {
-                    alert('Subscription initiated: ' + data.message);
-                } else {
-                    alert('Redirecting to checkout...');
-                }
-            } catch (error) {
-                console.error('Error initiating subscription:', error);
-                alert('Failed to start checkout process.');
-            }
-        }
-
-        async function generateCompliancePDF() {
-            try {
-                const response = await fetch('/api/documents/generate', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        property_address: '123 Hosteva Way, Cloud City, FL 33000',
-                        county: 'Cloud County'
-                    })
-                });
-                if (!response.ok) throw new Error('PDF generation failed');
-                const data = await response.json();
-                alert('PDF Generation Status: ' + (data.status || 'Pending') + '\\nTask ID: ' + (data.task_id || 'N/A') + '\\nMessage: ' + (data.message || ''));
-            } catch (error) {
-                console.error('Error generating PDF:', error);
-                alert('Failed to initiate PDF generation.');
-            }
-        }
-    </script>
-<script>
-    document.addEventListener("DOMContentLoaded", async function() {
-        try {
-            const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-            let userName = "Guest";
-            let userTier = "Free Tier";
-            let userInitials = "G";
-            
-            if (token) {
-                const response = await fetch("/api/v1/users/me", {
-                    headers: { "Authorization": `Bearer ${token}` }
-                });
-                if (response.ok) {
-                    const data = await response.json();
-                    userName = data.full_name || data.username || "User";
-                    userTier = data.tier || "Free Tier";
-                    userInitials = userName.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
-                }
-            }
-            document.getElementById("sidebar-user-name").textContent = userName;
-            document.getElementById("sidebar-user-tier").textContent = userTier;
-            document.getElementById("sidebar-user-initials").textContent = userInitials;
-        } catch (e) {
-            document.getElementById("sidebar-user-name").textContent = "Guest";
-            document.getElementById("sidebar-user-tier").textContent = "Free Tier";
-            document.getElementById("sidebar-user-initials").textContent = "G";
-        }
-    });
-    </script>
-</body>
-</html>
-
-<!-- Trigger Git Commit for Render UI Deploy -->
+                        <style>body{font-family:system-ui;padding:40px;}h1{color:#0d9488;}</style>    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.5/purify.min.js"></script>
+{% endblock %}

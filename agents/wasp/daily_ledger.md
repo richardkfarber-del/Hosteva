@@ -1,0 +1,3 @@
+- Removed duplicated Tailwind CDN scripts and config from landing.html and dashboard.html
+- Removed redundant .material-symbols-outlined style blocks from landing.html and dashboard.html
+- Calculated md5sum hashes and submitted API handshake for BUG-003

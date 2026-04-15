@@ -66,7 +66,7 @@
         <h2 class="font-headline text-3xl font-extrabold mb-4 tracking-tight text-on-surface">Eligibility Audit</h2>
         <p class="text-on-surface-variant mb-8 leading-relaxed">Enter the property address to verify local zoning constraints and state permit requirements.</p>
 
-        <div class="space-y-4">
+        <form id="auditForm" class="space-y-4">
             <div>
                 <label class="block text-sm font-bold text-on-surface mb-2 font-headline">Property Address</label>
                 <div class="relative">
@@ -83,7 +83,7 @@
                 <span>Run Compliance Audit</span>
                 <span class="material-symbols-outlined text-sm">arrow_forward</span>
             </button>
-        </div>
+        </form>
     </div>
 
     <!-- Right Panel: Results (The Insight Prism) -->
@@ -190,7 +190,8 @@
     });
 
     // Existing Audit Logic
-    document.getElementById('auditBtn').addEventListener('click', async () => {
+    document.getElementById('auditForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
         const address = addressInput.value.trim();
         const addressError = document.getElementById('addressError');
         
@@ -218,6 +219,10 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ address })
             });
+            
+            if (!response.ok) {
+                throw new Error('Network response was not ok (status ' + response.status + ')');
+            }
             
             const data = await response.json();
             
@@ -257,7 +262,7 @@
             document.getElementById('dataState').classList.add('flex');
 
         } catch (err) {
-            alert('Audit failed to run.');
+            alert('Audit failed to run: ' + err.message);
             document.getElementById('loadingState').classList.add('hidden');
             document.getElementById('loadingState').classList.remove('flex');
             document.getElementById('defaultState').classList.remove('hidden');
