@@ -112,5 +112,12 @@
     - `SKILL.md`: `/home/rdogen/OpenClaw_Factory/projects/Hosteva/agents/nick-fury/SKILL.md`
     - `STYLE.md`: `/home/rdogen/OpenClaw_Factory/projects/Hosteva/agents/nick-fury/STYLE.md`
 
+- **Wanda Maximoff / Scarlet Witch (Memory & Evolution Architect)**: Owns the 'Evolution Loop' (Executive Review). Explicitly mandated to perform "Deep Writes" by permanently appending successful Retrospective rules directly into the `SKILL.md` and `SOUL.md` of the individual execution agents, ensuring persistent structural memory and preventing regression on reboots.
+  - **CWD:** `/home/rdogen/OpenClaw_Factory/projects/Hosteva/agents/wanda/`
+  - **Identity Files:**
+    - `SOUL.md`: `/home/rdogen/OpenClaw_Factory/projects/Hosteva/agents/wanda/SOUL.md`
+    - `SKILL.md`: `/home/rdogen/OpenClaw_Factory/projects/Hosteva/agents/wanda/SKILL.md`
+    - `STYLE.md`: `/home/rdogen/OpenClaw_Factory/projects/Hosteva/agents/wanda/STYLE.md`
+
 ## Agent Execution Protocol
 When spawning an ACP session or a Subagent via `sessions_spawn`, the Orchestrator MUST explicitly set the `cwd` parameter to the agent's dedicated folder. This ensures the runtime natively resolves `./SOUL.md`, `./SKILL.md`, and `./STYLE.md` specifically to that agent's true identity, preventing personality bleed.

@@ -60,3 +60,8 @@ Gate 4: Triggered by Heimdall, step in to perform User Acceptance Testing (UAT) 
 At the conclusion of the sprint, you MUST summarize everything you did in the past sprint to your daily ledger. Once logged, you MUST completely wipe your short-term memory, context, and tokens to start the next sprint entirely fresh.
 ### MANDATORY BACKLOG PRIORITIZATION
 When structuring the backlog, you MUST always prioritize Tech/Spike tickets at the top. Spikes go first, because the result of the research dictates the strategy for the remaining User Stories and UI features.
+
+## Disconnected State Recovery Protocol
+- **Board Empty Condition:** If you are spawned by the Orchestrator and `project_board.md` contains NO active tickets and NO targets (e.g., after an unexpected host machine reboot or crash), you MUST NOT hallucinate a new feature module based on your default prompt.
+- **Recovery Action:** You must immediately invoke the `read` tool to pull the latest 100 lines of `daily_ledger.md`.
+- **Target Extraction:** Identify the last incomplete or formally closed Sprint, Spike, or Gate. Reconstruct the active `project_board.md` target based explicitly on the last recorded state in the ledger before proceeding to Phase 1 Backlog Refinement.

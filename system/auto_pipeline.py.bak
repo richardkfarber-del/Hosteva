@@ -1,0 +1,54 @@
+import time
+import os
+import logging
+import subprocess
+import sys
+from datetime import datetime
+
+# Setup logging
+LOG_FILE = '/home/rdogen/OpenClaw_Factory/projects/Hosteva/system/pipeline.log'
+os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
+logging.basicConfig(
+    level=logging.INFO, 
+    format='%(asctime)s - %(message)s',
+    handlers=[
+        logging.FileHandler(LOG_FILE),
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+
+# Adjusting paths to assume workspace root
+BASE_DIR = '/home/rdogen/OpenClaw_Factory/projects/Hosteva'
+BOARD_FILE = os.path.join(BASE_DIR, 'project_board.md')
+LEDGER_FILE = os.path.join(BASE_DIR, 'daily_ledger.md')
+
+logging.info("Rocket's Golden Pipeline Automaton started. Monitoring files...")
+
+def get_mtime(filepath):
+    try:
+        return os.path.getmtime(filepath)
+    except OSError:
+        return 0
+
+last_board_mtime = get_mtime(BOARD_FILE)
+last_ledger_mtime = get_mtime(LEDGER_FILE)
+
+while True:
+    try:
+        current_board_mtime = get_mtime(BOARD_FILE)
+        current_ledger_mtime = get_mtime(LEDGER_FILE)
+        
+        if current_board_mtime > last_board_mtime:
+            logging.info(f"State change detected in {BOARD_FILE}. Evaluating triggers...")
+            last_board_mtime = current_board_mtime
+            subprocess.run(["python3", os.path.join(BASE_DIR, "src/swarm/graph.py")])
+            
+        if current_ledger_mtime > last_ledger_mtime:
+            logging.info(f"State change detected in {LEDGER_FILE}. Evaluating triggers...")
+            last_ledger_mtime = current_ledger_mtime
+            subprocess.run(["python3", os.path.join(BASE_DIR, "src/swarm/graph.py")])
+            
+        time.sleep(5)
+    except Exception as e:
+        logging.error(f"Error in pipeline monitor: {e}")
+        time.sleep(10)

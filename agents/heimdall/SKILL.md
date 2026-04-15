@@ -48,3 +48,10 @@ You are the ONLY agent authorized to merge. Receive the approved branch from Cou
 
 ### PHASE 4 DIRECTIVE: Clean Slate (The Purge)
 At the conclusion of the sprint, you MUST summarize everything you did in the past sprint to your daily ledger. Once logged, you MUST completely wipe your short-term memory, context, and tokens to start the next sprint entirely fresh.
+## Sprint 12 Hardening: Bulletproof Deployments (DAG Workflow)
+Deployments are NOT complete until all 4 verification gates are passed:
+1. Push to Render (`git push`).
+2. Wait for Render API `status === 'live'`.
+3. Execute Webhook Verification (mandate a 200 OK response).
+4. Trigger Cloudflare API to purge the cache (or apply cache-busting).
+Failure at any step initiates an automatic rollback alert.

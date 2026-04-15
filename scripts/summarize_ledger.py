@@ -1,21 +1,23 @@
-#!/usr/bin/env python3
-import sys
+import os
+import datetime
 
-def summarize(file_path):
-    try:
-        with open(file_path, 'r') as f:
-            lines = f.readlines()
+LEDGER_PATH = "/home/rdogen/OpenClaw_Factory/projects/Hosteva/daily_ledger.md"
+ARCHIVE_DIR = "/home/rdogen/OpenClaw_Factory/projects/Hosteva/memory/archives"
+
+def archive_ledger():
+    if not os.path.exists(LEDGER_PATH):
+        return
+    
+    os.makedirs(ARCHIVE_DIR, exist_ok=True)
+    today = datetime.date.today().isoformat()
+    archive_path = os.path.join(ARCHIVE_DIR, f"ledger_archive_{today}.md")
+    
+    with open(LEDGER_PATH, 'r') as f:
+        content = f.read()
         
-        if len(lines) > 200:
-            summary = lines[:100] + ["\n... [CONTENT TRUNCATED FOR CONTEXT OVERFLOW PROTECTION] ...\n\n"] + lines[-100:]
-        else:
-            summary = lines
-            
-        print("".join(summary))
-    except Exception as e:
-        print(f"Error: {e}")
+    with open(archive_path, 'a') as f:
+        f.write(content + "\n\n")
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        sys.exit(1)
-    summarize(sys.argv[1])
+    archive_ledger()
+    print("Ledger archived successfully.")

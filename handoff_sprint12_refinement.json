@@ -1,0 +1,32 @@
+{
+  "sprint": 12,
+  "phase": "Backlog Refinement",
+  "routing": ["Iron Man", "Wasp", "The Hulk", "Captain America"],
+  "targets": [
+    {
+      "id": "BUG-001",
+      "title": "dashboard.html Template Literal Leak",
+      "description": "Template literal leakage on the dashboard.html page where raw JavaScript is rendering as plain text underneath the Geospatial Parcel Map.",
+      "assignees": ["Wasp", "Iron Man", "Captain America"]
+    },
+    {
+      "id": "BUG-002",
+      "title": "Persistent Broken Logo",
+      "description": "The application logo fails to load consistently across views, resulting in a broken image icon.",
+      "assignees": ["Wasp", "Captain America"]
+    },
+    {
+      "id": "BUG-003",
+      "title": "CSS Duplication in /dashboard",
+      "description": "Duplicate CSS rules and redundant styling are loading in the /dashboard route, potentially causing conflicts or bloating page weight.",
+      "assignees": ["Wasp", "Captain America"]
+    },
+    {
+      "id": "BUG-004",
+      "title": "Silent Failure on Empty Form Submit (/wizard)",
+      "description": "Submitting the form on /wizard without filling out required fields fails silently instead of displaying validation errors.",
+      "assignees": ["Iron Man", "Wasp", "Captain America"]
+    }
+  ],
+  "mandate": "QA scenarios and architectural blockers must be resolved before execution (Definition of Ready)."
+}

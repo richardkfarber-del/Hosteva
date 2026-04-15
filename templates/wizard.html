@@ -76,6 +76,7 @@
                     <!-- Dropdown for autocomplete suggestions -->
                     <div id="autocomplete-dropdown" class="autocomplete-dropdown hidden"></div>
                 </div>
+                <p id="addressError" class="text-red-500 text-xs mt-2 hidden font-medium">Please enter a valid property address.</p>
             </div>
             
             <button id="auditBtn" class="w-full primary-gradient text-on-primary font-bold rounded-xl px-4 py-3.5 shadow-ambient-light hover:shadow-ambient transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2">
@@ -137,6 +138,12 @@
     const autocompleteDropdown = document.getElementById('autocomplete-dropdown');
 
     addressInput.addEventListener('input', (e) => {
+        const addressError = document.getElementById('addressError');
+        if (addressError) {
+            addressError.classList.add('hidden');
+            addressInput.classList.remove('border-red-500', 'focus:border-red-500', 'focus:ring-red-500');
+            addressInput.classList.add('border-outline-variant/30');
+        }
         const val = e.target.value.trim();
         if (!val) {
             autocompleteDropdown.classList.add('hidden');
@@ -184,10 +191,18 @@
 
     // Existing Audit Logic
     document.getElementById('auditBtn').addEventListener('click', async () => {
-        const address = addressInput.value;
+        const address = addressInput.value.trim();
+        const addressError = document.getElementById('addressError');
+        
         if (!address) {
-            alert('Please enter a property address to run the audit.');
+            addressError.classList.remove('hidden');
+            addressInput.classList.add('border-red-500', 'focus:border-red-500', 'focus:ring-red-500');
+            addressInput.classList.remove('border-outline-variant/30');
             return;
+        } else {
+            addressError.classList.add('hidden');
+            addressInput.classList.remove('border-red-500', 'focus:border-red-500', 'focus:ring-red-500');
+            addressInput.classList.add('border-outline-variant/30');
         }
 
         // UI Transitions

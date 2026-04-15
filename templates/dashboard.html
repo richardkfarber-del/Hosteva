@@ -287,6 +287,79 @@ tailwind.config = {
                 </div>
             </div>
 
+            
+<template id="property-card-template">
+    <div class="group bg-white/10 text-white overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-teal-600/10 relative property-card-root">
+        <div class="violation-banner absolute top-0 left-0 right-0 z-20 px-4 py-2 flex items-center gap-2 hidden">
+            <span class="material-symbols-outlined text-white text-sm" style="font-variation-settings: 'FILL' 1;">warning</span>
+            <span class="text-white text-xs font-black uppercase tracking-widest">Critical Violation</span>
+        </div>
+        <div class="relative h-64 overflow-hidden property-card-clip property-image-container">
+            <img src="" alt="" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 property-image">
+            <div class="absolute top-4 left-4 property-status-badge"></div>
+            <button class="absolute top-4 right-4 p-2 bg-white/10 border/90 rounded-[8px] hover:bg-white/10 transition-colors property-export-btn" title="Export PDF">
+                <span class="material-symbols-outlined text-gray-700 text-sm">picture_as_pdf</span>
+            </button>
+            <div class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-gray-200 to-transparent">
+                <p class="text-on-surface font-headline tracking-tight font-black text-xl italic uppercase property-name"></p>
+            </div>
+        </div>
+        <div class="p-6">
+            <div class="flex justify-between items-start mb-6">
+                <div><p class="text-gray-500 text-sm font-medium property-location"></p></div>
+                <div class="text-right">
+                    <p class="text-primary font-black text-xl italic tracking-tighter property-price"></p>
+                    <p class="text-gray-500 text-[10px] uppercase font-bold tracking-tighter">per night</p>
+                </div>
+            </div>
+            <div class="flex justify-between items-center pt-4 border-t border-white/5">
+                <div class="flex gap-4">
+                    <div class="flex items-center gap-1 text-gray-500 text-xs"><span class="material-symbols-outlined text-sm">bed</span> <span class="property-beds"></span></div>
+                    <div class="flex items-center gap-1 text-gray-500 text-xs"><span class="material-symbols-outlined text-sm">bathtub</span> <span class="property-baths"></span></div>
+                </div>
+                <button class="text-primary font-bold text-sm hover:underline italic uppercase tracking-widest">Access</button>
+            </div>
+            <div class="mt-4 p-4 bg-white/10 rounded-[8px] flex flex-col gap-3">
+                <div class="flex justify-between items-center">
+                    <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Compliance Engine</p>
+                    <span class="px-2 py-1 text-[10px] font-black uppercase rounded-[8px] bg-green-500/20 text-green-600 property-county"></span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Listing Sync</p>
+                    <div class="flex items-center gap-2">
+                        <span class="px-2 py-1 text-[10px] font-black uppercase rounded-[8px] bg-white/10 text-teal-600 flex items-center gap-1">Airbnb <span class="material-symbols-outlined text-[12px] text-green-500">sync</span></span>
+                        <span class="px-2 py-1 text-[10px] font-black uppercase rounded-[8px] bg-white/10 text-indigo-600 flex items-center gap-1">VRBO <span class="material-symbols-outlined text-[12px] text-green-500">sync</span></span>
+                    </div>
+                </div>
+
+                <!-- FEAT-005 visible: Automated Permit Application Generator -->
+                <button class="mt-2 w-full px-4 py-2 bg-primary/10 text-primary hover:bg-primary/20 rounded-[8px] font-bold text-xs uppercase tracking-widest transition-colors flex items-center justify-center gap-2 property-permit-btn">
+                    <span class="material-symbols-outlined text-sm">description</span>
+                    Generate Permit Application
+                </button>
+
+                <!-- FEAT-006: Listing Optimization Recommendation Engine -->
+                <div class="mt-2 p-3 bg-white/10 rounded-[8px] recommendations-container">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">lightbulb</span>
+                            <p class="text-xs font-bold text-on-surface uppercase tracking-widest">Optimization Ideas</p>
+                        </div>
+                        <button class="text-primary hover:text-primary-container transition-colors property-refresh-btn" title="Refresh recommendations">
+                            <span class="material-symbols-outlined text-sm">refresh</span>
+                        </button>
+                    </div>
+                    <div class="recommendations-content">
+                        <ul class="text-xs text-gray-600 space-y-1 list-disc list-inside">
+                            <li>Loading recommendations...</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
             <div id="property-grid" class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
                 <div class="animate-pulse bg-white/10 text-white h-96 rounded-[8px]"></div>
                 <div class="animate-pulse bg-white/10 text-white h-96 rounded-[8px]"></div>
@@ -728,91 +801,92 @@ tailwind.config = {
             }
         }
 
+        
         function renderProperties(properties) {
             const grid = document.getElementById('property-grid');
-            grid.innerHTML = DOMPurify.sanitize(properties.map(p => `
-                <div class="group bg-white/10 text-white overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-teal-600/10 relative">
-                    ${p.zoning_status === 'Violation' ? '<div class="violation-banner absolute top-0 left-0 right-0 z-20 px-4 py-2 flex items-center gap-2"><span class="material-symbols-outlined text-white text-sm" style="font-variation-settings: \'FILL\' 1;">warning</span><span class="text-white text-xs font-black uppercase tracking-widest">Critical Violation</span></div>' : ''}
-                    <div class="relative h-64 overflow-hidden property-card-clip${p.zoning_status === 'Violation' ? ' mt-10' : ''}">
-                        <img src="${p.image_url}" alt="${p.name}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
-                        <div class="absolute top-4 left-4">${getStatusBadge(p.zoning_status)}</div>
-                        <button onclick="exportPDF(${p.id})" class="absolute top-4 right-4 p-2 bg-white/10 border/90 rounded-[8px] hover:bg-white/10 transition-colors" title="Export PDF">
-                            <span class="material-symbols-outlined text-gray-700 text-sm">picture_as_pdf</span>
-                        </button>
-                        <div class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-gray-200 to-transparent">
-                            <p class="text-on-surface font-headline tracking-tight font-black text-xl italic uppercase">${p.name}</p>
-                        </div>
-                    </div>
-                    <div class="p-6">
-                        <div class="flex justify-between items-start mb-6">
-                            <div><p class="text-gray-500 text-sm font-medium">${p.location}</p></div>
-                            <div class="text-right">
-                                <p class="text-primary font-black text-xl italic tracking-tighter">$${p.price.toLocaleString()}</p>
-                                <p class="text-gray-500 text-[10px] uppercase font-bold tracking-tighter">per night</p>
-                            </div>
-                        </div>
-                        <div class="flex justify-between items-center pt-4 border-t border-white/5">
-                            <div class="flex gap-4">
-                                <div class="flex items-center gap-1 text-gray-500 text-xs"><span class="material-symbols-outlined text-sm">bed</span> ${p.beds}</div>
-                                <div class="flex items-center gap-1 text-gray-500 text-xs"><span class="material-symbols-outlined text-sm">bathtub</span> ${p.baths}</div>
-                            </div>
-                            <button class="text-primary font-bold text-sm hover:underline italic uppercase tracking-widest">Access</button>
-                        </div>
-                        <div class="mt-4 p-4 bg-white/10 rounded-[8px] flex flex-col gap-3">
-                            <div class="flex justify-between items-center">
-                                <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Compliance Engine</p>
-                                <span class="px-2 py-1 text-[10px] font-black uppercase rounded-[8px] bg-green-500/20 text-green-600">${p.county || 'Pasco'}</span>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Listing Sync</p>
-                                <div class="flex items-center gap-2">
-                                    <span class="px-2 py-1 text-[10px] font-black uppercase rounded-[8px] bg-white/10 text-teal-600 flex items-center gap-1">Airbnb <span class="material-symbols-outlined text-[12px] text-green-500">sync</span></span>
-                                    <span class="px-2 py-1 text-[10px] font-black uppercase rounded-[8px] bg-white/10 text-indigo-600 flex items-center gap-1">VRBO <span class="material-symbols-outlined text-[12px] text-green-500">sync</span></span>
-                                </div>
-                            </div>
+            grid.innerHTML = '';
+            const template = document.getElementById('property-card-template');
 
-                            <!-- FEAT-005 visible: Automated Permit Application Generator -->
-                            <button class="mt-2 w-full px-4 py-2 bg-primary/10 text-primary hover:bg-primary/20 rounded-[8px] font-bold text-xs uppercase tracking-widest transition-colors flex items-center justify-center gap-2" onclick="generatePermit(event, '${p.id}')">
-                                <span class="material-symbols-outlined text-sm">description</span>
-                                Generate Permit Application
-                            </button>
+            properties.forEach(p => {
+                const clone = template.content.cloneNode(true);
+                
+                const root = clone.querySelector('.property-card-root');
+                const banner = clone.querySelector('.violation-banner');
+                const imageContainer = clone.querySelector('.property-image-container');
+                const image = clone.querySelector('.property-image');
+                const statusBadge = clone.querySelector('.property-status-badge');
+                const exportBtn = clone.querySelector('.property-export-btn');
+                const name = clone.querySelector('.property-name');
+                const location = clone.querySelector('.property-location');
+                const price = clone.querySelector('.property-price');
+                const beds = clone.querySelector('.property-beds');
+                const baths = clone.querySelector('.property-baths');
+                const county = clone.querySelector('.property-county');
+                const permitBtn = clone.querySelector('.property-permit-btn');
+                const recContainer = clone.querySelector('.recommendations-container');
+                const refreshBtn = clone.querySelector('.property-refresh-btn');
 
-                            <!-- FEAT-006: Listing Optimization Recommendation Engine -->
-                            <div class="mt-2 p-3 bg-white/10 rounded-[8px] recommendations-container" data-property-id="${p.id}">
-                                <div class="flex items-center justify-between mb-2">
-                                    <div class="flex items-center gap-2">
-                                        <span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">lightbulb</span>
-                                        <p class="text-xs font-bold text-on-surface uppercase tracking-widest">Optimization Ideas</p>
-                                    </div>
-                                    <button onclick="loadRecommendations(event, '${p.id}')" class="text-primary hover:text-primary-container transition-colors" title="Refresh recommendations">
-                                        <span class="material-symbols-outlined text-sm">refresh</span>
-                                    </button>
-                                </div>
-                                <div class="recommendations-content">
-                                    <ul class="text-xs text-gray-600 space-y-1 list-disc list-inside">
-                                        <li>Loading recommendations...</li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-            
+                if (p.zoning_status === 'Violation') {
+                    banner.classList.remove('hidden');
+                    imageContainer.classList.add('mt-10');
+                }
+
+                image.src = p.image_url;
+                image.alt = p.name;
+                
+                statusBadge.appendChild(createStatusBadge(p.zoning_status));
+                
+                exportBtn.addEventListener('click', () => exportPDF(p.id));
+                name.textContent = p.name;
+                location.textContent = p.location;
+                price.textContent = '$' + p.price.toLocaleString();
+                beds.textContent = p.beds;
+                baths.textContent = p.baths;
+                county.textContent = p.county || 'Pasco';
+                
+                permitBtn.addEventListener('click', (event) => generatePermit(event, p.id));
+                
+                recContainer.dataset.propertyId = p.id;
+                refreshBtn.addEventListener('click', (event) => loadRecommendations(event, p.id));
+
+                grid.appendChild(clone);
+            });
+
             // Auto-load recommendations for each property
             properties.forEach(p => {
                 setTimeout(() => loadRecommendations(null, p.id), 100);
             });
         }
 
-        function getStatusBadge(status) {
-            const base = "px-3 py-1 text-xs font-black uppercase rounded-[8px] flex items-center gap-1 ";
-            switch(status) {
-                case 'Compliant': return `<span class="${base} bg-green-500/20 text-green-600"><span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">verified_user</span>Compliant</span>`;
-                case 'Pending': return `<span class="${base} bg-yellow-500/20 text-yellow-600"><span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">pending</span>Pending</span>`;
-                case 'Violation': return `<span class="${base} bg-red-500/20 text-red-600 animate-pulse"><span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">warning</span>Violation</span>`;
-                default: return `<span class="${base} bg-white/10 text-white text-gray-500">Unknown</span>`;
+        function createStatusBadge(status) {
+            const span = document.createElement('span');
+            span.className = "px-3 py-1 text-xs font-black uppercase rounded-[8px] flex items-center gap-1 ";
+            
+            const icon = document.createElement('span');
+            icon.className = "material-symbols-outlined text-sm";
+            icon.style.fontVariationSettings = "'FILL' 1";
+            
+            if (status === 'Compliant') {
+                span.className += "bg-green-500/20 text-green-600";
+                icon.textContent = 'verified_user';
+                span.appendChild(icon);
+                span.appendChild(document.createTextNode('Compliant'));
+            } else if (status === 'Pending') {
+                span.className += "bg-yellow-500/20 text-yellow-600";
+                icon.textContent = 'pending';
+                span.appendChild(icon);
+                span.appendChild(document.createTextNode('Pending'));
+            } else if (status === 'Violation') {
+                span.className += "bg-red-500/20 text-red-600 animate-pulse";
+                icon.textContent = 'warning';
+                span.appendChild(icon);
+                span.appendChild(document.createTextNode('Violation'));
+            } else {
+                span.className += "bg-white/10 text-white text-gray-500";
+                span.textContent = 'Unknown';
             }
+            return span;
+        }
         }
 
         document.addEventListener('DOMContentLoaded', () => {

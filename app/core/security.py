@@ -1,3 +1,4 @@
+import os
 from datetime import datetime, timedelta
 from typing import Optional, Any
 from jose import jwt
@@ -5,8 +6,8 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
 
-# Secret key to encode the JWT
-SECRET_KEY = "SUPER_SECRET_KEY_REPLACE_IN_PRODUCTION"
+# Secret key to encode the JWT (Vibranium Habit: Enforce Environment Variable)
+SECRET_KEY = os.getenv("JWT_SECRET_KEY", "SUPER_SECRET_KEY_REPLACE_IN_PRODUCTION")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 

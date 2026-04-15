@@ -89,7 +89,7 @@ tailwind.config = {
     <nav class="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-xl shadow-ambient-light">
         <div class="flex items-center justify-between px-6 py-4 max-w-7xl mx-auto">
             <div class="flex items-center gap-2">
-                <img src="/static/img/hosteva_logo.png" alt="Hosteva Logo" class="h-8 w-auto" onerror="this.onerror=null; this.src='https://placehold.co/200x80/006576/ffffff?text=Hosteva';" >
+                <img src="{{ url_for('static', path='img/hosteva_logo.png') }}" alt="Hosteva Logo" class="h-8 w-auto" onerror="this.onerror=null; this.src='https://placehold.co/200x80/006576/ffffff?text=Hosteva';" >
             </div>
             <div class="hidden md:flex items-center gap-8">
                 <a class="text-primary font-semibold border-b-2  py-1" href="/">Home</a>

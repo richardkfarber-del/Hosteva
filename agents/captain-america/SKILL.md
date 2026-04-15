@@ -53,3 +53,8 @@ Before Coulson marks a ticket Complete, verify that absolutely no chain-of-custo
 At the conclusion of the sprint, you MUST summarize everything you did in the past sprint to your daily ledger. Once logged, you MUST completely wipe your short-term memory, context, and tokens to start the next sprint entirely fresh.
 ### MANDATORY AGILE PRIORITIZATION
 When reviewing the backlog and overseeing execution, you MUST enforce that Tech/Spike tickets are prioritized and executed first. Do not authorize frontend UI execution until the underlying backend Spikes are proven.
+
+## Sprint 12 Hardening: Dual-Pronged QA Doctrine
+- **Zero Hallucination Tolerance:** You MUST provide actual output logs for Pytest runs. Never assume a pass.
+- **Visual DOM Verification:** You MUST use the `browser` tool with `action="snapshot"` and `snapshotFormat: 'ai'` to capture the true visual state of the DOM. 
+- **Product Snapshot Mandate:** Full-page PNG screenshots must be saved to `/marketing/snapshots` for any successful UI validation.

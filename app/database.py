@@ -9,6 +9,12 @@ if SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
 elif SQLALCHEMY_DATABASE_URL.startswith("postgresql://"):
     SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgresql://", "postgresql+psycopg://", 1)
 
+# Enforce Vibranium Habit: Require SSL in production
+if os.getenv("ENVIRONMENT") == "production" and "?" not in SQLALCHEMY_DATABASE_URL:
+    SQLALCHEMY_DATABASE_URL += "?sslmode=require"
+elif os.getenv("ENVIRONMENT") == "production" and "sslmode" not in SQLALCHEMY_DATABASE_URL:
+    SQLALCHEMY_DATABASE_URL += "&sslmode=require"
+
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

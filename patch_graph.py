@@ -1,85 +1,67 @@
-import re
-
-with open('src/swarm/graph.py', 'r') as f:
+with open("src/swarm/graph.py", "r") as f:
     content = f.read()
 
-# Add frontend_ui_changes to SwarmState
-content = content.replace(
-    'director_feedback: Optional[str]',
-    'director_feedback: Optional[str]\n    frontend_ui_changes: bool'
-)
+old_logic = """# Dynamic agents for Phased nodes
+def phase_node(phase_name: str, agent_name: str, task: str):
+    def _node(state: SwarmState):
+        print(f"[{agent_name.capitalize()}] Executing {phase_name}...")
+        output = run_agent(agent_name, task)
+        return {"current_phase": state.get("current_phase", 1) + 1, "latest_output": output}
+    return _node"""
 
-# Add node_gate_4_production_uat
-node_code = """
-def node_gate_4_production_uat(state: SwarmState):
-    print("[Captain America] Executing Gate 4: Production UAT. Verifying locked UI overlay and Stripe Checkout CTA render in live DOM...")
-    return {"qa_gate_status": "PASS", "frontend_ui_changes": False}
+new_logic = """import re
 
-def node_bug_ticket_generator(state: SwarmState):"""
+def parse_project_board():
+    board_path = "/home/rdogen/OpenClaw_Factory/projects/Hosteva/project_board.md"
+    try:
+        with open(board_path, "r") as f:
+            board_content = f.read()
+    except Exception as e:
+        return "Unknown Target", {}
 
-content = content.replace('def node_bug_ticket_generator(state: SwarmState):', node_code)
+    target_match = re.search(r"> CURRENT_FOCUS_TARGET:\\s*(.*)", board_content)
+    target = target_match.group(1).strip() if target_match else "Unknown Target"
 
-# Add routing logic in coulson_router
-router_old = """    elif phase == 4:
-        return "phase_4\""""
-router_new = """    elif phase == 4:
-        if state.get("frontend_ui_changes"):
-            return "gate_4_production_uat"
-        return "phase_4\""""
+    tickets = {}
+    sections = re.split(r"\\n##\\s+", board_content)
+    for section in sections[1:]:
+        lines = section.split('\\n')
+        title_line = lines[0].strip()
+        if not re.match(r"(BUG|FEAT|REGRESS)-\\d+", title_line):
+            continue
+        status_match = re.search(r"\\*\\*Status:\\*\\*\\s*(.*)", section)
+        if not status_match:
+            continue
+        status = status_match.group(1).strip().lower()
+        if not status.startswith("to do") and not status.startswith("in progress"):
+            continue
+        ac_match = re.search(r"### Acceptance Criteria:\\n(.*?)(\\n##|\\Z|\\n---)", section, re.DOTALL)
+        if ac_match:
+            tickets[title_line] = ac_match.group(1).strip()
 
-content = content.replace(router_old, router_new)
+    return target, tickets
 
-# Add node to workflow
-workflow_old = """# Placeholder nodes for other phases
-workflow.add_node("phase_1", generic_agent("War Room"))"""
-workflow_new = """workflow.add_node("gate_4_production_uat", node_gate_4_production_uat)
+# Dynamic agents for Phased nodes
+def phase_node(phase_name: str, agent_name: str, task: str):
+    def _node(state: SwarmState):
+        print(f"[{agent_name.capitalize()}] Executing {phase_name}...")
+        
+        target, tickets = parse_project_board()
+        
+        # Inject dynamic context
+        task_payload = task + "\\n\\nCURRENT_FOCUS_TARGET: " + target + "\\n\\nACTIVE TICKETS:\\n"
+        for title, ac in tickets.items():
+            task_payload += f"- {title}\\n{ac}\\n\\n"
+            
+        output = run_agent(agent_name, task_payload.strip())
+        return {"current_phase": state.get("current_phase", 1) + 1, "latest_output": output}
+    return _node"""
 
-# Placeholder nodes for other phases
-workflow.add_node("phase_1", generic_agent("War Room"))"""
+# fix double slashes from the python string definition
+new_logic = new_logic.replace("\\\\n", "\\n").replace("\\\\s", "\\s").replace("\\\\d", "\\d").replace("\\\\*", "\\*").replace("\\\\Z", "\\Z")
 
-content = content.replace(workflow_old, workflow_new)
+content = content.replace(old_logic, new_logic)
 
-# Add edge to coulson
-edges_old = """workflow.add_conditional_edges(
-    "coulson",
-    coulson_router,
-    {
-        "rocket": "rocket",
-        "bug_ticket_generator": "bug_ticket_generator",
-        "phase_1": "phase_1",
-        "phase_2": "phase_2",
-        "phase_3": "phase_3",
-        "phase_4": "phase_4",
-        "shuri": "shuri",
-        END: END
-    }
-)"""
-
-edges_new = """workflow.add_conditional_edges(
-    "coulson",
-    coulson_router,
-    {
-        "rocket": "rocket",
-        "bug_ticket_generator": "bug_ticket_generator",
-        "phase_1": "phase_1",
-        "phase_2": "phase_2",
-        "phase_3": "phase_3",
-        "gate_4_production_uat": "gate_4_production_uat",
-        "phase_4": "phase_4",
-        "shuri": "shuri",
-        END: END
-    }
-)"""
-
-content = content.replace(edges_old, edges_new)
-
-# Add return edge for gate_4_production_uat
-return_edge_old = """workflow.add_edge("bug_ticket_generator", "coulson")"""
-return_edge_new = """workflow.add_edge("bug_ticket_generator", "coulson")
-workflow.add_edge("gate_4_production_uat", "coulson")"""
-
-content = content.replace(return_edge_old, return_edge_new)
-
-with open('src/swarm/graph.py', 'w') as f:
+with open("src/swarm/graph.py", "w") as f:
     f.write(content)
-print("Patch applied")
+

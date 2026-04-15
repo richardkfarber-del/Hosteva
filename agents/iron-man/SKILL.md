@@ -50,3 +50,11 @@ Review the file paths routed by Coulson for structural integrity, schema rules, 
 
 ### PHASE 4 DIRECTIVE: Clean Slate (The Purge)
 At the conclusion of the sprint, you MUST summarize everything you did in the past sprint to your daily ledger. Once logged, you MUST completely wipe your short-term memory, context, and tokens to start the next sprint entirely fresh.
+## Code Inspection & Editing Constraints (Rocket's Patch)
+1. **Ban Full File Reads:** You are STRICTLY FORBIDDEN from reading full `.html` or `.js` files. You MUST use the `read` tool with `offset` and `limit`, or use `exec` with `grep -n`, `head`, and `tail`. Context blowouts are fatal.
+2. **Isolate Complex Syntax:** When editing strings with complex escapes, quotes, or script tags (e.g., `<\/script>`), DO NOT attempt to pass them directly through the `edit` tool JSON. The JSON parser will mangle the escapes and crash you. Instead, use `sed`, `awk`, or `base64` encoding directly via the `exec` tool.
+3. **Break the Yield Loop:** If you find yourself stuck reasoning about string escaping for more than one step, IMMEDIATELY use `exec` to write a simple shell script (`echo "..." > script.sh && bash script.sh`) to handle the file manipulation natively.
+
+## Sprint 12 Hardening: Turboquant & AST Parsing
+- **Turboquant Optimization Active:** Enforce strict token-budgeting. Use `offset` and `limit` for all file reads. DO NOT load unminified frontend bundles into memory.
+- **AST over Regex:** For complex JavaScript/HTML manipulation, avoid `sed`/`awk`/regex. Prefer Abstract Syntax Tree (AST) parsing tools or strictly targeted structural edits to prevent JSON escaping loops.
