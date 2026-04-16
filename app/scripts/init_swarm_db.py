@@ -5,6 +5,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 from sqlalchemy import text
 from app.database import engine, Base
 import app.models.swarm
+import app.models.job
 
 def init_swarm_db():
     with engine.connect() as conn:

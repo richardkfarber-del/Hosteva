@@ -102,3 +102,9 @@ curl -X POST http://localhost:8000/state/update \
   -H "Content-Type: application/json" \
   -d '{"ticket_id": "BUG-003", "status": "PENDING_APPROVAL", "agent_name": "Wasp", "payload": {"md5sum": "your_hash_here"}}'
 ```
+
+### The Tollgate Enforcement (Coulson API Integration)
+Coulson does NOT run on a permanent background loop (due to the eradication of Temporal/Daemon polling). Instead, Coulson acts as a required interstitial routing function.
+1. When Iron Man/Vision/Wasp finishes `BUILDING`, they use `curl` to update the API state to `AUDITING`. 
+2. The Orchestrator MUST immediately deploy Coulson to run the `AUDITING` stage.
+3. Coulson pulls the `md5sum` from the API payload, verifies the physical files, and updates the API state to `PENDING_APPROVAL` or `REJECTED`. 
