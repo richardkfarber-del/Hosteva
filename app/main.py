@@ -8,7 +8,7 @@ from sqlalchemy import text
 from app.database import engine, Base
 from app.routers import user, listings, ordinances, zoning, compliance, hosts, properties, notifications, dashboard_api, eligibility, florida_compliance, listing_optimizer, permit_generator, recommendations, subscriptions, documents
 from app.integrations.ota_routes import router as ota_router
-from app.api.routes import swarm, queue
+from app.api.routes import swarm, queue, properties as v1_properties
 from app.schemas.dashboard import HostDashboardResponse
 import os
 import traceback
@@ -63,6 +63,7 @@ app.include_router(compliance.router)
 app.include_router(hosts.router)
 app.include_router(user.router)
 app.include_router(properties.router)
+app.include_router(v1_properties.router)
 app.include_router(notifications.router)
 app.include_router(dashboard_api.router)
 app.include_router(eligibility.router)
