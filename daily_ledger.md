@@ -488,3 +488,12 @@ The initial deployment of the LangGraph python daemon experienced critical failu
 - Updated NEXT_ACTION_UPON_RESTART flag for resumption point mapping.
 - Wed Apr 15 20:02:28 EDT 2026: Completed TICKET-02 (Async Worker Logic). Wrote app/core/worker.py. Hash: a6c75c7672f4780a33666650f94e4731
 Wed Apr 15 20:05:26 EDT 2026: Implemented TICKET-03 Queue REST Endpoints. Created app/api/routes/queue.py and updated app/main.py. Transitioned state to AUDITING via API handshake.
+
+## [2026-04-15] SPRINT 15 CLOSURE (FEAT-018: PostgreSQL-Backed Background Queue)
+- **Code Execution:** Vision built `app/models/job.py`. Iron Man built async worker (`app/core/worker.py`) and API endpoints (`app/api/routes/queue.py`).
+- **Orchestrator Interventions:** Fixed import syntax errors in `queue.py` and manually appended `app.models.job` to the `init_swarm_db.py` schema initialization script to physically instantiate the table.
+- **Testing:** Confirmed `POST /api/v1/queue/jobs` successfully enqueues a `PENDING` payload into PostgreSQL and `GET /api/v1/queue/jobs/{job_id}` correctly polls it.
+- **Deployment:** Committed (c1c956b9) and pushed to Render.
+- **Result:** FEAT-018 complete. The lightweight async queue mechanism is now functionally embedded within the DB.
+- 2026-04-15 21:25:54: Hawkeye wrote TICKET-04 (Backend) and TICKET-05 (Frontend) for FEAT-016 into project_board.md and successfully performed the Swarm State API handshakes.
+- Wed Apr 15 21:27:48 EDT 2026: Completed TICKET-04. Created /api/v1/dashboard/overview endpoint in app/routers/dashboard_api.py with mocked data. Verified router is included in app/main.py. Files modified: dashboard_api.py (md5sum: ea779b0e77a8a83c2959e03bc6b684cf).

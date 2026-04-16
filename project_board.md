@@ -1,42 +1,43 @@
-# Hosteva Project Board
+# Hosteva Project Board - Sprint 16 (Dashboard Integration)
 
 ## Current Focus Target
-Sprint 15: FEAT-018 (PostgreSQL-Backed Background Queue)
+FEAT-016: Final Dashboard Integration & User Analytics
 
 ## Active Tickets
 
-### TICKET-01: Vision (Data) - Create `jobs` tracking table in PostgreSQL
-**Description:** Establish the foundational data schema for the background queue.
+### TICKET-04: FEAT-016 Dashboard Overview Endpoint
+**Assignee:** Iron Man (Backend)
+**Status:** BACKLOG
+**Story:** As a user, I need to retrieve my subscription status, analytics quota, and recent query history so that my dashboard can be populated.
 **Acceptance Criteria:**
-* Given a database schema initialization process,
-* When the database migrations are executed,
-* Then a `jobs` table is successfully created with columns for ID, payload, state, and timestamp tracking.
+```gherkin
+Feature: Dashboard Overview Retrieval
+  Scenario: Retrieve Dashboard Overview Payload
+    Given a user is authenticated and has an active account
+    When the user sends a GET request to "/api/v1/dashboard/overview"
+    Then the system returns a 200 OK status
+    And the JSON payload contains the user's subscription tier, analytics quota remaining, and a list of recent query history.
+```
 
-### TICKET-02: Iron Man (Backend) - Implement async worker logic utilizing `SELECT ... FOR UPDATE SKIP LOCKED`
-**Description:** Build the asynchronous worker execution layer to process queued jobs without lock contention.
+### TICKET-05: FEAT-016 Dashboard UI Integration
+**Assignee:** Wasp (Frontend)
+**Status:** BACKLOG
+**Story:** As a user, I want my dashboard to display my subscription tier, remaining quota, and query history list so that I can track my account usage.
 **Acceptance Criteria:**
-* Given an active pool of background worker processes,
-* When the workers concurrently poll the `jobs` table for pending tasks,
-* Then the system utilizes `SELECT ... FOR UPDATE SKIP LOCKED` to exclusively acquire and process distinct jobs without deadlocking.
-
-### TICKET-03: Iron Man (Backend) - Create `/api/v1/queue/jobs` endpoints (POST enqueue, GET status)
-**Description:** Expose the queue functionality to client applications via REST API.
-**Acceptance Criteria:**
-* Given an authorized client system,
-* When a POST request is submitted to `/api/v1/queue/jobs` with a valid payload,
-* Then the job is enqueued in the database and a unique tracking ID is returned to the client.
-* Given an existing job in the queue,
-* When a GET request is submitted to `/api/v1/queue/jobs/{id}`,
-* Then the current execution status and payload of that job are returned to the client.
+```gherkin
+Feature: Dashboard Display
+  Scenario: Display Dashboard Information
+    Given a user is logged into the application and navigating to the dashboard
+    When the "dashboard.html" page loads
+    Then the frontend client fetches data from "/api/v1/dashboard/overview"
+    And the UI displays the subscription tier, remaining quota, and query history list based on the JSON payload.
+```
 
 ## Backlog
 *None*
 
 ## Completed
-- [x] BUG-001: JS Leak on Dashboard (Verified)
-- [x] BUG-002: Broken Logo (Verified)
-- [x] BUG-003: CSS Duplication (Verified)
-- [x] BUG-004: Silent Form Failure on `/wizard` (Verified)
+- [x] FEAT-018: PostgreSQL-Backed Background Queue (Sprint 15 - Verified)
 
 ## Next Action Upon Wake
-NEXT_ACTION_UPON_RESTART: Swarm agents to begin processing TICKET-01, TICKET-02, and TICKET-03 for Sprint 15.
+NEXT_ACTION_UPON_RESTART: Iron Man must build and verify `GET /api/v1/dashboard/overview` (TICKET-04), followed by Wasp integrating it into `dashboard.html` (TICKET-05).

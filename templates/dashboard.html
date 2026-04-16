@@ -106,6 +106,13 @@ tailwind.config = {
                     <span class="material-symbols-outlined">analytics</span>
                     <span>Analytics</span>
                 </a>
+                
+                <div class="mt-8 mb-2 px-4 text-xs font-bold uppercase tracking-widest text-[#52aecd]/50">Recent Queries</div>
+                <div class="px-4">
+                    <ul id="dashboard-recent-queries" class="flex flex-col gap-1 max-h-32 overflow-y-auto">
+                        <li class="text-xs text-slate-400 italic">No queries yet</li>
+                    </ul>
+                </div>
             </nav>
             
             <div class="mt-auto px-4">
@@ -962,10 +969,10 @@ tailwind.config = {
             let userTier = "Free Tier";
             let userInitials = "G";
             
+            const headers = token ? { "Authorization": `Bearer ${token}` } : {};
+
             if (token) {
-                const response = await fetch("/api/v1/users/me", {
-                    headers: { "Authorization": `Bearer ${token}` }
-                });
+                const response = await fetch("/api/v1/users/me", { headers });
                 if (response.ok) {
                     const data = await response.json();
                     userName = data.full_name || data.username || "User";
@@ -976,10 +983,53 @@ tailwind.config = {
             document.getElementById("sidebar-user-name").textContent = userName;
             document.getElementById("sidebar-user-tier").textContent = userTier;
             document.getElementById("sidebar-user-initials").textContent = userInitials;
+
+            // Dashboard Overview Fetch
+            const overviewResponse = await fetch("/api/v1/dashboard/overview", { headers });
+            if (overviewResponse.ok) {
+                const overviewData = await overviewResponse.json();
+                
+                // Update subscription tier
+                if (overviewData.subscription_tier) {
+                    document.getElementById("sidebar-user-tier").textContent = overviewData.subscription_tier;
+                }
+                
+                // Render Quota
+                let quotaElement = document.getElementById("dashboard-quota-remaining");
+                if (!quotaElement) {
+                    quotaElement = document.createElement("div");
+                    quotaElement.id = "dashboard-quota-remaining";
+                    quotaElement.className = "text-xs font-bold bg-white/20 text-teal-800 px-3 py-1 rounded-[8px] ml-4 flex items-center gap-1 shadow-sm";
+                    const headerContainer = document.querySelector("header .flex.items-center.gap-6");
+                    if (headerContainer) {
+                        headerContainer.insertBefore(quotaElement, headerContainer.firstChild);
+                    }
+                }
+                if (overviewData.analytics && overviewData.analytics.quota_remaining !== undefined) {
+                    quotaElement.innerHTML = `<span class="material-symbols-outlined text-[14px]">data_usage</span> Quota: ${overviewData.analytics.quota_remaining}`;
+                }
+
+                // Render recent queries
+                const queriesContainer = document.getElementById("dashboard-recent-queries");
+                if (queriesContainer && overviewData.recent_queries && Array.isArray(overviewData.recent_queries)) {
+                    if (overviewData.recent_queries.length > 0) {
+                        queriesContainer.innerHTML = overviewData.recent_queries.map(q => {
+                            const qText = q.query || q.address || q;
+                            return `<li class="text-xs text-slate-500 truncate py-1 border-b border-slate-100 hover:text-slate-800 transition-colors" title="${qText}">${qText}</li>`;
+                        }).join("");
+                    } else {
+                        queriesContainer.innerHTML = '<li class="text-xs text-slate-400 italic">No recent queries</li>';
+                    }
+                }
+            }
         } catch (e) {
-            document.getElementById("sidebar-user-name").textContent = "Guest";
-            document.getElementById("sidebar-user-tier").textContent = "Free Tier";
-            document.getElementById("sidebar-user-initials").textContent = "G";
+            console.error("Dashboard init error:", e);
+            const nameEl = document.getElementById("sidebar-user-name");
+            if (nameEl) nameEl.textContent = "Guest";
+            const tierEl = document.getElementById("sidebar-user-tier");
+            if (tierEl) tierEl.textContent = "Free Tier";
+            const initialsEl = document.getElementById("sidebar-user-initials");
+            if (initialsEl) initialsEl.textContent = "G";
         }
     });
     </script>
