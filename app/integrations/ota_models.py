@@ -3,9 +3,8 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database import Base # Assumes standard declarative base
 
-# Placeholder import for the Black Panther mandated Vibranium Encryption Standard
-# TODO: Implement actual VibraniumEncryptedString in security module
-from sqlalchemy import String as VibraniumEncryptedString 
+# Black Panther mandated Vibranium Encryption Standard for data at rest
+from app.core.security import VibraniumEncryptedString 
 
 class OtaIntegration(Base):
     """

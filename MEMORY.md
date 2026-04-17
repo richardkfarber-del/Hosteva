@@ -28,13 +28,13 @@
 ### 1. The Watcher Protocol (Orchestrator Demotion)
 - **Role Restriction:** The Orchestrator (Nick Fury) is STRICTLY a Watcher and Reporter. It is explicitly forbidden from acting as a courier, executing day-to-day operations, or prompt-chaining subagents to bypass the state machine.
 - **The Courier:** Phil Coulson (or designated local agent) is the sole Courier responsible for moving payloads between nodes. 
-- **The Output:** The Orchestrator only alerts the Director when a ticket officially transitions to a new state or hits a hard block.
+- **The Output:** The Orchestrator only alerts the Secretary when a ticket officially transitions to a new state or hits a hard block.
 
 ### 2. The Immutable Hub-and-Spoke 
 - **Cryptographic Stage-Gates:** No ticket can advance without a physical handoff artifact (e.g., `handoff.json`). The receiving spoke must drop the payload if the artifact is missing.
 - **Bureaucratic Dead-Drops:** Coulson must physically verify ledger updates. The pipeline fails closed if required signatures are missing.
 - **Zero-Tolerance Pruning:** Absolute enforcement of LOBSTER.md (no raw code bloat in chat). Absolute adherence to Gherkin third-person acceptance criteria.
-- **Daemon Enforcement:** [DEPRECATED by Sprint 12 Temporal Mandate] The LangGraph Autopilot (`graph.py`) and background subprocess daemons are permanently forbidden. The system must strictly use Temporal.io and Inotify File Watchers.
+- **Daemon Enforcement:** [DEPRECATED] LangGraph and Temporal polling daemons are strictly forbidden. The system must use an event-driven Redis `BLPOP` worker (`system/swarm_worker.py`) calling native OpenClaw REST APIs.
 
 ### 3. The Official Sprint Closure Pipeline
 Sprints CANNOT be closed until this exact sequence executes sequentially:
@@ -62,13 +62,15 @@ Local LLM attention mechanisms degrade when given multi-step plans and too many 
 - **Tool Stripping:** Irrelevant tools must be dynamically stripped from the prompt. If a node only reads, it should not know `write` exists.
 - **Action-Verification Guard Node:** Temporal Workflows must intercept subagent outputs. If the agent says "I fixed the file" but no tool execution metadata is registered in the state, the Guard Node intercepts, blocks the progression, and replies with a strict negative prompt forcing actual tool usage.
 
-## 🌩️ SPRINT 12: TEMPORAL ORCHESTRATION MANDATE
-*(Enforced by Executive Board: Sprint 12 Retrospective)*
+## 🌩️ SPRINT 15: FASTAPI + REDIS STATE MACHINE (THE COULSON TOLLBOOTH)
+*(Enforced by Executive Board: Sprint 15 Architectural Review Committee)*
 
 ### 1. Mandatory Swarm Orchestration Framework
-- **Temporal.io & Inotify:** The 'Temporal.io' architecture and 'Inotify File Watcher' are permanently locked as the mandatory Swarm orchestration framework.
-- **Deprecated Patterns:** Any future use of Python `while True` polling loops, background `subprocess` daemons, or manual `graph.py` shell scripts is permanently deprecated and strictly forbidden.
-- **CLI Native Spawning:** When spawned programmatically by Temporal, the Swarm MUST ONLY use the native `openclaw agent --json` CLI command. No wrapper scripts or background daemon wrappers are permitted.
+- **FastAPI + Redis + Postgres:** The Swarm officially runs on a Redis-backed State Machine. LangGraph and Temporal.io are permanently deprecated and their ghost processes have been purged.
+- **Event-Driven Daemon (`system/swarm_worker.py`):** The orchestration worker must NEVER use a `while True / sleep()` polling loop. It must strictly use event-driven blocking pops (e.g., Redis `BLPOP`) to consume 0% CPU until a state change is pushed.
+- **The Coulson Tollbooth (Separation of Duties):** Execution agents (Iron Man, Wasp, Ant-Man) are strictly locked out of the `DONE` state. They may only execute code and push the state to `QA_REVIEW`.
+- **Physical Verification:** Only Coulson is authorized to transition a ticket to `DONE` after physically verifying the Git Diff, file hashes, or HTTP 200 OK responses ("Show Me, Don't Tell Me").
+- **3-Strike Escapation:** If an execution agent fails Coulson's verification three times on the same ticket, the system locks the state to `FAILED_ESCALATED` and halts for the Secretary's manual review to prevent infinite LLM loops.
 
 ## Dynamic Model Routing Protocol (Sprint 13 Override)
 - **Default Execution:** All execution agents (Iron Man, Wasp, Cap) must default to `google/gemini-3-pro-preview` (or equivalent frontier model) for coding, architectural refactoring, and UI/DOM parsing.
@@ -108,3 +110,73 @@ Coulson does NOT run on a permanent background loop (due to the eradication of T
 1. When Iron Man/Vision/Wasp finishes `BUILDING`, they use `curl` to update the API state to `AUDITING`. 
 2. The Orchestrator MUST immediately deploy Coulson to run the `AUDITING` stage.
 3. Coulson pulls the `md5sum` from the API payload, verifies the physical files, and updates the API state to `PENDING_APPROVAL` or `REJECTED`. 
+
+## 🛡️ V3.0 SWARM WORKFLOW PROTOCOL (Sprint 16+ Overrides)
+*(Enforced by Executive Board: 2026-04-16)*
+
+**PHASE 0: Sprint Planning (The Vanguard)**
+* **Roster:** Hawkeye, Coulson, Iron Man, Hulk, Wasp, Shang-Chi, Vision, Rocket, Ant-Man, She-Hulk, Falcon. 
+* **Objective:** Establish the overarching Sprint Feature/Goal. Align architectural, compliance, and market context before a single ticket is written. The team can request Spikes or pivot priorities. (Captain America remains completely isolated to preserve DoR veto objectivity).
+
+**PHASE 1: Backlog Refinement & The Commander's Veto**
+* **Roster:** Black Panther, Falcon, Kang, Iron Man, Vision, Captain America, Jarvis.
+* **Objective:** Black Panther, Falcon, Kang, Iron Man, and Vision stress-test every ticket from all strategic/technical angles.
+* **The Gate:** Once cleared, Captain America intercepts for the final Definition of Ready (DoR) veto. If it passes, Jarvis assigns the compute tier (LOE) and routes it.
+
+**PHASE 2: Execution (The Stark Loop)**
+* **Roster:** Iron Man, Wasp, Spider-Man, Ant-Man, Shang-Chi, Vision.
+* **Objective:** Builders execute code. They are permanently locked out of the `DONE` state and strictly push states to `AUDITING`.
+
+**PHASE 3: The Bureaucratic Tollbooth**
+* **Roster:** Coulson (Auditor), Rocket Raccoon (Diagnostician).
+* **Objective:** Coulson physically verifies file hashes and diffs.
+* **Escalation:** If an agent fails Coulson's audit 3 times, Rocket is triggered to sweep and diagnose the environment. *Rocket is hard-collared:* he drafts a fix proposal and halts the pipeline for explicit Secretary authorization via the Orchestrator. No unauthorized file changes.
+
+**PHASE 4: The Crucible (QA & Staging)**
+* **Roster:** Black Widow, Ultron, Thanos.
+* **Objective:** Staging build subjected to edge-case hunting, simulated XSS/prompt injections (Ultron), and "The Snap" resource starvation (Thanos).
+
+**PHASE 4.5: Gate 4 Production UAT (The Snapshot Mandate)**
+* **Roster:** Captain America (QA Gatekeeper).
+* **Objective:** Captain America MUST execute headless browser tests against the live Render URL. He MUST verify the DOM (via `snapshotFormat: "ai"`) and physically capture a full-page PNG (`snapshot type="png"`) of the live deployed feature, saving it to `/marketing/snapshots`. The pipeline CANNOT proceed to the Retrospective until production reality is mathematically verified.
+
+**PHASE 5: Deployment & Evolution (The Retrospective)**
+* **Roster:** Heimdall, Coulson, Dev/Ops Crew, Wanda, Shuri, Hawkeye.
+* **Objective:** Heimdall pushes to prod. Dev/Ops reports friction. Wanda executes "Deep Writes" to agent profiles. Shuri maps out custom `/rnd/` tools for the next cycle. Hawkeye reviews ticket formatting impact.
+
+**PHASE 6: Executive Review (Pre-Wipe)**
+* **Roster:** Nick Fury (CEO), Captain America (COO), Iron Man (CTO), Hawkeye (PO), Black Panther (CISO), She-Hulk (CLO), Star-Lord (CMO), Wanda (Evolution), Kang (Temporal Strategist).
+* **Objective:** Filter operations, tech, product, security, legal, and marketing strategy for the next cycle. Wanda translates decisions into permanent "Deep Writes" before the Dreamstate memory wipe triggers. Kang forecasts the blueprint for the next sprint.
+
+**PHASE 7: Security & Risk Assessment (The Threat Council)**
+* **Roster:** Black Panther (CISO), Black Widow (QA), She-Hulk (CLO), Ultron (Red Team), Thanos (Chaos Engineer), Wanda (Evolution).
+* **Objective:** A final, uncompromising stress-test of the Executive strategy before the Dreamstate wipe. The attackers (Ultron, Thanos) challenge the defenders (Panther, She-Hulk). 
+* **The Output:** If fatal vulnerabilities or legal liabilities are identified in the roadmap, Wanda executes a final "Security Deep Write" to burn the warnings into the agents' profiles, and logs a mandatory high-priority ticket into the `BACKLOG` for Hawkeye to address in Phase 0 of the next sprint.
+
+## 🛑 THE SECRETARY'S TOLLGATES (END-OF-SPRINT PIPELINE)
+*(Mandated: 2026-04-16)*
+
+1. **Phase 5 (Retrospective) -> Phase 6 (Executive Review):**
+   * **Routing:** AUTOMATIC. No Secretary approval required.
+   * **Orchestrator Action:** Nick Fury MUST generate a summary of the Retrospective and deliver it directly to the Secretary via Telegram/chat.
+
+2. **Phase 6 (Executive Review) -> Phase 7 (Threat Council):**
+   * **Routing:** HARD HOLD. Secretary approval REQUIRED.
+   * **Orchestrator Action:** Nick Fury MUST generate a summary of the Executive Review, deliver it to the Secretary via Telegram/chat, and physically halt the pipeline until the Secretary authorizes the Security/Risk Review.
+
+3. **Phase 7 (Threat Council) -> Dreamstate (Memory Wipe):**
+   * **Routing:** HARD HOLD. Secretary approval REQUIRED.
+   * **Orchestrator Action:** Nick Fury MUST halt the pipeline after the Threat Council completes its audit and Wanda executes her final deep writes. The system CANNOT enter the memory wipe/dream state without explicit authorization from the Secretary.
+
+## 🔮 WANDA'S DEEP WRITE: SPRINT 16 EVOLUTION MANDATES
+*(Authorized by Secretary Farber: 2026-04-16)*
+
+1. **The Comprehensive DoR (Hawkeye & Captain America):**
+   * **Positive & Negative Flows:** Tickets can no longer define a single "happy path" user scenario. Hawkeye MUST explicitly map out all edge cases and negative test scenarios (e.g., "Given a user inputs malformed JSON...", "Given the database connection times out...") in the Acceptance Criteria.
+   * **Technical Specificity:** Tickets MUST contain granular technical constraints (e.g., explicit table names, API route paths, required cryptographic validations, and target HTTP status codes). 
+   * **Cap's New Veto:** Captain America will reject any ticket that fails to provide negative test cases or lacks sufficient technical depth to guide the Execution Squad.
+
+2. **The "Spike-First" Doctrine (The Vanguard & Iron Man):**
+   * **No Blind Builds:** The Swarm is strictly forbidden from initiating a "Feature Build" (FEAT) ticket if the underlying architecture, data models, and UI components have not been explicitly defined by preceding Spike (SPIKE) tickets.
+   * **Complete Mapping:** Before writing a single line of feature code, the R&D Vanguard MUST execute Spikes to map every single hyperlink, required data point, database query, and UI component necessary for the feature.
+   * **Sprint 17 Dedication:** Sprint 17 is officially designated as a purely "Research & Planning" cycle. No production feature code will be written. The entire sprint is dedicated to updating the project roadmap, researching best practices for FEAT-016 (User Analytics & Dashboard), and generating the comprehensive Sprint Backlog.

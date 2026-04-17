@@ -37,7 +37,7 @@ Fury reads the locked backlog and presents the proposed sprint payload (via file
 
 ### 3. Conflict Resolution
 - Any negative feedback triggers an immediate revision.
-- If the Swarm cannot autonomously resolve a dependency, it triggers a Hard Stop and Fury escalates to the Secretary (Director).
+- If the Swarm cannot autonomously resolve a dependency, it triggers a Hard Stop and Fury escalates to the Secretary.
 
 ### 4. The Lock (Captain America & Coulson)
 - Captain America confirms feasibility.
@@ -48,25 +48,33 @@ Fury reads the locked backlog and presents the proposed sprint payload (via file
 Objective: Write the code and prove it works at three distinct layers of integration using pointer-handoffs.
 
 ### 1. Execution Loop
-Wasp, Shang-Chi, or Hulk execute the code on a local branch. They save the files and pass the file paths to Coulson. Coulson logs the commit state and hands the paths to QA.
+The Swarm is orchestrated by a persistent, event-driven Redis daemon (`system/swarm_worker.py`).
+1. **The Jarvis Tollgate (LOE & Compute Arbiter):** When the worker detects a `PENDING` ticket, it first routes it to Jarvis. Jarvis evaluates the Level of Effort (LOE). If routine/easy, Jarvis downgrades the team to local hardware (`qwen2.5-coder` on RTX 4070). If complex, Jarvis upgrades the team to Gemini 3 Pro.
+2. **The Assignment:** The worker then assigns the ticket and the designated compute tier to an Execution Agent (e.g., Iron Man, Wasp, Ant-Man, Shang-Chi). 
+3. **The Output:** The Execution Agent writes the code. They are permanently locked out of the `DONE` state and cannot self-certify completion.
+4. **The Yield:** The Agent yields their terminal output (a summary of changes, file paths, hashes). The daemon intercepts this yield and automatically transitions the ticket to `QA_REVIEW`.
 
-### 2. Gate 1: Local Feature QA
-- **Black Widow** silently sweeps the isolated branch files for vulnerabilities.
-- **She-Hulk** audits the reasoning chain to ensure the dev didn't hardcode a shortcut just to pass the test.
-- **Hawkeye** runs tests.
-- **The Rocket Trigger Check:** If the build fails to compile or fails QA twice in a row, Rocket steps in, diagnoses, and halts the swarm for your review. Requirement: Zero critical failures.
+### 2. Gate 1: Local Feature QA (The Coulson Tollbooth)
+- **The Tollbooth:** The daemon routes all `QA_REVIEW` tickets directly to Coulson.
+- **Physical Verification:** Coulson must physically verify the Execution Agent's claims using `md5sum`, `pytest`, or parsing DOM changes. 
+- **The Escalate Loop:** If Coulson rejects the work, he kicks it back to `PENDING` with his failure logs. If he rejects it 3 times, the ticket locks to `FAILED_ESCALATED` and halts for Director review.
+- **The PASS:** If Coulson replies `VERIFIED`, the daemon formally triggers the API to mark the ticket `DONE`.
+- **Parallel Sweeps:** 
+  - **Shang-Chi** intercepts code immediately for typing/linting.
+  - **Black Widow** silently sweeps the isolated branch files for vulnerabilities.
+  - **Jarvis** acts as the Guard Node, verifying tool execution metadata against text output.
 
 ### 3. Gate 2: Local Integration QA
-- The code is merged locally.
-- **Winter Soldier** runs the Golden Master regression suite to ensure no legacy/Hosteva breakages.
+- **Winter Soldier** (Chaos Engineering) load-tests the staging build and stress-tests APIs to hunt failure modes.
 - **Vision** verifies no Prisma/SQL unauthorized mutations occurred.
-- **Coulson** documents the test output paths. Requirement: Successful local boot, zero regressions.
+- **Quicksilver** evaluates the CI/CD test duration; pipeline fails if it takes longer than 15 seconds.
+- **Captain America** reviews all headless regression tests.
 
 ### 4. Gate 3: Production QA
-- **Ant-Man** packages the minimal Docker payload.
-- **War Machine** handles the deployment to the Render environment.
-- **Black Panther** verifies end-to-end encryption standards hold.
-- A final, live-environment smoke test is conducted.
+- **Ant-Man** packages the minimal Docker payload, compressing bundles to their absolute limit.
+- **War Machine** (Heavy Artillery) performs DDoS simulations and load testing before the handoff.
+- **Black Panther** ensures Vibranium Habit compliance across encryption parameters.
+- **Heimdall** manages the final `git merge` and pushes directly to the Render webhook.
 
 ### 5. Definition of Done (DoD)
 - **Captain America** verifies Gate 3 is passed.

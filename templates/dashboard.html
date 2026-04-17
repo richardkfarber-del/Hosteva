@@ -334,7 +334,7 @@ tailwind.config = {
                 <div class="flex justify-between items-center">
                     <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Listing Sync</p>
                     <div class="flex items-center gap-2">
-                        <span class="px-2 py-1 text-[10px] font-black uppercase rounded-[8px] bg-white/10 text-teal-600 flex items-center gap-1">Airbnb <span class="material-symbols-outlined text-[12px] text-green-500">sync</span></span>
+                        <!-- Airbnb sync omitted per FEAT-016-B -->
                         <span class="px-2 py-1 text-[10px] font-black uppercase rounded-[8px] bg-white/10 text-indigo-600 flex items-center gap-1">VRBO <span class="material-symbols-outlined text-[12px] text-green-500">sync</span></span>
                     </div>
                 </div>
@@ -367,10 +367,55 @@ tailwind.config = {
     </div>
 </template>
 
+<template id="property-card-skeleton">
+    <div class="animate-pulse bg-gray-100 overflow-hidden transition-all duration-300 rounded-xl h-full flex flex-col border border-gray-200">
+        <div class="h-64 bg-gray-200 w-full relative">
+            <div class="absolute top-4 left-4 h-6 w-24 bg-gray-300 rounded-lg"></div>
+            <div class="absolute top-4 right-4 h-8 w-8 bg-gray-300 rounded-lg"></div>
+        </div>
+        <div class="p-6 flex-1 flex flex-col">
+            <div class="flex justify-between items-start mb-6">
+                <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+                <div class="text-right flex flex-col items-end">
+                    <div class="h-6 bg-gray-200 rounded w-16 mb-1"></div>
+                    <div class="h-3 bg-gray-200 rounded w-12"></div>
+                </div>
+            </div>
+            <div class="flex justify-between items-center pt-4 border-t border-gray-200">
+                <div class="flex gap-4">
+                    <div class="h-4 bg-gray-200 rounded w-12"></div>
+                    <div class="h-4 bg-gray-200 rounded w-12"></div>
+                </div>
+                <div class="h-4 bg-gray-200 rounded w-16"></div>
+            </div>
+            <div class="mt-4 p-4 bg-gray-50 rounded-lg flex flex-col gap-3 border border-gray-100">
+                <div class="flex justify-between items-center">
+                    <div class="h-3 bg-gray-200 rounded w-24"></div>
+                    <div class="h-4 bg-gray-200 rounded w-16"></div>
+                </div>
+                <div class="h-8 w-full bg-gray-200 rounded-lg mt-2"></div>
+                <div class="h-20 w-full bg-gray-200 rounded-lg mt-2"></div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<template id="system-degraded-error">
+    <div class="col-span-full bg-red-900/20 border border-red-500/50 rounded-[8px] p-8 text-center text-white">
+        <span class="material-symbols-outlined text-red-500 text-4xl mb-4">cloud_off</span>
+        <h3 class="text-xl font-bold font-headline tracking-tight uppercase italic mb-2">System Degraded</h3>
+        <p class="text-gray-400 text-sm mb-6">Unable to connect to the backend properties service.</p>
+        <button onclick="fetchProperties()" class="px-6 py-2 bg-red-500/20 text-red-500 hover:bg-red-500/30 rounded-[8px] font-bold text-xs uppercase tracking-widest transition-colors inline-flex items-center gap-2">
+            <span class="material-symbols-outlined text-sm">refresh</span>
+            Refresh Connection
+        </button>
+    </div>
+</template>
+
             <div id="property-grid" class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
-                <div class="animate-pulse bg-white/10 text-white h-96 rounded-[8px]"></div>
-                <div class="animate-pulse bg-white/10 text-white h-96 rounded-[8px]"></div>
-                <div class="animate-pulse bg-white/10 text-white h-96 rounded-[8px]"></div>
+                <div class="animate-pulse bg-gray-100 border border-gray-200 h-96 rounded-xl"></div>
+                <div class="animate-pulse bg-gray-100 border border-gray-200 h-96 rounded-xl"></div>
+                <div class="animate-pulse bg-gray-100 border border-gray-200 h-96 rounded-xl"></div>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
@@ -786,25 +831,48 @@ tailwind.config = {
                 });
         }
 
+        function renderSkeletons() {
+            const grid = document.getElementById('property-grid');
+            grid.innerHTML = '';
+            const skelTemplate = document.getElementById('property-card-skeleton');
+            for(let i=0; i<3; i++){
+                grid.appendChild(skelTemplate.content.cloneNode(true));
+            }
+        }
+
         async function fetchProperties(filterStatus = null) {
             const grid = document.getElementById('property-grid');
+            renderSkeletons();
+            
             try {
-                let url = '/api/properties/';
+                let url = '/api/v1/properties';
                 if (filterStatus) {
                     url += `?status=${encodeURIComponent(filterStatus)}`;
                 }
                 const response = await fetch(url);
-                if (!response.ok) throw new Error('Network response was not ok');
+                if (!response.ok) {
+                    if (response.status === 500 || response.status === 502 || response.status === 503 || response.status === 504) {
+                        throw new Error('SYSTEM_DEGRADED');
+                    }
+                    throw new Error('Network response was not ok');
+                }
                 const properties = await response.json();
                 renderProperties(properties);
                 initParcelMap(properties);
             } catch (error) {
                 console.error('Failed to fetch properties:', error);
-                renderProperties([
-                    { id: 1, name: "The Obsidian Sanctuary", location: "West Hollywood, CA", price: 1250, beds: 4, baths: 3.5, zoning_status: "Compliant", image_url: "https://lh3.googleusercontent.com/aida-public/AB6AXuDtDfxPMaRsQxdORVLEVnaJqJkfWn-BIXgFNQc-W5TalH7m8KmPsVxzaGJymts4o67euXEuPWg-baUXk4eMJfPEe5BNL4ewYRx5BGIISm6s-VSgn_4yYv07IC2nEmtgMELJXzcESUQg9C8Wd4ktY2bTxOBeFDG9fiGcZVp6tsDSSyt5Noy0pJAbcaZD7TEfNffu00ipN1I6qeoV-KfAp73nAnWN2l8WW7hV8bKR-DY9XH9gD1QXSQZzfO7x5soMp5tvDsIGbgRGAlw" },
-                    { id: 2, name: "The Glass Pavilion", location: "Aspen, CO", price: 2400, beds: 5, baths: 6, zoning_status: "Pending", image_url: "https://lh3.googleusercontent.com/aida-public/AB6AXuBq14jjRyvZzz5UTQ0eMg5f3Tb372I7mv8Yrv6TY6sV_E4IRmFPA9xkERl57KcoDkzf8ltJE710_mWm9ijIJBp9YOOLmP9XuxQmdaJfrn4sqja-Py71hfXYXCpHUpb3lceiSPUTdzYkw_0n2v2n-UO4PvSh56L6oRhsLSfL2X0SP-VMGsDLeIH8Sw1pjKpBSnQQoYGfk5_wZ7qxULyQFOyddN3I7xAgbjPRLZFhFVQNfulIKKZDNVG_Jy01u1swzQDGBbk_ANZ95HE" },
-                    { id: 3, name: "Azure Loft Estate", location: "Miami Beach, FL", price: 850, beds: 3, baths: 3, zoning_status: "Violation", image_url: "https://lh3.googleusercontent.com/aida-public/AB6AXuDNvPJa8r3BvpFcxDHWTuHvngW3w2L31pdYX1LsjjO8rspEk8_0xeqr01EkJ81bgS4QyRXhja146HIbo1pSks32I3W5U6kwhSPBWTMhhp4rhfXNbzGu-oVr3KCs97Co4_kJid2PFPsa_oEa2RpVcq2Hb5wVoxwOee45oOVauEJ_I02eRigIcTrVjre8HFqtFRmn16IwF-yTXMsL5HOXCf9-xWqKHPMMdKPXvQoBbFubq2ne4cxtT36bjDgrYexgaqKAAL8_nNHW0rM" }
-                ]);
+                if (error.message === 'SYSTEM_DEGRADED' || error.message === 'Failed to fetch') {
+                    grid.innerHTML = '';
+                    const errTemplate = document.getElementById('system-degraded-error');
+                    grid.appendChild(errTemplate.content.cloneNode(true));
+                } else {
+                    // Fallback mock data if other error
+                    renderProperties([
+                        { id: 1, name: "The Obsidian Sanctuary", location: "West Hollywood, CA", price: 1250, beds: 4, baths: 3.5, zoning_status: "Compliant", image_url: "https://lh3.googleusercontent.com/aida-public/AB6AXuDtDfxPMaRsQxdORVLEVnaJqJkfWn-BIXgFNQc-W5TalH7m8KmPsVxzaGJymts4o67euXEuPWg-baUXk4eMJfPEe5BNL4ewYRx5BGIISm6s-VSgn_4yYv07IC2nEmtgMELJXzcESUQg9C8Wd4ktY2bTxOBeFDG9fiGcZVp6tsDSSyt5Noy0pJAbcaZD7TEfNffu00ipN1I6qeoV-KfAp73nAnWN2l8WW7hV8bKR-DY9XH9gD1QXSQZzfO7x5soMp5tvDsIGbgRGAlw" },
+                        { id: 2, name: "The Glass Pavilion", location: "Aspen, CO", price: 2400, beds: 5, baths: 6, zoning_status: "Pending", image_url: "https://lh3.googleusercontent.com/aida-public/AB6AXuBq14jjRyvZzz5UTQ0eMg5f3Tb372I7mv8Yrv6TY6sV_E4IRmFPA9xkERl57KcoDkzf8ltJE710_mWm9ijIJBp9YOOLmP9XuxQmdaJfrn4sqja-Py71hfXYXCpHUpb3lceiSPUTdzYkw_0n2v2n-UO4PvSh56L6oRhsLSfL2X0SP-VMGsDLeIH8Sw1pjKpBSnQQoYGfk5_wZ7qxULyQFOyddN3I7xAgbjPRLZFhFVQNfulIKKZDNVG_Jy01u1swzQDGBbk_ANZ95HE" },
+                        { id: 3, name: "Azure Loft Estate", location: "Miami Beach, FL", price: 850, beds: 3, baths: 3, zoning_status: "Violation", image_url: "https://lh3.googleusercontent.com/aida-public/AB6AXuDNvPJa8r3BvpFcxDHWTuHvngW3w2L31pdYX1LsjjO8rspEk8_0xeqr01EkJ81bgS4QyRXhja146HIbo1pSks32I3W5U6kwhSPBWTMhhp4rhfXNbzGu-oVr3KCs97Co4_kJid2PFPsa_oEa2RpVcq2Hb5wVoxwOee45oOVauEJ_I02eRigIcTrVjre8HFqtFRmn16IwF-yTXMsL5HOXCf9-xWqKHPMMdKPXvQoBbFubq2ne4cxtT36bjDgrYexgaqKAAL8_nNHW0rM" }
+                    ]);
+                }
             }
         }
 
@@ -1006,19 +1074,33 @@ tailwind.config = {
                     }
                 }
                 if (overviewData.analytics && overviewData.analytics.quota_remaining !== undefined) {
-                    quotaElement.innerHTML = `<span class="material-symbols-outlined text-[14px]">data_usage</span> Quota: ${overviewData.analytics.quota_remaining}`;
+                    quotaElement.innerHTML = '';
+                    const icon = document.createElement('span');
+                    icon.className = 'material-symbols-outlined text-[14px]';
+                    icon.textContent = 'data_usage';
+                    const textNode = document.createTextNode(` Quota: ${overviewData.analytics.quota_remaining}`);
+                    quotaElement.appendChild(icon);
+                    quotaElement.appendChild(textNode);
                 }
 
                 // Render recent queries
                 const queriesContainer = document.getElementById("dashboard-recent-queries");
                 if (queriesContainer && overviewData.recent_queries && Array.isArray(overviewData.recent_queries)) {
+                    queriesContainer.innerHTML = '';
                     if (overviewData.recent_queries.length > 0) {
-                        queriesContainer.innerHTML = overviewData.recent_queries.map(q => {
+                        overviewData.recent_queries.forEach(q => {
                             const qText = q.query || q.address || q;
-                            return `<li class="text-xs text-slate-500 truncate py-1 border-b border-slate-100 hover:text-slate-800 transition-colors" title="${qText}">${qText}</li>`;
-                        }).join("");
+                            const li = document.createElement('li');
+                            li.className = 'text-xs text-slate-500 truncate py-1 border-b border-slate-100 hover:text-slate-800 transition-colors';
+                            li.title = qText;
+                            li.textContent = qText;
+                            queriesContainer.appendChild(li);
+                        });
                     } else {
-                        queriesContainer.innerHTML = '<li class="text-xs text-slate-400 italic">No recent queries</li>';
+                        const li = document.createElement('li');
+                        li.className = 'text-xs text-slate-400 italic';
+                        li.textContent = 'No recent queries';
+                        queriesContainer.appendChild(li);
                     }
                 }
             }

@@ -5,11 +5,51 @@ from jose import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
+from sqlalchemy.types import TypeDecorator, String
+
+# Vibranium Habit: Require Fernet for column encryption
+try:
+    from cryptography.fernet import Fernet
+except ImportError:
+    Fernet = None
 
 # Secret key to encode the JWT (Vibranium Habit: Enforce Environment Variable)
 SECRET_KEY = os.getenv("JWT_SECRET_KEY", "SUPER_SECRET_KEY_REPLACE_IN_PRODUCTION")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
+# Vibranium Habit: Encryption key for data at rest
+VIBRANIUM_ENCRYPTION_KEY = os.getenv("VIBRANIUM_ENCRYPTION_KEY")
+if VIBRANIUM_ENCRYPTION_KEY and Fernet:
+    fernet = Fernet(VIBRANIUM_ENCRYPTION_KEY.encode())
+else:
+    fernet = None
+
+class VibraniumEncryptedString(TypeDecorator):
+    """
+    Vibranium Habit: SQLAlchemy TypeDecorator that transparently encrypts
+    data before saving to the database and decrypts upon retrieval.
+    """
+    impl = String
+
+    def process_bind_param(self, value, dialect):
+        if value is None:
+            return value
+        if not fernet:
+            if os.getenv("ENVIRONMENT") == "production":
+                raise RuntimeError("Vibranium Habit Violation: VIBRANIUM_ENCRYPTION_KEY is required in production for data at rest.")
+            return value
+        return fernet.encrypt(value.encode()).decode()
+
+    def process_result_value(self, value, dialect):
+        if value is None:
+            return value
+        if not fernet:
+            return value
+        try:
+            return fernet.decrypt(value.encode()).decode()
+        except Exception:
+            return value
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
