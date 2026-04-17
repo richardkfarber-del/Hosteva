@@ -33,11 +33,17 @@ class FatalRosterError(Exception):
     pass
 
 class TaskState(str, Enum):
-    PENDING = "PENDING"
+    BACKLOG = "BACKLOG"
+    REFINEMENT = "REFINEMENT"
+    FAILED_REFINEMENT = "FAILED_REFINEMENT"
+    BUILDING = "BUILDING"
+    BLOCKED = "BLOCKED"
     AUDITING = "AUDITING"
-    DREAMSTATE_READY = "DREAMSTATE_READY"
+    TESTING = "TESTING"
+    REJECTED = "REJECTED"
+    PENDING_APPROVAL = "PENDING_APPROVAL"
+    DEPLOYING = "DEPLOYING"
     DONE = "DONE"
-    FAILED_ESCALATED = "FAILED_ESCALATED"
 
 # ==========================================
 # WORKER DAEMON
@@ -123,7 +129,7 @@ class SwarmWorker:
         except RequestException as e:
             logger.error(f"[{ticket_id}] Failed to send Telegram alert: {e}")
 
-    def sync_fastapi_state(self, ticket_id: str, status: TaskState, payload_data: Dict[str, Any]) -> None:
+    def sync_fastapi_state(self, ticket_id: str, status: TaskState, payload_data: Dict[str, Any]) -> bool:
         """Syncs the final state to the FastAPI backend."""
         try:
             req = {
@@ -134,8 +140,10 @@ class SwarmWorker:
             response = self.http_session.post(self.fastapi_state_url, json=req, timeout=10)
             response.raise_for_status()
             logger.info(f"[{ticket_id}] Synced state {status.value} to FastAPI backend.")
+            return True
         except RequestException as e:
             logger.error(f"[{ticket_id}] Exception syncing state to FastAPI: {e}")
+            return False
 
     def spawn_subagent(self, agent_id: str, prompt: str, ticket_id: str = "UNKNOWN") -> Optional[str]:
         # [SECURITY LOCK] Physical Roster Verification (Anti-Fragmentation)
@@ -188,18 +196,78 @@ class SwarmWorker:
         self.redis_client.xack(self.stream_name, self.group_name, stream_id)
 
     def requeue_task(self, stream_id: str, data: Dict[str, Any]) -> None:
-        self.redis_client.xadd(self.stream_name, {"payload": json.dumps(data)})
+        # Strictly enforce Redis state decoupling
+        filtered_data = {
+            "ticket_id": data.get("ticket_id"),
+            "status": data.get("status"),
+            "previous_response": data.get("previous_response", "")
+        }
+        self.redis_client.xadd(self.stream_name, {"payload": json.dumps(filtered_data)})
         self.ack_task(stream_id)
 
     def dlq_task(self, stream_id: str, data: Dict[str, Any]) -> None:
         self.redis_client.xadd(self.dlq_name, {"payload": json.dumps(data)})
         self.ack_task(stream_id)
 
-    def handle_pending(self, data: Dict[str, Any], ticket_id: str, task_desc: str, stream_id: str) -> None:
+
+    def handle_backlog(self, data: Dict[str, Any], ticket_id: str, stream_id: str) -> None:
+        logger.info(f"[{ticket_id}] BACKLOG -> Transitioning to REFINEMENT")
+        data["status"] = TaskState.REFINEMENT.value
+        success = self.sync_fastapi_state(ticket_id, TaskState.REFINEMENT, {"reason": "Auto-transition to refinement"})
+        if success:
+            self.requeue_task(stream_id, data)
+        else:
+            raise RequestException(f"Failed to sync state REFINEMENT for {ticket_id}")
+
+    def handle_refinement(self, data: Dict[str, Any], ticket_id: str, stream_id: str) -> None:
+        self.sync_fastapi_state(ticket_id, TaskState.REFINEMENT, {"reason": "Executing phase"})
+        logger.info(f"[{ticket_id}] REFINEMENT -> Spawning Hawkeye/Vision for feasibility")
+        prompt = f"""Refine this ticket for technical feasibility.\nTicket: {ticket_id}\nUse your tools to read project_board.md, find your specific ticket_id, and extract your requirements.\nReply with JSON containing status 'BUILDING' or 'FAILED_REFINEMENT'."""
+        output = self.spawn_subagent("vision", prompt, ticket_id)
+        if output and "FAILED_REFINEMENT" in output:
+            data["status"] = TaskState.FAILED_REFINEMENT.value
+            self.sync_fastapi_state(ticket_id, TaskState.FAILED_REFINEMENT, {"reason": output})
+            self.send_telegram_alert(ticket_id, "vision", TaskState.FAILED_REFINEMENT.value, output)
+        else:
+            data["status"] = TaskState.BUILDING.value
+            self.sync_fastapi_state(ticket_id, TaskState.BUILDING, {"reason": "Refinement successful"})
+        self.requeue_task(stream_id, data)
+
+    def handle_testing(self, data: Dict[str, Any], ticket_id: str, stream_id: str) -> None:
+        self.sync_fastapi_state(ticket_id, TaskState.TESTING, {"reason": "Executing phase"})
+        logger.info(f"[{ticket_id}] TESTING -> Spawning Captain America")
+        prompt = f"""Run headless QA tests for Ticket: {ticket_id}. Requires PNG snapshot path.\nUse your tools to read project_board.md, find your specific ticket_id, and extract your requirements.\nReply with JSON containing status 'VERIFIED' or 'REJECTED'."""
+        output = self.spawn_subagent("captain_america", prompt, ticket_id)
+        if output and "REJECTED" in output:
+            data["status"] = TaskState.REJECTED.value
+            self.sync_fastapi_state(ticket_id, TaskState.REJECTED, {"reason": output})
+        else:
+            data["status"] = TaskState.PENDING_APPROVAL.value
+            self.sync_fastapi_state(ticket_id, TaskState.PENDING_APPROVAL, {"reason": "Testing passed, awaiting approval"})
+        self.requeue_task(stream_id, data)
+
+    def handle_deploying(self, data: Dict[str, Any], ticket_id: str, stream_id: str) -> None:
+        self.sync_fastapi_state(ticket_id, TaskState.DEPLOYING, {"reason": "Executing phase"})
+        logger.info(f"[{ticket_id}] DEPLOYING -> Spawning Heimdall")
+        prompt = f"""Deploy ticket {ticket_id} to production.\nUse your tools to read project_board.md, find your specific ticket_id, and extract your requirements.\nReply with 'DEPLOY_SUCCESS' or 'DEPLOY_FAILED'."""
+        output = self.spawn_subagent("heimdall", prompt, ticket_id)
+        if output and "DEPLOY_SUCCESS" in output:
+            data["status"] = TaskState.DONE.value
+            self.sync_fastapi_state(ticket_id, TaskState.DONE, {"reason": "Deployment successful"})
+            self.send_telegram_alert(ticket_id, "heimdall", TaskState.DONE.value, "Deployment successful")
+            self.ack_task(stream_id)
+        else:
+            data["status"] = TaskState.REJECTED.value
+            self.sync_fastapi_state(ticket_id, TaskState.REJECTED, {"reason": "Deployment failed"})
+            self.requeue_task(stream_id, data)
+
+
+    def handle_building(self, data: Dict[str, Any], ticket_id: str, stream_id: str) -> None:
+        self.sync_fastapi_state(ticket_id, TaskState.BUILDING, {"reason": "Executing phase"})
         logger.info(f"[{ticket_id}] Routing to Jarvis for LOE & Compute Tier analysis...")
         jarvis_prompt = (
             f"Analyze the Level of Effort (LOE) for this ticket: {ticket_id}\n\n"
-            f"REQUIREMENTS:\n{task_desc}\n\n"
+            f"Use your tools to read project_board.md, find your specific ticket_id, and extract your requirements.\n\n"
             f"DIRECTIVE: Determine if this is a simple/routine task or a difficult/complex task. "
             f"If routine, we will downgrade the team to local hardware to save compute. Reply with 'COMPUTE: LOCAL'. "
             f"If difficult, we will upgrade the team to Gemini. Reply with 'COMPUTE: GEMINI'. "
@@ -218,27 +286,20 @@ class SwarmWorker:
         else:
             logger.warning(f"[{ticket_id}] Jarvis analysis timed out. Defaulting to GEMINI.")
 
-        assigned_agent = "iron_man"
-        task_desc_lower = task_desc.lower()
-        if "frontend" in task_desc_lower or "wasp" in task_desc_lower:
-            assigned_agent = "wasp"
-        elif "ant-man" in task_desc_lower:
-            assigned_agent = "ant_man"
-        elif "shang-chi" in task_desc_lower:
-            assigned_agent = "shang_chi"
-        elif "heimdall" in task_desc_lower or "deploy" in task_desc_lower:
-            assigned_agent = "heimdall"
-        elif "captain america" in task_desc_lower or "qa" in task_desc_lower or "uat" in task_desc_lower:
-            assigned_agent = "captain_america"
-        elif "wanda" in task_desc_lower or "scarlet witch" in task_desc_lower or "retro" in task_desc_lower or "deep write" in task_desc_lower:
-            assigned_agent = "scarlet_witch"
-            
+        # Assign agent based on ticket description or context
+        # Since we removed task_desc, we'll try to infer from data or default to iron_man
+        assigned_agent = data.get("assigned_agent", "iron_man")
+        
         logger.info(f"[{ticket_id}] Routing to Execution Squad ({assigned_agent}) on {compute_tier}...")
+        
+        previous_response = data.get("previous_response", "")
+        fallback_context = f"\nPrevious Agent Response / Rejection:\n{previous_response}\n" if previous_response else ""
         
         agent_prompt = (
             f"Sprint Task for Ticket: {ticket_id}\n"
-            f"Assigned Compute Tier: {compute_tier}\n\n"
-            f"REQUIREMENTS:\n{task_desc}\n\n"
+            f"Assigned Compute Tier: {compute_tier}\n"
+            f"{fallback_context}\n"
+            f"Use your tools to read project_board.md, find your specific ticket_id, and extract your requirements.\n\n"
             f"DIRECTIVE: You are locked out of the 'DONE' state. "
             f"You must write the code, verify locally, and yield a summary of your physical file changes. "
             f"Do not attempt to transition this ticket to DONE."
@@ -259,22 +320,23 @@ class SwarmWorker:
                 logger.error(f"[{ticket_id}] Interceptor failed: {e}")
                 
             data["status"] = TaskState.AUDITING.value
-            data["execution_output"] = exec_output
+            data["previous_response"] = exec_output
             
             self.requeue_task(stream_id, data)
-            self.sync_fastapi_state(ticket_id, TaskState.AUDITING, {"execution_output": exec_output})
+            self.sync_fastapi_state(ticket_id, TaskState.AUDITING, {"previous_response": exec_output})
         else:
-            logger.error(f"[{ticket_id}] Iron Man execution failed. Re-queueing as PENDING.")
+            logger.error(f"[{ticket_id}] Execution failed. Re-queueing as PENDING.")
             time.sleep(5)
             self.requeue_task(stream_id, data)
 
-    def handle_auditing(self, data: Dict[str, Any], ticket_id: str, task_desc: str, stream_id: str) -> None:
+    def handle_auditing(self, data: Dict[str, Any], ticket_id: str, stream_id: str) -> None:
+        self.sync_fastapi_state(ticket_id, TaskState.AUDITING, {"reason": "Executing phase"})
         logger.info(f"[{ticket_id}] Routing to Coulson Tollbooth for physical verification...")
-        exec_output = data.get("execution_output", "No output provided.")
+        exec_output = data.get("previous_response", "No output provided.")
         
         coulson_prompt = (
             f"Audit this execution for {ticket_id}:\n\n"
-            f"Original Task Requirements:\n{task_desc}\n\n"
+            f"Use your tools to read project_board.md, find your specific ticket_id, and extract your requirements.\n\n"
             f"Execution Squad Output:\n{exec_output}\n\n"
             f"DIRECTIVE: Verify physical reality. Check file paths, hashes, or run tests. "
             f"You MUST reply with a strict JSON object containing a 'status' key set to exactly 'VERIFIED' or 'REJECTED'. "
@@ -305,12 +367,15 @@ class SwarmWorker:
             audit_reason = f"Prompt injection or schema violation detected. Raw output: {coulson_output}"
 
         if audit_status == "VERIFIED":
-            logger.info(f"[{ticket_id}] Coulson VERIFIED. Transitioning ticket to DONE.")
-            self.ack_task(stream_id)
-            self.sync_fastapi_state(ticket_id, TaskState.DONE, {"coulson_audit": coulson_output})
-            self.send_telegram_alert(ticket_id, "phil_coulson", TaskState.DONE.value, coulson_output)
+            logger.info(f"[{ticket_id}] Coulson VERIFIED. Transitioning ticket to TESTING.")
+            self.redis_client.delete(f"swarm:strikes:{ticket_id}")
+            data["status"] = TaskState.TESTING.value
+            data["previous_response"] = coulson_output
+            self.requeue_task(stream_id, data)
+            self.sync_fastapi_state(ticket_id, TaskState.TESTING, {"coulson_audit": coulson_output})
+            self.send_telegram_alert(ticket_id, "phil_coulson", TaskState.TESTING.value, coulson_output)
         else:
-            retry_count = data.get("retry_count", 0) + 1
+            retry_count = self.redis_client.incr(f"swarm:strikes:{ticket_id}")
             logger.warning(f"[{ticket_id}] Coulson REJECTED. Strike count: {retry_count}")
             
             if retry_count >= 3:
@@ -319,7 +384,7 @@ class SwarmWorker:
                 rocket_prompt = (
                     f"A ticket has failed 3 consecutive times.\n\n"
                     f"Ticket: {ticket_id}\n"
-                    f"Task: {task_desc}\n"
+                    f"Use your tools to read project_board.md, find your specific ticket_id, and extract your requirements.\n"
                     f"Execution Output: {exec_output}\n"
                     f"Coulson Audit Failure: {coulson_output}\n\n"
                     f"DIRECTIVE: Perform a root-cause diagnostic on this failure loop. Propose a permanent fix. Do not write the code. Output your recommendation for the Secretary's review."
@@ -328,6 +393,7 @@ class SwarmWorker:
                 rocket_analysis = self.spawn_subagent("rocket_raccoon", rocket_prompt, ticket_id)
                 
                 data["status"] = TaskState.FAILED_ESCALATED.value
+                self.redis_client.delete(f"swarm:strikes:{ticket_id}")
                 self.dlq_task(stream_id, data)
                 
                 self.sync_fastapi_state(ticket_id, TaskState.FAILED_ESCALATED, {
@@ -337,11 +403,16 @@ class SwarmWorker:
                 })
                 self.send_telegram_alert(ticket_id, "rocket_raccoon", TaskState.FAILED_ESCALATED.value, rocket_analysis)
             else:
-                data["status"] = TaskState.PENDING.value
-                data["retry_count"] = retry_count
-                data["task"] = f"{task_desc}\n\nPREVIOUS REJECTION REASON:\n{coulson_output}"
-                self.requeue_task(stream_id, data)
-                self.sync_fastapi_state(ticket_id, TaskState.PENDING, {"reason": "Rejected by Coulson", "retry_count": retry_count})
+                # Transition to REJECTED first to satisfy FastAPI state machine
+                sync_success = self.sync_fastapi_state(ticket_id, TaskState.REJECTED, {"reason": "Rejected by Coulson", "retry_count": retry_count})
+                
+                # If sync is successful, then move it back to BUILDING
+                if sync_success:
+                    self.sync_fastapi_state(ticket_id, TaskState.BUILDING, {"reason": "Re-queueing after rejection"})
+                    data["status"] = TaskState.BUILDING.value
+                    data["previous_response"] = f"PREVIOUS REJECTION REASON:\n{coulson_output}"
+                    self.requeue_task(stream_id, data)
+                
                 self.send_telegram_alert(ticket_id, "phil_coulson", "REJECTED", coulson_output)
 
     def recover_orphaned_tasks(self) -> None:
@@ -388,20 +459,31 @@ class SwarmWorker:
             return
 
         ticket_id = data.get("ticket_id", "UNKNOWN")
-        status = data.get("status", TaskState.PENDING.value)
-        task_desc = data.get("task", "")
-        retry_count = data.get("retry_count", 0)
+        status = data.get("status", TaskState.BACKLOG.value)
         
-        logger.info(f"--- Received Event | Ticket: {ticket_id} | Status: {status} | Strikes: {retry_count} ---")
+        logger.info(f"--- Received Event | Ticket: {ticket_id} | Status: {status} ---")
         
+
         try:
-            if status == TaskState.PENDING.value:
-                self.handle_pending(data, ticket_id, task_desc, stream_id)
+            if status == TaskState.BACKLOG.value:
+                self.handle_backlog(data, ticket_id, stream_id)
+            elif status == TaskState.REFINEMENT.value:
+                self.handle_refinement(data, ticket_id, stream_id)
+            elif status == TaskState.BUILDING.value:
+                self.handle_building(data, ticket_id, stream_id)
             elif status == TaskState.AUDITING.value:
-                self.handle_auditing(data, ticket_id, task_desc, stream_id)
+                self.handle_auditing(data, ticket_id, stream_id)
+            elif status == TaskState.TESTING.value:
+                self.handle_testing(data, ticket_id, stream_id)
+            elif status == TaskState.DEPLOYING.value:
+                self.handle_deploying(data, ticket_id, stream_id)
+            elif status in [TaskState.DONE.value, TaskState.PENDING_APPROVAL.value, TaskState.BLOCKED.value, TaskState.REJECTED.value, TaskState.FAILED_REFINEMENT.value]:
+                logger.info(f"[{ticket_id}] State {status} is passive. No active handler required.")
+                self.ack_task(stream_id)
             else:
                 logger.warning(f"[{ticket_id}] Unhandled state: {status}. Dropping task.")
                 self.ack_task(stream_id)
+
                 
         except FatalRosterError as fre:
             logger.critical(f"Pipeline Halting for Ticket {ticket_id}: {fre}")
