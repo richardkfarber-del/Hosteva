@@ -1,22 +1,22 @@
 # Hosteva Project Board
 
 ## Current Focus Target
-BUG-019 & BUG-020 (Staging Patches)
+Sprint 20 Backlog Generation: Real-Time Comms & TDD Infrastructure
 
 ## Active Tickets
 
-### BUG-020: 504/502 Gateway Timeout UI Fallback
-**Type:** Bug Fix
-**State:** TESTING (Phase 4: The Crucible)
-**Owner:** Black Widow, Thanos
+### SPIKE-008: Pytest SQLite vs. Postgres Test Container (TDD Infrastructure)
+**Type:** Spike
+**State:** PENDING_APPROVAL (Crucible Passed - Secretary Hold)
+**Owner:** Thanos
 
-### BUG-019: Subagent Tooling Capability Restoration (Swarm Rearmament)
-**Type:** Bug Fix
-**State:** BUILDING (Phase 2: Execution)
-**Owner:** Nick Fury
+### FEAT-018: Real-Time Telegram Webhook Telemetry
+**Type:** Feature
+**State:** PENDING_APPROVAL (Crucible Passed - Secretary Hold)
+**Owner:** Black Widow
 
 ## Backlog
 *Empty*
 
 ## Next Action Upon Restart
-Secretary to authorize Nick Fury to physically overwrite the `.json` and `TOOLS.md` profiles across the Swarm with the official Rearmament List.
+Secretary to authorize Phase 5 (Deployment) for Sprint 20.

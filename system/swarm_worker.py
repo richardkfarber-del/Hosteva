@@ -106,6 +106,23 @@ class SwarmWorker:
             return True
         return False
 
+    def send_telegram_alert(self, ticket_id: str, agent_name: str, status: str, coulson_summary: str) -> None:
+        bot_token = os.environ.get('TELEGRAM_BOT_TOKEN')
+        chat_id = os.environ.get('TELEGRAM_CHAT_ID')
+        if not bot_token or not chat_id:
+            logger.warning(f"[{ticket_id}] Telegram credentials missing. Skipping alert.")
+            return
+
+        text = f"[{ticket_id}] - [{agent_name}] - [{status}] - [{coulson_summary}]"
+        url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+        payload = {"chat_id": chat_id, "text": text}
+        try:
+            response = self.http_session.post(url, json=payload, timeout=10)
+            response.raise_for_status()
+            logger.info(f"[{ticket_id}] Telegram alert sent ({status}).")
+        except RequestException as e:
+            logger.error(f"[{ticket_id}] Failed to send Telegram alert: {e}")
+
     def sync_fastapi_state(self, ticket_id: str, status: TaskState, payload_data: Dict[str, Any]) -> None:
         """Syncs the final state to the FastAPI backend."""
         try:
@@ -291,6 +308,7 @@ class SwarmWorker:
             logger.info(f"[{ticket_id}] Coulson VERIFIED. Transitioning ticket to DONE.")
             self.ack_task(stream_id)
             self.sync_fastapi_state(ticket_id, TaskState.DONE, {"coulson_audit": coulson_output})
+            self.send_telegram_alert(ticket_id, "phil_coulson", TaskState.DONE.value, coulson_output)
         else:
             retry_count = data.get("retry_count", 0) + 1
             logger.warning(f"[{ticket_id}] Coulson REJECTED. Strike count: {retry_count}")
@@ -317,12 +335,14 @@ class SwarmWorker:
                     "last_audit": coulson_output,
                     "rocket_diagnostic": rocket_analysis
                 })
+                self.send_telegram_alert(ticket_id, "rocket_raccoon", TaskState.FAILED_ESCALATED.value, rocket_analysis)
             else:
                 data["status"] = TaskState.PENDING.value
                 data["retry_count"] = retry_count
                 data["task"] = f"{task_desc}\n\nPREVIOUS REJECTION REASON:\n{coulson_output}"
                 self.requeue_task(stream_id, data)
                 self.sync_fastapi_state(ticket_id, TaskState.PENDING, {"reason": "Rejected by Coulson", "retry_count": retry_count})
+                self.send_telegram_alert(ticket_id, "phil_coulson", "REJECTED", coulson_output)
 
     def recover_orphaned_tasks(self) -> None:
         logger.info("Recovering orphaned tasks via XAUTOCLAIM...")

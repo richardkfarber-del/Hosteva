@@ -25,6 +25,17 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
       POSTGRES_DB: ${DB_NAME:-hosteva}
 
+  test_db:
+    image: pgvector/pgvector:pg16
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: test_db
+    tmpfs:
+      - /var/lib/postgresql/data
+
   jaeger:
     image: jaegertracing/all-in-one:latest
     environment:
