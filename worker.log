@@ -13,3 +13,9 @@
 2026-04-18 16:25:03,821 - [SwarmWorker] - ERROR - [FEAT-020] Exception syncing state to FastAPI: 400 Client Error: Bad Request for url: http://localhost:8000/state/update
 2026-04-18 16:25:03,821 - [SwarmWorker] - INFO - [FEAT-020] DEPLOYING -> Spawning Heimdall
 2026-04-18 16:25:03,821 - [SwarmWorker] - INFO - Spawning native API request for agent: heimdall...
+2026-04-18 16:25:16,451 - [SwarmWorker] - INFO - [FEAT-020] Synced state REJECTED to FastAPI backend.
+2026-04-18 16:25:16,732 - [SwarmWorker] - ERROR - Unexpected worker error processing 1776543882175-0: maximum recursion depth exceeded
+2026-04-18 16:25:19,736 - [SwarmWorker] - INFO - --- Received Event | Ticket: FEAT-019 | Status: DEPLOYING ---
+2026-04-18 16:25:19,740 - [SwarmWorker] - ERROR - [FEAT-019] Exception syncing state to FastAPI: 400 Client Error: Bad Request for url: http://localhost:8000/state/update
+2026-04-18 16:25:19,740 - [SwarmWorker] - INFO - [FEAT-019] DEPLOYING -> Spawning Heimdall
+2026-04-18 16:25:19,740 - [SwarmWorker] - INFO - Spawning native API request for agent: heimdall...
