@@ -338,7 +338,7 @@ class SwarmWorker:
             self.handle_spawn_failure(data, ticket_id, stream_id, assigned_agent)
             return
         self.redis_client.delete(f"swarm:routing_strikes:{ticket_id}")
-        if "REJECTED" in output:
+        if '"status": "REJECTED"' in output or '"status":"REJECTED"' in output:
             data["status"] = TaskState.REJECTED.value
             data["previous_response"] = output
             self.sync_fastapi_state(ticket_id, TaskState.REJECTED, {"reason": output})
