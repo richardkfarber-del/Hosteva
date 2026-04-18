@@ -92,3 +92,12 @@ The Swarm operates on a strict, cryptographically enforced state machine via the
 9. **`PENDING_APPROVAL`**: Swarm paused; strictly awaiting Director (Richard Farber) authorization.
 10. **`DEPLOYING`**: Heimdall actively pushing to Render production.
 11. **`DONE`**: Deployed, Retro complete, and Wanda has executed the Deep Write.
+## 🌩️ SPRINT 20: THE PHYSICAL REALITY PROTOCOL (Wanda's Deep Write)
+*(Enforced by Executive Board: Sprint Retrospective on 2026-04-18)*
+
+### 1. The Anti-Simulation Mandate
+- **No Simulation:** Agents must NEVER be instructed to "simulate" a physical action (e.g., deployments). If a real-world action is required, they MUST be provided a physical script (e.g., `scripts/deploy_to_render.sh`) and explicitly commanded to execute it.
+- **Physical Output Verification:** Agents cannot claim success without verifying the physical `stdout` of the executed script. Hallucinating success based on a prompt's hypothetical is a fatal violation.
+
+### 2. State Machine Superiority
+- **Gatekeeper Override:** Safety overrides in agent `SOUL.md` files (like Heimdall's "Failure is Success") are subordinate to the cryptographic state. If the Redis State Machine registers `PENDING_APPROVAL` (Executive Approval verified), the agent is strictly forbidden from rejecting the pipeline based on internal caution.

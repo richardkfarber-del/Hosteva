@@ -386,7 +386,7 @@ class SwarmWorker:
         
         if jarvis_output:
             if "COMPUTE: LOCAL" in jarvis_output.upper():
-                compute_tier = "LOCAL (qwen2.5-coder / RTX 4070)"
+                compute_tier = "LOCAL (gemma4:9b / RTX 4070)"
             elif "COMPUTE: GEMINI" in jarvis_output.upper():
                 compute_tier = "GEMINI (google/gemini-3-pro-preview)"
             logger.info(f"[{ticket_id}] Jarvis LOE Analysis Complete. Assigned Tier: {compute_tier}")
