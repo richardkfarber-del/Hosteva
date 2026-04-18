@@ -1,45 +1,34 @@
 import pytest
-from fastapi.testclient import TestClient
 from app.main import app
-from app.models.host import Host
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from app.database import Base, get_db
+from fastapi.testclient import TestClient
 from app.core.security import get_current_user
+from app.database import get_db
 
 client = TestClient(app)
 
-# Use in-memory SQLite for testing DB interactions
-SQLALCHEMY_DATABASE_URL = "sqlite:///./test_analytics.db"
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+class MockHost:
+    subscription_tier = "Pro"
 
-def override_get_db():
-    try:
-        db = TestingSessionLocal()
-        yield db
-    finally:
-        db.close()
+class MockQuery:
+    def filter(self, *args, **kwargs):
+        return self
+    def first(self):
+        return MockHost()
+
+class MockDB:
+    def query(self, *args, **kwargs):
+        return MockQuery()
 
 def override_get_current_user():
     return {"username": "testuser", "role": "host"}
 
-app.dependency_overrides[get_db] = override_get_db
-app.dependency_overrides[get_current_user] = override_get_current_user
-
-@pytest.fixture(autouse=True)
-def setup_db():
-    Base.metadata.create_all(bind=engine)
-    db = TestingSessionLocal()
-    # Seed a test host
-    test_host = Host(username="testuser", email="test@example.com", password_hash="hash")
-    db.add(test_host)
-    db.commit()
-    yield
-    db.close()
-    Base.metadata.drop_all(bind=engine)
+def override_get_db():
+    yield MockDB()
 
 def test_get_user_analytics():
+    app.dependency_overrides[get_current_user] = override_get_current_user
+    app.dependency_overrides[get_db] = override_get_db
+    
     response = client.get("/api/user/analytics")
     assert response.status_code == 200
     data = response.json()
@@ -50,3 +39,5 @@ def test_get_user_analytics():
     assert isinstance(data["recent_queries"], list)
     assert len(data["recent_queries"]) == 3
     assert data["recent_queries"][0]["query"] == "What are the STR laws in Miami?"
+    
+    app.dependency_overrides.clear()

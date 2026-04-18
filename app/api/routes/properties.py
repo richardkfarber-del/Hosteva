@@ -84,11 +84,13 @@ async def aggregate_properties(db: Session, username: str) -> dict:
 @router.get("", response_model=PropertiesResponseOut)
 @router.get("/", response_model=PropertiesResponseOut, include_in_schema=False)
 async def get_properties(
+    current_user: dict = Depends(get_current_user),
+
     db: Session = Depends(get_db)
 ):
     try:
         # Wrap DB aggregation query in asyncio.wait_for (5 seconds)
-        data = await asyncio.wait_for(aggregate_properties(db, "testuser"), timeout=5.0)
+        data = await asyncio.wait_for(aggregate_properties(db, current_user.get("username", "testuser")), timeout=5.0)
     except asyncio.TimeoutError:
         # DLQ Logging requirement
         logger.error(f"DLQ Log: Database aggregation query timed out for user testuser.")

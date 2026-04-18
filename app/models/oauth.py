@@ -3,6 +3,7 @@ from sqlalchemy.dialects.postgresql import UUID, ARRAY
 from sqlalchemy.sql import func
 import uuid
 from app.database import Base
+from app.core.security import VibraniumEncryptedString
 
 class OAuthConnection(Base):
     __tablename__ = "oauth_connections"
@@ -12,8 +13,8 @@ class OAuthConnection(Base):
     user_id = Column(String, ForeignKey("hosts.id", ondelete="CASCADE"), nullable=True) # hosts table is used instead of users
     platform = Column(String, nullable=False)
     platform_account_id = Column(String, nullable=False)
-    access_token = Column(String, nullable=False)
-    refresh_token = Column(String, nullable=False)
+    access_token = Column(VibraniumEncryptedString, nullable=False)
+    refresh_token = Column(VibraniumEncryptedString, nullable=False)
     expires_at = Column(DateTime(timezone=True), nullable=False)
     scopes = Column(String, nullable=True) # or ARRAY(String) if using postgres specific
     status = Column(String, default="active")

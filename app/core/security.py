@@ -14,7 +14,11 @@ except ImportError:
     Fernet = None
 
 # Secret key to encode the JWT (Vibranium Habit: Enforce Environment Variable)
-SECRET_KEY = os.getenv("JWT_SECRET_KEY", "SUPER_SECRET_KEY_REPLACE_IN_PRODUCTION")
+SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+if not SECRET_KEY:
+    if os.getenv("ENVIRONMENT") == "production":
+        raise RuntimeError("Vibranium Habit Violation: JWT_SECRET_KEY must be set in production. Perimeter locked.")
+    SECRET_KEY = "SUPER_SECRET_KEY_REPLACE_IN_PRODUCTION"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 

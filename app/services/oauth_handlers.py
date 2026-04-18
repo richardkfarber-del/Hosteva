@@ -10,8 +10,19 @@ class OAuthHandler:
     OAUTH_TOKEN_URL = os.getenv('OAUTH_TOKEN_URL')
     OAUTH_USERINFO_URL = os.getenv('OAUTH_USERINFO_URL')
 
+    @classmethod
+    def validate_config(cls):
+        if os.getenv("ENVIRONMENT") == "production":
+            missing = [k for k, v in [
+                ("OAUTH_CLIENT_ID", cls.OAUTH_CLIENT_ID),
+                ("OAUTH_CLIENT_SECRET", cls.OAUTH_CLIENT_SECRET)
+            ] if not v]
+            if missing:
+                raise RuntimeError(f"Vibranium Habit Violation: Missing OAuth credentials in production: {missing}. Perimeter locked.")
+
     @staticmethod
     def authorize():
+        OAuthHandler.validate_config()
         """Redirects the user to the OAuth provider for authorization."""
         params = {
             'response_type': 'code',
@@ -24,6 +35,7 @@ class OAuthHandler:
 
     @staticmethod
     def callback():
+        OAuthHandler.validate_config()
         """Handles the callback from the OAuth provider."""
         if 'code' in request.args:
             code = request.args.get('code')

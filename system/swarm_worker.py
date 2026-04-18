@@ -44,6 +44,13 @@ class TaskState(str, Enum):
     PENDING_APPROVAL = "PENDING_APPROVAL"
     DEPLOYING = "DEPLOYING"
     DONE = "DONE"
+    SPIKE_REVIEW = "SPIKE_REVIEW"
+    PROD_DEPLOYED = "PROD_DEPLOYED"
+    POST_PROD_QA = "POST_PROD_QA"
+    RETROSPECTIVE = "RETROSPECTIVE"
+    EXECUTIVE_REVIEW = "EXECUTIVE_REVIEW"
+    DEEP_WRITE_DONE = "DEEP_WRITE_DONE"
+    FAILED_ESCALATED = "FAILED_ESCALATED"
 
 # ==========================================
 # WORKER DAEMON
@@ -203,12 +210,32 @@ class SwarmWorker:
             "previous_response": data.get("previous_response", "")
         }
         self.redis_client.xadd(self.stream_name, {"payload": json.dumps(filtered_data)})
-        self.ack_task(stream_id)
+        self.requeue_task(stream_id, data)
 
     def dlq_task(self, stream_id: str, data: Dict[str, Any]) -> None:
         self.redis_client.xadd(self.dlq_name, {"payload": json.dumps(data)})
-        self.ack_task(stream_id)
+        self.requeue_task(stream_id, data)
 
+
+
+    def _extract_ticket_requirements(self, ticket_id: str) -> str:
+        try:
+            with open("/home/rdogen/OpenClaw_Factory/projects/Hosteva/project_board.md", "r") as f:
+                content = f.read()
+            
+            ticket_marker = f"### {ticket_id}"
+            if ticket_marker not in content:
+                return f"No requirements found for {ticket_id}."
+            
+            start_index = content.find(ticket_marker)
+            next_ticket_index = content.find("### ", start_index + len(ticket_marker))
+            
+            if next_ticket_index == -1:
+                return content[start_index:]
+            else:
+                return content[start_index:next_ticket_index]
+        except Exception as e:
+            return f"Error reading requirements for {ticket_id}: {e}"
 
     def handle_backlog(self, data: Dict[str, Any], ticket_id: str, stream_id: str) -> None:
         logger.info(f"[{ticket_id}] BACKLOG -> Transitioning to REFINEMENT")
@@ -221,43 +248,123 @@ class SwarmWorker:
 
     def handle_refinement(self, data: Dict[str, Any], ticket_id: str, stream_id: str) -> None:
         self.sync_fastapi_state(ticket_id, TaskState.REFINEMENT, {"reason": "Executing phase"})
-        logger.info(f"[{ticket_id}] REFINEMENT -> Spawning Hawkeye/Vision for feasibility")
-        prompt = f"""Refine this ticket for technical feasibility.\nTicket: {ticket_id}\nUse your tools to read project_board.md, find your specific ticket_id, and extract your requirements.\nReply with JSON containing status 'BUILDING' or 'FAILED_REFINEMENT'."""
-        output = self.spawn_subagent("vision", prompt, ticket_id)
-        if output and "FAILED_REFINEMENT" in output:
+        logger.info(f"[{ticket_id}] REFINEMENT -> Spawning Vanguard + Threat Council")
+        
+        council = ["hawkeye", "vision", "black_panther", "she_hulk", "falcon", "kang_the_conqueror", "iron_man", "heimdall"]
+        failed = False
+        reasons = []
+        
+        for agent in council:
+            prompt = f"Refine this ticket for technical feasibility and compliance.\nTicket: {ticket_id}\nUse your tools to read project_board.md, find your specific ticket_id, and extract your requirements.\nDOMAIN BYPASS MANDATE: If this ticket falls outside your area of expertise, you MUST reply with status 'PASS' and note no objections.\nReply with JSON containing status 'PASS' or 'FAILED_REFINEMENT', and a 'reason'."
+            output = self.spawn_subagent(agent, prompt, ticket_id)
+            if not output:
+                self.handle_spawn_failure(data, ticket_id, stream_id, agent)
+                return
+            if "FAILED_REFINEMENT" in output.upper():
+                failed = True
+                reasons.append(f"{agent}: {output}")
+
+        self.redis_client.delete(f"swarm:routing_strikes:{ticket_id}")
+        
+        if failed:
             data["status"] = TaskState.FAILED_REFINEMENT.value
-            self.sync_fastapi_state(ticket_id, TaskState.FAILED_REFINEMENT, {"reason": output})
-            self.send_telegram_alert(ticket_id, "vision", TaskState.FAILED_REFINEMENT.value, output)
+            reason_str = " | ".join(reasons)
+            self.sync_fastapi_state(ticket_id, TaskState.FAILED_REFINEMENT, {"reason": reason_str})
+            self.send_telegram_alert(ticket_id, "Threat Council", TaskState.FAILED_REFINEMENT.value, reason_str)
         else:
-            data["status"] = TaskState.BUILDING.value
-            self.sync_fastapi_state(ticket_id, TaskState.BUILDING, {"reason": "Refinement successful"})
+            ticket_type = data.get("ticket_type", "FEATURE")
+            if ticket_type.upper() == "SPIKE":
+                data["status"] = TaskState.SPIKE_REVIEW.value
+                self.sync_fastapi_state(ticket_id, TaskState.SPIKE_REVIEW, {"reason": "Refinement successful, moving to SPIKE_REVIEW"})
+            else:
+                data["status"] = TaskState.BUILDING.value
+                self.sync_fastapi_state(ticket_id, TaskState.BUILDING, {"reason": "Refinement successful"})
+        self.requeue_task(stream_id, data)
+
+    def handle_failed_refinement(self, data: Dict[str, Any], ticket_id: str, stream_id: str) -> None:
+        logger.info(f"[{ticket_id}] FAILED_REFINEMENT -> Auto-routing back to Hawkeye")
+        self.send_telegram_alert(ticket_id, "System", "FAILED_REFINEMENT", "Ticket failed refinement. Routing back to Hawkeye.")
+        
+        prompt = f"Review the failed refinement feedback for Ticket: {ticket_id}. Fix the ticket requirements in the project board.\\nPrevious feedback: {data.get('reason', '')}\\nReply with 'REFINEMENT' when ready to resubmit."
+        output = self.spawn_subagent("hawkeye", prompt, ticket_id)
+        if not output:
+            self.handle_spawn_failure(data, ticket_id, stream_id, "hawkeye")
+            return
+            
+        data["status"] = TaskState.REFINEMENT.value
+        self.sync_fastapi_state(ticket_id, TaskState.REFINEMENT, {"reason": "Resubmitted for refinement by Hawkeye"})
+        self.requeue_task(stream_id, data)
+
+    def handle_rejected(self, data: Dict[str, Any], ticket_id: str, stream_id: str) -> None:
+        logger.info(f"[{ticket_id}] REJECTED -> Auto-routing back to Building")
+        rejection_reason = data.get("previous_response", "Unknown rejection reason.")
+        self.send_telegram_alert(ticket_id, "System", "REJECTED", "Ticket was rejected. Routing back to Execution Squad.")
+        
+        data["status"] = TaskState.BUILDING.value
+        data["previous_response"] = f"PREVIOUS REJECTION REASON:\n{rejection_reason}"
+        self.sync_fastapi_state(ticket_id, TaskState.BUILDING, {"reason": "Routed back to Execution from REJECTED"})
         self.requeue_task(stream_id, data)
 
     def handle_testing(self, data: Dict[str, Any], ticket_id: str, stream_id: str) -> None:
         self.sync_fastapi_state(ticket_id, TaskState.TESTING, {"reason": "Executing phase"})
-        logger.info(f"[{ticket_id}] TESTING -> Spawning Captain America")
-        prompt = f"""Run headless QA tests for Ticket: {ticket_id}. Requires PNG snapshot path.\nUse your tools to read project_board.md, find your specific ticket_id, and extract your requirements.\nReply with JSON containing status 'VERIFIED' or 'REJECTED'."""
-        output = self.spawn_subagent("captain_america", prompt, ticket_id)
-        if output and "REJECTED" in output:
+        
+        ticket_reqs = self._extract_ticket_requirements(ticket_id)
+
+        logger.info(f"[{ticket_id}] TESTING -> Routing to Jarvis for Ticket Classification...")
+        jarvis_prompt = (
+            f"Analyze the following ticket requirements and determine if this is a Frontend/UI ticket "
+            f"or a Backend/Infrastructure ticket.\n\n"
+            f"TICKET_REQUIREMENTS:\n{ticket_reqs}\n\n"
+            f"Reply with exactly 'TYPE: FRONTEND' or 'TYPE: BACKEND'."
+        )
+        jarvis_output = self.spawn_subagent("jarvis", jarvis_prompt, ticket_id)
+        
+        is_frontend = False
+        if jarvis_output and "TYPE: FRONTEND" in jarvis_output.upper():
+            is_frontend = True
+            
+        assigned_agent = "black_widow" if is_frontend else "captain_america"
+        logger.info(f"[{ticket_id}] TESTING -> Classified as {'FRONTEND' if is_frontend else 'BACKEND'}. Spawning {assigned_agent}")
+        
+        if is_frontend:
+            prompt = f"Run headless QA tests for Ticket: {ticket_id}. Requires PNG snapshot path.\n\nTICKET_REQUIREMENTS:\n{ticket_reqs}\n\nReply with JSON containing status 'VERIFIED' or 'REJECTED'."
+        else:
+            prompt = f"Run backend/infrastructure Pytest execution for Ticket: {ticket_id}.\n\nTICKET_REQUIREMENTS:\n{ticket_reqs}\n\nReply with JSON containing status 'VERIFIED' or 'REJECTED'."
+            
+        prompt += "\n\nWSL2 NATIVE PATH OVERRIDE: The project is running natively on a host WSL2 filesystem, not inside a Docker container volume. The target path `/app/workspace/Hosteva/` is a HALLUCINATED GHOST DIRECTORY and does not exist. All physical files, verification checks, and terminal executions MUST use the absolute path: `/home/rdogen/OpenClaw_Factory/projects/Hosteva/`. Do not check `/app/workspace/`."
+            
+        output = self.spawn_subagent(assigned_agent, prompt, ticket_id)
+        if not output:
+            self.handle_spawn_failure(data, ticket_id, stream_id, assigned_agent)
+            return
+        self.redis_client.delete(f"swarm:routing_strikes:{ticket_id}")
+        if "REJECTED" in output:
             data["status"] = TaskState.REJECTED.value
+            data["previous_response"] = output
             self.sync_fastapi_state(ticket_id, TaskState.REJECTED, {"reason": output})
         else:
-            data["status"] = TaskState.PENDING_APPROVAL.value
-            self.sync_fastapi_state(ticket_id, TaskState.PENDING_APPROVAL, {"reason": "Testing passed, awaiting approval"})
+            ticket_type = data.get("ticket_type", "FEATURE")
+            if ticket_type.upper() == "SPIKE":
+                data["status"] = TaskState.SPIKE_REVIEW.value
+                self.sync_fastapi_state(ticket_id, TaskState.SPIKE_REVIEW, {"reason": "Testing passed, moving to SPIKE_REVIEW"})
+            else:
+                data["status"] = TaskState.PENDING_APPROVAL.value
+                self.sync_fastapi_state(ticket_id, TaskState.PENDING_APPROVAL, {"reason": "Testing passed, awaiting approval"})
         self.requeue_task(stream_id, data)
 
     def handle_deploying(self, data: Dict[str, Any], ticket_id: str, stream_id: str) -> None:
         self.sync_fastapi_state(ticket_id, TaskState.DEPLOYING, {"reason": "Executing phase"})
         logger.info(f"[{ticket_id}] DEPLOYING -> Spawning Heimdall")
-        prompt = f"""Deploy ticket {ticket_id} to production.\nUse your tools to read project_board.md, find your specific ticket_id, and extract your requirements.\nReply with 'DEPLOY_SUCCESS' or 'DEPLOY_FAILED'."""
+        prompt = f"""Deploy ticket {ticket_id} to production.\nUse your tools to read project_board.md, find your specific ticket_id, and extract your requirements.\nV3.0 PIPELINE OVERRIDE: Legacy `state.json` is deprecated. Executive Approval verified.\nPHYSICAL DEPLOYMENT MANDATE: You MUST physically execute the following command using your exec tool:\n`/home/rdogen/OpenClaw_Factory/projects/Hosteva/scripts/deploy_to_render.sh {ticket_id}`\nYou MUST wait for the tool to finish. Do NOT hallucinate the result. If the script outputs 'DEPLOYMENT_VERIFIED', then you reply exactly with 'DEPLOY_SUCCESS'. If it fails, reply with 'DEPLOY_FAILED'."""
         output = self.spawn_subagent("heimdall", prompt, ticket_id)
         if output and "DEPLOY_SUCCESS" in output:
-            data["status"] = TaskState.DONE.value
-            self.sync_fastapi_state(ticket_id, TaskState.DONE, {"reason": "Deployment successful"})
-            self.send_telegram_alert(ticket_id, "heimdall", TaskState.DONE.value, "Deployment successful")
-            self.ack_task(stream_id)
+            data["status"] = TaskState.PROD_DEPLOYED.value
+            self.sync_fastapi_state(ticket_id, TaskState.PROD_DEPLOYED, {"reason": "Deployment successful"})
+            self.send_telegram_alert(ticket_id, "heimdall", TaskState.PROD_DEPLOYED.value, "Deployment successful")
+            self.requeue_task(stream_id, data)
         else:
             data["status"] = TaskState.REJECTED.value
+            data["previous_response"] = f"Deployment failed: {output}"
             self.sync_fastapi_state(ticket_id, TaskState.REJECTED, {"reason": "Deployment failed"})
             self.requeue_task(stream_id, data)
 
@@ -302,7 +409,9 @@ class SwarmWorker:
             f"Use your tools to read project_board.md, find your specific ticket_id, and extract your requirements.\n\n"
             f"DIRECTIVE: You are locked out of the 'DONE' state. "
             f"You must write the code, verify locally, and yield a summary of your physical file changes. "
-            f"Do not attempt to transition this ticket to DONE."
+            f"Do not attempt to transition this ticket to DONE.\n"
+            f"SPRINT 11 HALLUCINATION PROTOCOL: You MUST physically invoke the physical tools (e.g., 'write', 'exec') to generate files and run tests. Do NOT output text claiming you finished without using the tools. If you just output text claiming you did it without a tool call, your process will be blasted.\n\n"
+            f"WSL2 NATIVE PATH OVERRIDE: The project is running natively on a host WSL2 filesystem, not inside a Docker container volume. The target path `/app/workspace/Hosteva/` is a HALLUCINATED GHOST DIRECTORY and does not exist. All physical files, verification checks, and terminal executions MUST use the absolute path: `/home/rdogen/OpenClaw_Factory/projects/Hosteva/`. Do not check `/app/workspace/`."
         )
         
         exec_output = self.spawn_subagent(assigned_agent, agent_prompt, ticket_id)
@@ -334,13 +443,16 @@ class SwarmWorker:
         logger.info(f"[{ticket_id}] Routing to Coulson Tollbooth for physical verification...")
         exec_output = data.get("previous_response", "No output provided.")
         
+        ticket_reqs = self._extract_ticket_requirements(ticket_id)
+        
         coulson_prompt = (
             f"Audit this execution for {ticket_id}:\n\n"
-            f"Use your tools to read project_board.md, find your specific ticket_id, and extract your requirements.\n\n"
+            f"TICKET_REQUIREMENTS:\n{ticket_reqs}\n\n"
             f"Execution Squad Output:\n{exec_output}\n\n"
             f"DIRECTIVE: Verify physical reality. Check file paths, hashes, or run tests. "
             f"You MUST reply with a strict JSON object containing a 'status' key set to exactly 'VERIFIED' or 'REJECTED'. "
-            f"If rejected, include a 'reason' key. Example: {{\"status\": \"VERIFIED\"}} or {{\"status\": \"REJECTED\", \"reason\": \"<explicit reasoning>\"}}."
+            f"If rejected, include a 'reason' key. Example: {{\"status\": \"VERIFIED\"}} or {{\"status\": \"REJECTED\", \"reason\": \"<explicit reasoning>\"}}\n\n"
+            f"WSL2 NATIVE PATH OVERRIDE: The project is running natively on a host WSL2 filesystem, not inside a Docker container volume. The target path `/app/workspace/Hosteva/` is a HALLUCINATED GHOST DIRECTORY and does not exist. All physical files, verification checks, and terminal executions MUST use the absolute path: `/home/rdogen/OpenClaw_Factory/projects/Hosteva/`. Do not check `/app/workspace/`."
         )
         
         coulson_output = self.spawn_subagent("phil_coulson", coulson_prompt, ticket_id)
@@ -477,12 +589,17 @@ class SwarmWorker:
                 self.handle_testing(data, ticket_id, stream_id)
             elif status == TaskState.DEPLOYING.value:
                 self.handle_deploying(data, ticket_id, stream_id)
-            elif status in [TaskState.DONE.value, TaskState.PENDING_APPROVAL.value, TaskState.BLOCKED.value, TaskState.REJECTED.value, TaskState.FAILED_REFINEMENT.value]:
+            elif status == TaskState.REJECTED.value:
+                self.handle_rejected(data, ticket_id, stream_id)
+            elif status == TaskState.FAILED_REFINEMENT.value:
+                self.handle_failed_refinement(data, ticket_id, stream_id)
+
+            elif status in [TaskState.DONE.value, TaskState.PENDING_APPROVAL.value, TaskState.BLOCKED.value, TaskState.SPIKE_REVIEW.value, TaskState.PROD_DEPLOYED.value, TaskState.POST_PROD_QA.value, TaskState.RETROSPECTIVE.value, TaskState.EXECUTIVE_REVIEW.value, TaskState.DEEP_WRITE_DONE.value]:
                 logger.info(f"[{ticket_id}] State {status} is passive. No active handler required.")
-                self.ack_task(stream_id)
+                self.requeue_task(stream_id, data)
             else:
                 logger.warning(f"[{ticket_id}] Unhandled state: {status}. Dropping task.")
-                self.ack_task(stream_id)
+                self.requeue_task(stream_id, data)
 
                 
         except FatalRosterError as fre:

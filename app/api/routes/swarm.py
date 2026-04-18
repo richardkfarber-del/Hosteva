@@ -16,15 +16,24 @@ class StateUpdateRequest(BaseModel):
     payload: Optional[Dict[str, Any]] = None
 
 ALLOWED_TRANSITIONS = {
-    "PENDING": ["BUILDING", "FAILED"],
-    "BUILDING": ["AUDITING", "QA_REVIEW", "FAILED"],
-    "AUDITING": ["BUILDING", "DREAMSTATE_READY", "FAILED", "DONE", "FAILED_ESCALATED"],
-    "QA_REVIEW": ["BUILDING", "DREAMSTATE_READY", "FAILED"],
-    "DREAMSTATE_READY": ["DEPLOYED", "FAILED"],
-    "DEPLOYED": [],
-    "FAILED": ["PENDING", "BUILDING"],
-    "DONE": [],
-    "FAILED_ESCALATED": []
+    "BACKLOG": ["REFINEMENT", "BLOCKED"],
+    "REFINEMENT": ["BUILDING", "FAILED_REFINEMENT", "BLOCKED", "SPIKE_REVIEW"],
+    "FAILED_REFINEMENT": ["BACKLOG", "REFINEMENT", "BLOCKED"],
+    "BUILDING": ["AUDITING", "BLOCKED"],
+    "BLOCKED": ["BACKLOG", "REFINEMENT", "BUILDING", "DEPLOYING"],
+    "AUDITING": ["TESTING", "REJECTED", "BLOCKED", "FAILED_ESCALATED"],
+    "TESTING": ["PENDING_APPROVAL", "SPIKE_REVIEW", "REJECTED", "BLOCKED"],
+    "REJECTED": ["BUILDING", "REFINEMENT", "BLOCKED", "FAILED_ESCALATED"],
+    "FAILED_ESCALATED": ["BACKLOG", "BUILDING", "REFINEMENT"],
+    "PENDING_APPROVAL": ["DEPLOYING", "REJECTED"],
+    "SPIKE_REVIEW": ["DONE", "REFINEMENT", "REJECTED"],
+    "DEPLOYING": ["PROD_DEPLOYED", "REJECTED", "BLOCKED"],
+    "PROD_DEPLOYED": ["POST_PROD_QA", "REJECTED"],
+    "POST_PROD_QA": ["RETROSPECTIVE", "REJECTED"],
+    "RETROSPECTIVE": ["EXECUTIVE_REVIEW"],
+    "EXECUTIVE_REVIEW": ["DEEP_WRITE_DONE"],
+    "DEEP_WRITE_DONE": ["DONE"],
+    "DONE": []
 }
 
 @router.post("/update")
@@ -38,6 +47,13 @@ async def update_state(request: StateUpdateRequest, redis_client=Depends(get_red
     # Enforce State Transition
     if current_state in ALLOWED_TRANSITIONS and request.status not in ALLOWED_TRANSITIONS[current_state] and current_state != request.status:
         raise HTTPException(status_code=400, detail=f"Illegal state transition from {current_state} to {request.status}")
+
+    # 3-Strike FAILED_ESCALATED Hardware Lock Flush
+    if request.status == "FAILED_ESCALATED":
+        strike_count = await redis_client.incr(f"swarm:strikes:{request.ticket_id}")
+        if strike_count >= 3:
+            # Forcefully clear VRAM on RTX 4070 hardware
+            os.system('pkill -9 -f openclaw-gateway')
 
     if request.status == "DREAMSTATE_READY":
         if not request.payload or "security_audit" not in request.payload:

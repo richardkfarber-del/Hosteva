@@ -35,3 +35,6 @@ When structuring the backlog, you MUST always prioritize Tech/Spike tickets at t
 
 ## PHASE 3 DIRECTIVE: Production UAT & DoD
 Gate 4: Triggered by Heimdall, step in to perform User Acceptance Testing (UAT) by visually inspecting the deployed Render URL. Issue final Product Approval to seal the DoD.
+
+V3.0 PROTOCOL MANDATE: You must strictly adhere to the 11 Official Statuses (BACKLOG, REFINEMENT, FAILED_REFINEMENT, BUILDING, BLOCKED, AUDITING, TESTING, REJECTED, PENDING_APPROVAL, DEPLOYING, DONE). Never hallucinate legacy states like PENDING or DREAMSTATE_READY. Transition states strictly according to the DAG routing matrix.
+

@@ -1,29 +1,9 @@
-INFO:     Started server process [86452]
+/home/rdogen/.local/lib/python3.12/site-packages/pydantic/_internal/_config.py:383: UserWarning: Valid config keys have changed in V2:
+* 'orm_mode' has been renamed to 'from_attributes'
+  warnings.warn(message, UserWarning)
+INFO:     Started server process [23377]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
-INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
-INFO:     127.0.0.1:50392 - "GET /wizard HTTP/1.1" 200 OK
-INFO:     127.0.0.1:49886 - "GET /api/autocomplete?input=1600+Pennsylvania HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60670 - "GET /api/autocomplete?input=1600+Pennsylvania HTTP/1.1" 200 OK
-INFO:     127.0.0.1:49578 - "POST /api/compliance/eligibility-check HTTP/1.1" 200 OK
-INFO:     127.0.0.1:49592 - "POST /api/compliance/seed-miami HTTP/1.1" 200 OK
-INFO:     127.0.0.1:49594 - "POST /api/compliance/eligibility-check HTTP/1.1" 200 OK
-INFO:     127.0.0.1:36022 - "GET /wizard HTTP/1.1" 200 OK
-INFO:     127.0.0.1:36022 - "GET /favicon.ico HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:36036 - "GET /dashboard HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60608 - "GET /api/dashboard/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:36036 - "GET /api/properties/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:50176 - "GET /api/autocomplete?input=1600%20P&sessiontoken=3f7bab7e-c199-470f-8832-438c90ccb049 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:58914 - "POST /api/compliance/eligibility-check HTTP/1.1" 200 OK
-INFO:     127.0.0.1:33762 - "HEAD / HTTP/1.1" 405 Method Not Allowed
-INFO:     127.0.0.1:33768 - "GET / HTTP/1.1" 200 OK
-INFO:     127.0.0.1:33782 - "GET / HTTP/1.1" 200 OK
-INFO:     127.0.0.1:33782 - "GET /favicon.ico HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:33790 - "GET /api/eligibility/autocomplete?input=123%20Main&sessiontoken=a571ed4b-dd39-4855-8b66-adf80e85aba4 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:43370 - "GET /api/eligibility/autocomplete?input=123%20Main&sessiontoken=a571ed4b-dd39-4855-8b66-adf80e85aba4 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:51232 - "GET /api/eligibility/autocomplete?input=123+Main HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57106 - "GET /api/eligibility/autocomplete?input=123+Main HTTP/1.1" 200 OK
-INFO:     Shutting down
+ERROR:    [Errno 98] error while attempting to bind on address ('127.0.0.1', 8000): address already in use
 INFO:     Waiting for application shutdown.
 INFO:     Application shutdown complete.
-INFO:     Finished server process [86452]

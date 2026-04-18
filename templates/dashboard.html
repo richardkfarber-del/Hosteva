@@ -497,7 +497,7 @@ tailwind.config = {
                                      onclick="selectPlace('${p.place_id}', '${p.description.replace(/'/g, "\'")}')">
                                     ${p.description}
                                 </div>
-                            `).join('');
+                            `).join(''));
                             dropdown.classList.remove('hidden');
                         } else {
                             dropdown.classList.add('hidden');
@@ -687,7 +687,7 @@ tailwind.config = {
                         <div class="p-2">
                             <strong class="text-on-surface font-headline tracking-tight">${p.name}</strong><br>
                             <span class="text-gray-500 text-sm">${p.location}</span><br>
-                            <span class="text-xs font-bold ${p.zoning_status === 'Violation' ? 'text-red-500' : p.zoning_status 'Pending' 'text-yellow-500' 'text-teal-500'}">${p.zoning_status}</span>
+                            <span class="text-xs font-bold ${p.zoning_status === 'Violation' ? 'text-red-500' : p.zoning_status === 'Pending' ? 'text-yellow-500' : 'text-teal-500'}">${p.zoning_status}</span>
                         </div>
                     `));
                 }
@@ -793,35 +793,6 @@ tailwind.config = {
                             <h2>History</h2>
                             <ul>${data.history.map(h => `<li>${h.date} - ${h.action} (${h.status})</li>`).join('')}</ul>
                             ${data.violations.length > 0 ? `<h2 style="color:red;">Violations</h2><ul>${data.violations.map(v => `<li>${v.date} - ${v.type}: ${v.description}</li>`).join('')}</ul>` : ''}
-                        <script>
-    document.addEventListener("DOMContentLoaded", async function() {
-        try {
-            const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-            let userName = "Guest";
-            let userTier = "Free Tier";
-            let userInitials = "G";
-            
-            if (token) {
-                const response = await fetch("/api/v1/users/me", {
-                    headers: { "Authorization": `Bearer ${token}` }
-                });
-                if (response.ok) {
-                    const data = await response.json();
-                    userName = data.full_name || data.username || "User";
-                    userTier = data.tier || "Free Tier";
-                    userInitials = userName.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
-                }
-            }
-            document.getElementById("sidebar-user-name").textContent = userName;
-            document.getElementById("sidebar-user-tier").textContent = userTier;
-            document.getElementById("sidebar-user-initials").textContent = userInitials;
-        } catch (e) {
-            document.getElementById("sidebar-user-name").textContent = "Guest";
-            document.getElementById("sidebar-user-tier").textContent = "Free Tier";
-            document.getElementById("sidebar-user-initials").textContent = "G";
-        }
-    });
-    <\/script>
 </body>
                         </html>
                     `;

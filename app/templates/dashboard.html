@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hosteva Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined" rel="stylesheet">
+</head>
+<body>
+    <div id="property-list">
+        <div class="PropertyCardSkeleton animate-pulse"></div>
+    </div>
+    
+    <template id="property-card-skeleton">
+        <div class="animate-pulse bg-gray-200 p-4 rounded"></div>
+    </template>
+    
+    <template id="system-degraded-error">
+        <div class="error-container">
+            <span class="material-symbols-outlined">cloud_off</span>
+            <h1 class="error-title">System Degraded</h1>
+            <p>We are experiencing a timeout. Please try again later.</p>
+        </div>
+    </template>
+    
+    <div id="error-boundary" style="display: none;">
+        <h1 class="error-title">System Degraded</h1>
+        <p>We are experiencing a timeout. Please try again later.</p>
+    </div>
+</body>
+</html>

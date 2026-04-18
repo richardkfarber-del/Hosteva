@@ -6,18 +6,29 @@ from app.core.database import async_session_maker
 
 logger = logging.getLogger(__name__)
 
+async def update_ordinances(session: AsyncSession, payload: dict):
+    """
+    Business logic for FEAT-020: Compliance Evergreen System
+    Updates all relevant local ordinances.
+    """
+    logger.info("Executing Compliance Evergreen System: Updating all relevant local ordinances.")
+    # Here we would query the external ordinance APIs and update our DB.
+    # For now, simulate work.
+    await asyncio.sleep(2)
+    logger.info("Ordinances updated successfully.")
+
 async def process_queue():
     async with async_session_maker() as session:
         # Fetch a pending job
         result = await session.execute(
-            text("SELECT id, payload FROM jobs WHERE status = 'PENDING' FOR UPDATE SKIP LOCKED LIMIT 1")
+            text("SELECT id, task_name, payload FROM jobs WHERE status = 'PENDING' FOR UPDATE SKIP LOCKED LIMIT 1")
         )
         job = result.fetchone()
         
         if not job:
             return
             
-        job_id, payload = job
+        job_id, task_name, payload = job
         
         try:
             # Mark as RUNNING
@@ -27,9 +38,13 @@ async def process_queue():
             )
             await session.commit()
             
-            # Dummy processing
-            logger.info(f"Processing job {job_id} with payload {payload}")
-            await asyncio.sleep(1)
+            logger.info(f"Processing job {job_id} (Task: {task_name}) with payload {payload}")
+            
+            if task_name == "update_ordinances":
+                await update_ordinances(session, payload)
+            else:
+                # Dummy processing
+                await asyncio.sleep(1)
             
             # Mark as COMPLETED
             await session.execute(

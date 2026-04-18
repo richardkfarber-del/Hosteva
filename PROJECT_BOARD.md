@@ -103,9 +103,9 @@
 **Status:** Backlog
 **Description:** Implement the missing `/login` route and the complete user authentication flow. (Originally reported as a bug, but identified as an unbuilt feature).
 ### Acceptance Criteria:
-- [ ] **Iron Man (Backend):** Build secure `/login` and auth session management routes.
-- [ ] **Wasp (UI/UX):** Create the `/login` interface.
-- [ ] **Captain America (QA):** Verify users can log in, receive a valid session/token, and log out successfully.
+- [ ] **Given** an unauthenticated user navigates to `/login`, **When** the page loads, **Then** the application displays a secure login interface.
+- [ ] **Given** a user provides valid credentials, **When** the backend processes the login request, **Then** a secure session is established and the user is redirected to the dashboard.
+- [ ] **Given** an authenticated user initiates a logout, **When** the request is processed, **Then** the session is securely terminated and the user is redirected to the login interface.
 
 ## FEAT-020: Integrations Route & Wiring
 **Status:** Backlog

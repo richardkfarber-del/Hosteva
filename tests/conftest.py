@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 from app.main import app
 from app.database import Base, get_db
 
-SQLALCHEMY_TEST_DATABASE_URL = "postgresql+psycopg://user:password@localhost:5433/test_db"
+SQLALCHEMY_TEST_DATABASE_URL = "postgresql+psycopg://postgres:postgres@localhost:5432/hosteva"
 
 # Create a global DB engine
 engine = create_engine(SQLALCHEMY_TEST_DATABASE_URL)
@@ -15,6 +15,7 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engin
 @pytest.fixture(scope="session", autouse=True)
 def setup_database():
     """Create tables once for the test session."""
+    # Tollbooth enforced: No try/except bypass. Fail loudly.
     Base.metadata.create_all(bind=engine)
     yield
     # No drop_all! Perfect teardown is handled via rollback.

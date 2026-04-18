@@ -6,7 +6,7 @@ from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from app.database import engine, Base
-from app.routers import user, listings, ordinances, zoning, compliance, hosts, properties, notifications, dashboard_api, eligibility, florida_compliance, listing_optimizer, permit_generator, recommendations, subscriptions, documents
+from app.routers import user, listings, ordinances, zoning, compliance, hosts, properties, notifications, dashboard_api, eligibility, florida_compliance, listing_optimizer, permit_generator, recommendations, subscriptions, documents, market_intelligence
 from app.integrations.ota_routes import router as ota_router
 from app.api.routes import swarm, queue, properties as v1_properties
 from app.schemas.dashboard import HostDashboardResponse
@@ -29,7 +29,7 @@ ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "https://app.hosteva.com,https://
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS if os.getenv("ENVIRONMENT") == "production" else ["*"],
+    allow_origins=ALLOWED_ORIGINS, # Vibranium Habit: Never fallback to wildcard
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
@@ -42,12 +42,11 @@ if os.getenv("ENVIRONMENT") == "production":
 @app.middleware("http")
 async def add_security_headers(request: Request, call_next):
     response = await call_next(request)
-    # Vibranium Habit: Strict-Transport-Security and other browser security headers
-    if os.getenv("ENVIRONMENT") == "production":
-        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload"
-        response.headers["X-Content-Type-Options"] = "nosniff"
-        response.headers["X-Frame-Options"] = "DENY"
-        response.headers["X-XSS-Protection"] = "1; mode=block"
+    # Vibranium Habit: Strict-Transport-Security and other browser security headers applied globally
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
     return response
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
@@ -73,6 +72,7 @@ app.include_router(permit_generator.router)
 app.include_router(recommendations.router)
 app.include_router(subscriptions.router, prefix="/api")
 app.include_router(documents.router, prefix="/api")
+app.include_router(market_intelligence.router)
 app.include_router(ota_router)
 app.include_router(swarm.router)
 app.include_router(queue.router)
