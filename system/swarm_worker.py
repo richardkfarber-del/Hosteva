@@ -210,11 +210,11 @@ class SwarmWorker:
             "previous_response": data.get("previous_response", "")
         }
         self.redis_client.xadd(self.stream_name, {"payload": json.dumps(filtered_data)})
-        self.requeue_task(stream_id, data)
+        self.ack_task(stream_id)
 
     def dlq_task(self, stream_id: str, data: Dict[str, Any]) -> None:
         self.redis_client.xadd(self.dlq_name, {"payload": json.dumps(data)})
-        self.requeue_task(stream_id, data)
+        self.ack_task(stream_id)
 
 
 
