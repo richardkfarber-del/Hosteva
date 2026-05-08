@@ -1,5 +1,3 @@
-import os
-import shutil
 import subprocess
 
 def run_cmd(cmd):
@@ -9,13 +7,6 @@ def run_cmd(cmd):
     if res.stderr:
         print(f'ERROR: {res.stderr}')
 
-# Remove ALL problematic nested git repos
-for root, dirs, files in os.walk('/home/rdogen/OpenClaw_Factory/projects/Hosteva'):
-    if '.git' in dirs and root != '/home/rdogen/OpenClaw_Factory/projects/Hosteva':
-        bad_git = os.path.join(root, '.git')
-        shutil.rmtree(bad_git)
-        print(f'Removed {bad_git}')
-
-run_cmd('git add .')
-run_cmd('git commit -m "feat: Stripe Paywall Implementation (FEAT-013)"')
+run_cmd('git rm --cached openclaw-state.tgz')
+run_cmd('git commit --amend -m "feat: Stripe Paywall Implementation (FEAT-013) - without large state file"')
 run_cmd('git push origin master')
