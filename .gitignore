@@ -1,0 +1,8 @@
+.openclaw/
+.openclaw-madcloser/
+venv/
+__pycache__/
+node_modules/
+.env
+*.log
+*.bak

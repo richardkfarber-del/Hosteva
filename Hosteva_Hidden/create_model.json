@@ -1,0 +1,4 @@
+{
+  "name": "qwen2.5:14b",
+  "modelfile": "FROM qwen2.5:14b\nPARAMETER num_ctx 32768"
+}

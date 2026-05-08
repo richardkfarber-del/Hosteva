@@ -1,0 +1,12 @@
+{
+  "handoff_from": "Hawkeye",
+  "handoff_to": "Iron Man",
+  "sprint": "11",
+  "feature": "FEAT-016",
+  "mandate": "API Contract Mandate",
+  "instructions": "Iron Man, you are up. Sprint 11 is exclusively focused on FEAT-016 (Final Dashboard Integration & User Analytics). Before Wasp can touch the UI, you MUST define the API contract. Build the analytics endpoints and finalize the Swagger contract. Do not proceed to UI tasks or allow UI integration until the API contract is firmly established.",
+  "required_artifacts": [
+    "Swagger contract for analytics endpoints",
+    "Backend analytics API endpoints implemented"
+  ]
+}

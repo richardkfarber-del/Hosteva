@@ -1,0 +1,39 @@
+from graphbit import init, LlmConfig, Workflow, Executor, Node, tool, execute_workflow_tool_calls
+import subprocess
+import json
+
+init()
+
+@tool("Execute a shell command")
+def execute_shell(command: str) -> str:
+    """Execute a command in the shell and return its output."""
+    print(f"*** TOOL CALLED WITH: {command} ***")
+    res = subprocess.run(command, shell=True, capture_output=True, text=True)
+    return f"STDOUT:\n{res.stdout}\nSTDERR:\n{res.stderr}"
+
+config = LlmConfig.ollama('qwen2.5-coder:7b')
+
+node = Node.agent(
+    name="Test Agent",
+    prompt="Run the 'ls -la' command using your tool. Return a JSON list of tool calls.",
+    tools=[execute_shell],
+    llm_config=config
+)
+
+workflow = Workflow("Test")
+workflow.add_node(node)
+
+executor = Executor(config)
+result = executor.execute(workflow)
+
+output = result.get_node_output("Test Agent")
+print("Node output:", output)
+
+try:
+    # Try calling execute_workflow_tool_calls with tool names
+    if not output.strip().startswith('['):
+        output = f"[{output}]"
+    tool_result = execute_workflow_tool_calls(output, ["execute_shell"])
+    print("Tool execution result:", tool_result)
+except Exception as e:
+    print("Error calling execute_workflow_tool_calls:", e)
