@@ -6,4 +6,4 @@ templates = Jinja2Templates(directory="app/templates")
 
 @router.get("/pricing")
 def pricing_page(request: Request):
-    return templates.TemplateResponse("pricing.html", {"request": request})
+    return templates.TemplateResponse(request=request, name="pricing.html", context={"request": request})
