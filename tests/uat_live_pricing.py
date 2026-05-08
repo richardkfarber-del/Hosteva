@@ -12,11 +12,13 @@ def run_uat():
             response = page.goto("https://hosteva.onrender.com/pricing", timeout=60000)
             print(f"HTTP Status: {response.status}")
             print(f"Page Title: {page.title()}")
-            content = page.content().lower()
+            
             if response.status != 200:
                 print(f"UAT FAILED: Expected HTTP 200, got {response.status}")
                 sys.exit(1)
-            elif "stripe" in content or "subscribe" in content:
+                
+            content = page.content().lower()
+            if "stripe" in content or "subscribe" in content:
                 print("UAT SUCCESS: Pricing UI loaded successfully.")
             else:
                 print("UAT WARNING: Page loaded, but pricing/subscription elements not found in the DOM.")
