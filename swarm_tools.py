@@ -12,7 +12,7 @@ def run_shell_command(command: str) -> str:
             shell=True, 
             capture_output=True, 
             text=True, 
-            timeout=60,
+            timeout=600,
             cwd="/home/rdogen/OpenClaw_Factory/projects/Hosteva"
         )
         out = result.stdout.strip()
@@ -22,7 +22,7 @@ def run_shell_command(command: str) -> str:
         else:
             return f"FAILED (Code {result.returncode})\nSTDOUT:\n{out}\nSTDERR:\n{err}"
     except subprocess.TimeoutExpired:
-        return "CRITICAL ERROR: Command timed out after 60 seconds. The process hung (e.g., infinite loop or hanging database connection)."
+        return "CRITICAL ERROR: Command timed out after 600 seconds. The process hung (e.g., infinite loop or hanging database connection)."
     except Exception as e:
         return f"CRITICAL ERROR: {str(e)}"
 
