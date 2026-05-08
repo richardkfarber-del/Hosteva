@@ -1,0 +1,274 @@
+{% extends "base.html" %}
+
+{% block title %}Eligibility Wizard | Hosteva{% endblock %}
+
+{% block extra_head %}
+<style>
+    .glass-panel {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        box-shadow: 0 20px 40px rgba(0, 28, 55, 0.08);
+    }
+    
+    .insight-prism {
+        border-left: 3px solid #75fbbf;
+    }
+    
+    .glass-input:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(0, 101, 118, 0.3);
+        background-color: #ffffff;
+    }
+    
+    .autocomplete-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        margin-top: 4px;
+        border-radius: 0 0 8px 8px;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(12px);
+        box-shadow: 0 10px 25px rgba(0, 28, 55, 0.1);
+        z-index: 60;
+        max-height: 250px;
+        overflow-y: auto;
+    }
+    .autocomplete-dropdown div {
+        padding: 12px 16px;
+        cursor: pointer;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+        transition: background-color 0.15s ease;
+        font-size: 14px;
+        color: #001c37;
+    }
+    .autocomplete-dropdown div:hover {
+        background: rgba(0, 101, 118, 0.06);
+    }
+</style>
+{% endblock %}
+
+{% block header_title %}Eligibility Audit{% endblock %}
+
+{% block content %}
+
+<div class="max-w-4xl mx-auto glass-panel rounded-2xl overflow-hidden border border-white/50 flex flex-col md:flex-row min-h-[600px] relative">
+    
+    <!-- Decorative background element inside card -->
+    <div class="absolute top-0 right-0 w-96 h-96 bg-primary-container opacity-5 rounded-full blur-[80px] pointer-events-none"></div>
+
+    <!-- Left Panel: Input -->
+    <div class="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center relative z-10 bg-white/40">
+        <div class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-white shadow-sm text-primary mb-6 border border-outline-variant/20">
+            <span class="material-symbols-outlined">shield_with_house</span>
+        </div>
+        <h2 class="font-headline text-3xl font-extrabold mb-4 tracking-tight text-on-surface">Eligibility Audit</h2>
+        <p class="text-on-surface-variant mb-8 leading-relaxed">Enter the property address to verify local zoning constraints and state permit requirements.</p>
+
+        <form id="auditForm" class="space-y-4">
+            <div>
+                <label class="block text-sm font-bold text-on-surface mb-2 font-headline">Property Address</label>
+                <div class="relative">
+                    <span class="material-symbols-outlined absolute left-4 top-3.5 text-outline">location_on</span>
+                    <input type="text" id="addressInput" placeholder="e.g. 123 Ocean Drive, Miami FL" 
+                        class="w-full bg-white/80 border border-outline-variant/30 rounded-xl pl-12 pr-4 py-3.5 text-on-surface placeholder:text-outline glass-input transition-all">
+                    <!-- Dropdown for autocomplete suggestions -->
+                    <div id="autocomplete-dropdown" class="autocomplete-dropdown hidden"></div>
+                </div>
+                <p id="addressError" class="text-red-500 text-xs mt-2 hidden font-medium">Please enter a valid property address.</p>
+            </div>
+            
+            <button id="auditBtn" class="w-full primary-gradient text-on-primary font-bold rounded-xl px-4 py-3.5 shadow-ambient-light hover:shadow-ambient transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2">
+                <span>Run Compliance Audit</span>
+                <span class="material-symbols-outlined text-sm">arrow_forward</span>
+            </button>
+        </form>
+    </div>
+
+    <!-- Right Panel: Results (The Insight Prism) -->
+    <div class="w-full md:w-1/2 bg-surface/50 border-t md:border-l md:border-t-0 border-white/40 p-8 md:p-12 flex flex-col justify-center relative overflow-hidden z-10" id="resultsPanel">
+        
+        <!-- Default State -->
+        <div id="defaultState" class="text-center">
+            <div class="w-20 h-20 rounded-full bg-white/60 mx-auto flex items-center justify-center mb-6 shadow-sm border border-white">
+                <span class="material-symbols-outlined text-outline" style="font-size: 32px;">search</span>
+            </div>
+            <p class="text-on-surface-variant font-medium">Awaiting address input...</p>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="hidden flex-col items-center text-center">
+            <div class="w-12 h-12 border-4 border-surface-container-high border-t-primary rounded-full animate-spin mb-6 shadow-sm"></div>
+            <p class="text-primary font-bold tracking-tight animate-pulse font-headline">Querying municipal databases...</p>
+        </div>
+
+        <!-- Result State -->
+        <div id="dataState" class="hidden flex-col h-full insight-prism pl-6">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="font-headline text-xl font-extrabold text-on-surface">Audit Results</h3>
+                <span id="resultBadge" class="px-3 py-1 text-xs font-bold uppercase rounded-full shadow-sm tracking-wider"></span>
+            </div>
+
+            <div class="bg-white/80 rounded-xl p-5 mb-8 border border-white shadow-sm">
+                <p id="resultMessage" class="text-on-surface-variant leading-relaxed font-medium"></p>
+            </div>
+
+            <h4 class="text-xs font-bold text-outline uppercase tracking-widest mb-4">Regulatory Checklist</h4>
+            <ul id="resultDetails" class="space-y-4">
+                <!-- Populated via JS -->
+            </ul>
+
+            <button class="mt-auto w-full bg-white border border-outline-variant/30 text-primary font-bold rounded-xl px-4 py-3.5 hover:bg-surface transition-all shadow-sm flex items-center justify-center gap-2 group">
+                <span>Generate Permit Application</span>
+                <span class="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">description</span>
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Hosteva V2 Autocomplete implementation (Internal DB search over Google)
+    let sessionToken = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2);
+    let debounceTimer;
+
+    const addressInput = document.getElementById('addressInput');
+    const autocompleteDropdown = document.getElementById('autocomplete-dropdown');
+
+    addressInput.addEventListener('input', (e) => {
+        const addressError = document.getElementById('addressError');
+        if (addressError) {
+            addressError.classList.add('hidden');
+            addressInput.classList.remove('border-red-500', 'focus:border-red-500', 'focus:ring-red-500');
+            addressInput.classList.add('border-outline-variant/30');
+        }
+        const val = e.target.value.trim();
+        if (!val) {
+            autocompleteDropdown.classList.add('hidden');
+            return;
+        }
+        
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            // Call the internal FastAPI autocomplete endpoint
+            fetch(`/api/eligibility/autocomplete?input=${encodeURIComponent(val)}&sessiontoken=${sessionToken}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.predictions && data.predictions.length > 0) {
+                        autocompleteDropdown.innerHTML = DOMPurify.sanitize(data.predictions.map(p => `
+                            <div class="suggestion-item" data-place-id="${p.place_id}" data-description="${p.description.replace(/"/g, '&quot;')}">
+                                ${p.description}
+                            </div>
+                        `).join(''));
+                        autocompleteDropdown.classList.remove('hidden');
+                    } else {
+                        autocompleteDropdown.classList.add('hidden');
+                    }
+                })
+                .catch(err => console.error('Autocomplete fetch error:', err));
+        }, 300);
+    });
+
+    // Hide dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!addressInput.contains(e.target) && !autocompleteDropdown.contains(e.target)) {
+            autocompleteDropdown.classList.add('hidden');
+        }
+    });
+
+    // Handle suggestion selection
+    autocompleteDropdown.addEventListener('click', (e) => {
+        const item = e.target.closest('.suggestion-item');
+        if (item) {
+            addressInput.value = item.dataset.description;
+            autocompleteDropdown.classList.add('hidden');
+            // Reset session token after a selection is made
+            sessionToken = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2);
+        }
+    });
+
+    // Existing Audit Logic
+    document.getElementById('auditForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const address = addressInput.value.trim();
+        const addressError = document.getElementById('addressError');
+        
+        if (!address) {
+            addressError.classList.remove('hidden');
+            addressInput.classList.add('border-red-500', 'focus:border-red-500', 'focus:ring-red-500');
+            addressInput.classList.remove('border-outline-variant/30');
+            return;
+        } else {
+            addressError.classList.add('hidden');
+            addressInput.classList.remove('border-red-500', 'focus:border-red-500', 'focus:ring-red-500');
+            addressInput.classList.add('border-outline-variant/30');
+        }
+
+        // UI Transitions
+        document.getElementById('defaultState').classList.add('hidden');
+        document.getElementById('dataState').classList.add('hidden');
+        document.getElementById('loadingState').classList.remove('hidden');
+        document.getElementById('loadingState').classList.add('flex');
+        document.getElementById('auditBtn').disabled = true;
+
+        try {
+            const response = await fetch('/api/eligibility/check', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ address })
+            });
+            
+            if (!response.ok) {
+                throw new Error('Network response was not ok (status ' + response.status + ')');
+            }
+            
+            const data = await response.json();
+            
+            // Populate Data
+            document.getElementById('resultMessage').innerText = data.conditions || data.plain_english_conditions || data.reason || 'No details available.';
+            
+            const badge = document.getElementById('resultBadge');
+            const statusUpper = (data.status || data.eligibility_status || '').toUpperCase();
+            if(statusUpper === 'GREEN') {
+                badge.innerText = 'Eligible';
+                badge.className = 'px-3 py-1 text-xs font-bold uppercase rounded-full shadow-sm tracking-wider bg-tertiary-fixed text-on-surface border border-[#52aecd]/20';
+            } else if(statusUpper === 'YELLOW') {
+                badge.innerText = 'Review Required';
+                badge.className = 'px-3 py-1 text-xs font-bold uppercase rounded-full shadow-sm tracking-wider bg-yellow-100 text-yellow-700 border border-yellow-200';
+            } else {
+                badge.innerText = 'Action Required';
+                badge.className = 'px-3 py-1 text-xs font-bold uppercase rounded-full shadow-sm tracking-wider bg-red-100 text-red-700 border border-red-200 animate-pulse';
+            }
+
+            const detailsList = document.getElementById('resultDetails');
+            detailsList.innerHTML = '';
+            
+            const items = data.components || [];
+            if (data.jurisdiction) items.unshift('Jurisdiction: ' + data.jurisdiction);
+            
+            items.forEach(detail => {
+                const li = document.createElement('li');
+                li.className = 'flex items-start text-sm text-on-surface-variant font-medium';
+                li.innerHTML = DOMPurify.sanitize(`<span class="material-symbols-outlined text-primary mr-3 shrink-0" style="font-size: 20px;">check_circle</span> ${detail}`);
+                detailsList.appendChild(li);
+            });
+
+            // Show Results
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('loadingState').classList.remove('flex');
+            document.getElementById('dataState').classList.remove('hidden');
+            document.getElementById('dataState').classList.add('flex');
+
+        } catch (err) {
+            alert('Audit failed to run: ' + err.message);
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('loadingState').classList.remove('flex');
+            document.getElementById('defaultState').classList.remove('hidden');
+        } finally {
+            document.getElementById('auditBtn').disabled = false;
+        }
+    });
+</script>
+{% endblock %}
