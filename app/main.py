@@ -14,7 +14,7 @@ import os
 import traceback
 import requests
 
-templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(directory="app/templates")
 
 SHOW_DOCS = os.getenv("SHOW_DOCS", "True").lower() == "true"
 
