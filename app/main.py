@@ -89,6 +89,7 @@ def read_root(request: Request):
         context={"request": request}
     )
 
+
 @app.get("/wizard", include_in_schema=False)
 def read_wizard(request: Request):
     return templates.TemplateResponse(
@@ -97,12 +98,10 @@ def read_wizard(request: Request):
         context={"request": request, "active_page": "compliance"}
     )
 
-
-
-@app.get('/dashboard', name="dashboard")
+@app.get("/dashboard", name="dashboard")
 def read_dashboard(request: Request):
     return templates.TemplateResponse(
         request=request,
         name="dashboard.html", 
-        context={"request": request, "google_maps_api_key": os.environ.get("GOOGLE_MAPS_API_KEY", ""), "active_page": "dashboard"}
+        context={"request": request, "google_maps_api_key": os.getenv("GOOGLE_MAPS_API_KEY", ""), "active_page": "dashboard"}
     )
