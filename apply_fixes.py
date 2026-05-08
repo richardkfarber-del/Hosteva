@@ -1,50 +1,31 @@
-import os
 import re
-import glob
 
-# 1. & 3. Fix UUIDs and Context Bleed
-for filepath in glob.glob('/home/rdogen/OpenClaw_Factory/projects/Hosteva/run_*.py'):
-    with open(filepath, 'r') as f:
-        content = f.read()
-    
-    new_content = content
-    # Fix UUIDs
-    new_content = re.sub(r"append_to_ledger\(f'KICKBACK triggered by \{k\}'\)", "append_to_ledger('KICKBACK triggered')", new_content)
-    
-    # Context bleed
-    if 'load_system_prompt' in new_content and '=== CRITICAL DIRECTIVE ===' not in new_content:
-        new_content = new_content.replace('return rules', 'return rules + "\\n\\n=== CRITICAL DIRECTIVE ===\\n\\nYour CURRENT task is defined EXCLUSIVELY by the active Sprint Backlog and the artifacts provided below. DO NOT reference past test failures or external logs.\\n"')
+# Fix pricing.py
+pricing_path = 'app/routers/pricing.py'
+with open(pricing_path, 'r') as f:
+    p_content = f.read()
+p_content = p_content.replace('templates.TemplateResponse("pricing.html", {"request": request})', 'templates.TemplateResponse(request=request, name="pricing.html", context={"request": request})')
+with open(pricing_path, 'w') as f:
+    f.write(p_content)
 
-    # Add UUID mapping if not present
-    if 'ids = {' in new_content and 'id_to_name =' not in new_content:
-        new_content = re.sub(r"(ids = \{.*?\}\n)", r"\1id_to_name = {v: k for k, v in ids.items()}\n", new_content, flags=re.DOTALL)
-        new_content = new_content.replace("f'# {k}\\n{v}\\n\\n'", "f'# {id_to_name.get(k, k)}\\n{v}\\n\\n'")
+# Fix main.py
+main_path = 'app/main.py'
+with open(main_path, 'r') as f:
+    m_content = f.read()
 
-    if new_content != content:
-        with open(filepath, 'w') as f:
-            f.write(new_content)
-        print(f"Patched {filepath}")
+# Replace the malformed line
+# We use a regex to catch the malformed part without needing the exact redacted text
+m_content = re.sub(r'"google_maps_"api_key": ".*?\("GOOGLE_MAPS_API_KEY", ""\)', '"google_maps_api_key": os.getenv("GOOGLE_MAPS_API_KEY", "")', m_content)
 
-# 2. Fix Coulson 3-Strike
-coulson_path = '/home/rdogen/OpenClaw_Factory/projects/Hosteva/run_coulson_intervention.py'
-with open(coulson_path, 'r') as f:
-    coulson = f.read()
-    
-strike_logic = """def count_consecutive_kickbacks():
-    strike_file = os.path.join(os.path.dirname(__file__), 'strike_counter.txt')
-    count = 0
-    if os.path.exists(strike_file):
-        with open(strike_file, 'r') as f:
-            try:
-                count = int(f.read().strip())
-            except:
-                pass
-    count += 1
-    with open(strike_file, 'w') as f:
-        f.write(str(count))
-    return count
-"""
-coulson = re.sub(r'def count_consecutive_kickbacks\(\):.*?return 0', strike_logic, coulson, flags=re.DOTALL)
-with open(coulson_path, 'w') as f:
-    f.write(coulson)
-print("Patched run_coulson_intervention.py")
+with open(main_path, 'w') as f:
+    f.write(m_content)
+
+# Fix uat_live_pricing.py
+uat_path = 'tests/uat_live_pricing.py'
+with open(uat_path, 'r') as f:
+    u_content = f.read()
+u_content = u_content.replace('content = page.content().lower()\n            if response.status != 200:', 'if response.status != 200:\n                print(f"UAT FAILED: Expected HTTP 200, got {response.status}")\n                sys.exit(1)\n            content = page.content().lower()')
+with open(uat_path, 'w') as f:
+    f.write(u_content)
+
+print("Fixes applied.")

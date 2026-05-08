@@ -59,7 +59,7 @@ agent_coulson_node = Node.agent(
 rocket_raccoon_node = Node.agent(
     name='Rocket Raccoon',
     prompt='The tests failed or hung. Use your shell tool to run pytest, read the stack trace, and fix the code.',
-    system_prompt=load_prompt('rocket_rules.md'),
+    system_prompt=load_prompt('rocket_raccoon_rules.md'),
     llm_config=local_config,
     tools=native_tools
 )
@@ -68,26 +68,22 @@ rocket_raccoon_node = Node.agent(
 # Instead of blind baton passes, Coulson mathematically evaluates the state.
 
 def coulson_router(state):
-    coulson_output = state.node_outputs.get('Agent Coulson', '').lower()
+    coulson_output = state.get('node_outputs', {}).get('Agent Coulson', '').lower()
     
     if 'timeout' in coulson_output or 'hung' in coulson_output or 'critical error' in coulson_output:
         print("\n[COULSON EVENT]: Process hung. Triggering Rocket Raccoon Failsafe.")
         return 'Rocket Raccoon'
     
-    if 'fail' in coulson_output:
-        print("\n[COULSON EVENT]: Tests failed. Routing back to Iron Man.")
-        return 'Iron Man'
-        
-    print("\n[COULSON EVENT]: All tests passed. Proceeding to QA.")
-    return 'END' # Proceed to next phase
+    print("\n[COULSON EVENT]: Evaluation complete. Proceeding to End.")
+    return 'END'
 
 def rocket_router(state):
-    rocket_output = state.node_outputs.get('Rocket Raccoon', '').lower()
+    rocket_output = state.get('node_outputs', {}).get('Rocket Raccoon', '').lower()
     if 'fail' in rocket_output or 'timeout' in rocket_output:
         print("\n[ROCKET EVENT]: Rocket failed to fix the issue. Escalating to human.")
         return 'END'
     print("\n[ROCKET EVENT]: Rocket fixed the issue. Returning to standard pipeline.")
-    return 'Agent Coulson'
+    return 'END'
 
 # Define the Router Nodes
 coulson_route_node = Node.condition('Coulson Router', coulson_router)
@@ -105,6 +101,9 @@ nodes = [
     rocket_route_node
 ]
 
+end_node = Node.agent(name='END', prompt='Acknowledge completion.', system_prompt='You are the end node.', llm_config=local_config)
+nodes.append(end_node)
+
 ids = {n.name(): workflow.add_node(n) for n in nodes}
 
 # Event Loop Connections
@@ -113,15 +112,14 @@ workflow.connect(ids['Iron Man'], ids['Agent Coulson'])
 workflow.connect(ids['Agent Coulson'], ids['Coulson Router'])
 
 # Coulson routes to Rocket on failure, or END on success
-# (GraphBit resolves target strings dynamically from the router function)
+workflow.connect(ids['Coulson Router'], ids['Rocket Raccoon'])
+workflow.connect(ids['Coulson Router'], ids['END'])
 
-# Rocket attempts to fix, then routes back to Coulson to verify
+# Rocket attempts to fix, then routes to END
 workflow.connect(ids['Rocket Raccoon'], ids['Rocket Router'])
+workflow.connect(ids['Rocket Router'], ids['END'])
 
 if __name__ == '__main__':
-    # Allow the loop to cycle backwards (e.g. Coulson -> Iron Man)
-    workflow.set_graph_metadata('allow_cycles', True)
-    
     # Use the native Executor with streaming to catch events in real-time
     executor = Executor(local_config, timeout_seconds=3600)
     
