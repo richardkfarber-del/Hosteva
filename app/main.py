@@ -13,6 +13,9 @@ from app.schemas.dashboard import HostDashboardResponse
 import os
 import traceback
 import requests
+from dotenv import load_dotenv
+
+load_dotenv()
 
 templates = Jinja2Templates(directory="app/templates")
 
