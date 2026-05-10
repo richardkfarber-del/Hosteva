@@ -14,13 +14,13 @@ ENV PATH="/opt/venv/bin:$PATH"
 RUN uv venv /opt/venv
 
 # Install dependencies using cache mounts
+# We bind mount README.md and the app directory so setuptools can build the metadata without crashing
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
-    uv sync --no-install-project --no-dev && \
-    find /opt/venv -name "*.so" -exec strip {} \; || true && \
-    rm -rf /opt/venv/lib/python*/site-packages/numpy/core/tests || true
-
+    --mount=type=bind,source=README.md,target=README.md \
+    --mount=type=bind,source=app,target=app \
+    uv sync --no-install-project --no-dev
 
 # Final runtime stage
 FROM python:3.12-slim
