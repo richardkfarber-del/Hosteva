@@ -7,9 +7,15 @@ This document outlines the architectural structure and key components of the Hos
 -   **`agents/`**: Contains various AI agents, each designed for specific tasks.
     -   **`agents/iron-man/`**: Iron Man-themed agents.
         -   `snap_algorithm.py`: Implements a "snap" algorithm, possibly for data cleanup or simulating resource reduction, by randomly deleting half of the files in a target directory. It includes error handling and a test execution block.
--   **`app/`**: Likely houses the core application logic.
+-   **`app/`**: Houses the core application logic, configuration, scripts, and static assets.
+    -   **`app/core/`**: Contains core application configurations.
+        -   `config.py`: Defines application settings using Pydantic's `BaseSettings`.
     -   **`app/scripts/`**: Utility scripts for the application.
         -   `seed_florida_ordinances.py`: A script responsible for seeding a test ordinance for Florida State into a production database via an external API endpoint (`https://hosteva.onrender.com/api/ordinances/ingest`). It uses `requests` for HTTP POST and includes error handling.
+    -   **`app/static/`**: Directory for static web assets.
+        -   `.gitkeep`: Placeholder file to ensure the directory is tracked by Git.
+-   **`backend/`**: No files from this directory were provided for analysis.
+-   **`frontend/`**: No files from this directory were provided for analysis.
 -   **`scrum_master.py`**: A placeholder file, possibly for a main orchestrator script or a general scrum-related utility, with a `TODO` for "Shuri's review of V3 architecture".
 -   **`scrum_pipelines/`**: Contains definitions and configurations for automated scrum processes or AI-driven workflows.
     -   `gb_config.py`: Configuration for Graphbit workflows. It loads environment variables, initializes Graphbit, defines an LLM configuration for `ollama('llama3.1-orchestrator')`, and includes a `run_single_agent` function. This function constructs and executes a Graphbit workflow for a single agent, loading skills from `skills/` directory, crafting prompts, and integrating tools like `run_shell_command`, `read_file`, and `write_file`. It emphasizes absolute paths for file operations within the project root `/home/rdogen/OpenClaw_Factory/projects/Hosteva`.
