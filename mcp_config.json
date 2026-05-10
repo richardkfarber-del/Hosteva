@@ -12,6 +12,13 @@
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-puppeteer"]
     },
+    "render": {
+      "command": "npx",
+      "args": ["-y", "mcp-render"],
+      "env": {
+        "RENDER_API_KEY": "${RENDER_API_KEY}"
+      }
+    },
     "backlog": {
       "command": "/home/rdogen/OpenClaw_Factory/projects/Hosteva/venv/bin/python",
       "args": ["/home/rdogen/OpenClaw_Factory/projects/Hosteva/mcp_servers/backlog_mcp.py"]
