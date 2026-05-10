@@ -74,13 +74,16 @@ async def stripe_webhook(request: Request, stripe_signature: Optional[str] = Hea
         subscription_id = session.get('subscription')
         
         if client_reference_id:
-            # In a real app, update the user's subscription in the database
-            # user = db.query(User).filter(User.id == int(client_reference_id)).first()
-            # if user:
-            #     user.stripe_customer_id = stripe_customer_id
-            #     user.subscription_status = 'active'
-            #     user.stripe_subscription_id = subscription_id
-            #     db.commit()
-            print(f"Fulfilling subscription for user {client_reference_id}")
+            # Update the user's subscription in the database
+            if db is not None:
+                user = db.query(User).filter(User.id == int(client_reference_id)).first()
+                if user:
+                    user.stripe_customer_id = stripe_customer_id
+                    user.subscription_status = 'active'
+                    user.stripe_subscription_id = subscription_id
+                    db.commit()
+                    print(f"Successfully activated subscription for user {client_reference_id}")
+            else:
+                print(f"[MOCK DB] Fulfilling subscription for user {client_reference_id}")
 
     return {"status": "success"}

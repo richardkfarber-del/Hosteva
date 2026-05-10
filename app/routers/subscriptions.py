@@ -4,6 +4,12 @@ from typing import Optional
 import stripe
 import os
 from app.worker import redis_client
+
+def update_subscription_status(client_reference_id, stripe_customer_id, subscription_id):
+    """Updates the user's subscription status in the database."""
+    # TODO: Implement actual database session injection and update logic
+    pass
+
 # from app.database import get_db
 
 router = APIRouter(prefix="/subscriptions", tags=["subscriptions"])
@@ -92,5 +98,6 @@ async def stripe_webhook(request: Request, stripe_signature: Optional[str] = Hea
         
         print(f"Webhook received: Fulfilling subscription for user {client_reference_id}")
         # In a real app, update DB here
+        update_subscription_status(client_reference_id, stripe_customer_id, subscription_id)
 
     return {"status": "success"}

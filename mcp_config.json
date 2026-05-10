@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"]
+    },
+    "docker": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-docker"]
+    },
+    "puppeteer": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-puppeteer"]
+    },
+    "backlog": {
+      "command": "/home/rdogen/OpenClaw_Factory/projects/Hosteva/venv/bin/python",
+      "args": ["/home/rdogen/OpenClaw_Factory/projects/Hosteva/mcp_servers/backlog_mcp.py"]
+    }
+  }
+}

@@ -15,7 +15,7 @@ def load_prompt(filename):
 
 # --- LLM Configs ---
 # Using the local orchestrator model
-local_config = LlmConfig.ollama('llama3.1-orchestrator')
+local_config = LlmConfig.ollama('qwen-agent-32k:latest')
 
 # Give tools to the agents
 native_tools = [run_shell_command, read_file, write_file]
@@ -114,13 +114,11 @@ workflow.connect(ids['Agent Coulson'], ids['Coulson Router'])
 # Coulson routes to Rocket on failure, or END on success
 workflow.connect(ids['Coulson Router'], ids['Rocket Raccoon'])
 workflow.connect(ids['Coulson Router'], ids['END'])
-
-# Rocket attempts to fix, then routes to END
 workflow.connect(ids['Rocket Raccoon'], ids['Rocket Router'])
-workflow.connect(ids['Rocket Router'], ids['END'])
 
 if __name__ == '__main__':
     # Use the native Executor with streaming to catch events in real-time
+    workflow.set_graph_metadata('allow_cycles', True)
     executor = Executor(local_config, timeout_seconds=3600)
     
     print("\n🚀 IGNITING EVENT-DRIVEN SWARM...\n")
