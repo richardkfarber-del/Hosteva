@@ -35,4 +35,4 @@ COPY --chown=hosteva_user:hosteva_user . /app
 
 USER hosteva_user
 
-CMD gunicorn app.main:app -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:${PORT:-8000}
+CMD /opt/venv/bin/gunicorn app.main:app -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:${PORT:-8000}

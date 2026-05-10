@@ -1,4 +1,6 @@
 import sys
+import os
+import json
 from gb_config import run_single_agent, local_config
 
 def main():
@@ -6,10 +8,17 @@ def main():
     print("  [PHASE 7] SECURITY & COMPLIANCE GATES")
     print("======================================================")
     
+    state_path = os.environ.get("SWARM_STATE_FILE", os.path.join(os.path.dirname(os.path.dirname(__file__)), "swarm_state.json"))
+    try:
+        with open(state_path, "r") as f:
+            state = json.load(f)
+    except FileNotFoundError:
+        state = {"skills": {}, "kickback_context": None}
+
     skill_file = "security_audit_skill.md"
     
     initial_state = {
-        "input": "Perform static code analysis, vulnerability scanning, and license governance on the codebase."
+        "input": state.get("input", "")
     }
     
     print("-> AGENT-19-SECURITY (Black Panther) & AGENT-21-REDTEAM (Ultron) bound to security_audit_skill.md")
@@ -25,7 +34,7 @@ def main():
             config=local_config,
             initial_state=initial_state
         )
-        outputs_dict = result_obj if isinstance(result_obj, dict) else {agent_name.replace(" ", "_"): str(result_obj)}
+        outputs_dict = result_obj if isinstance(result_obj, dict) else {"Security_Team": str(result_obj)}
         output_text = outputs_dict.get("Security_Team", str(outputs_dict))
     except Exception as e:
         output_text = f"GraphBit Execution Failed: {str(e)}"

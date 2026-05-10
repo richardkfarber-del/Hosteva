@@ -14,10 +14,7 @@
     },
     "render": {
       "command": "npx",
-      "args": ["-y", "mcp-render"],
-      "env": {
-        "RENDER_API_KEY": "${RENDER_API_KEY}"
-      }
+      "args": ["-y", "mcp-render"]
     },
     "backlog": {
       "command": "/home/rdogen/OpenClaw_Factory/projects/Hosteva/venv/bin/python",

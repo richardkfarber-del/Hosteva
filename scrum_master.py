@@ -16,16 +16,27 @@ def load_skill(skill_name):
     return ""
 
 def init_state():
+    backlog_content = ""
+    backlog_path = os.path.join(BASE_DIR, "SPRINT_BACKLOG.md")
+    if os.path.exists(backlog_path):
+        with open(backlog_path, 'r') as f:
+            backlog_content = f.read()
+
     state = {
         "status": "in_progress",
         "current_phase": "01_intake",
+        "input": backlog_content,
         "kickback_context": "",
         "skills": {
             "architecture": load_skill("architecture_skill.md"),
             "pr_review": load_skill("pr_review_skill.md"),
             "qa_generation": load_skill("qa_generation_skill.md")
         },
-        "strikes": 0
+        "strikes": {
+            "05_execution": 0,
+            "06_review": 0,
+            "07_security": 0
+        }
     }
     save_state(state)
     return state
@@ -70,16 +81,23 @@ def main():
             sys.exit(1)
 
     # Phase 5-7: Execution, Review, QA (The Core Kickback Loop)
-    max_strikes = 3
+    max_strikes = 2
     success = False
 
-    while state["strikes"] < max_strikes:
-        print(f"\n--- Sprint Iteration {state['strikes'] + 1} ---")
+    while True:
+        # Load state to get updated strikes in case sub-scripts modify it
+        state = load_state()
+        if "strikes" not in state or not isinstance(state["strikes"], dict):
+            state["strikes"] = {"05_execution": 0, "06_review": 0, "07_security": 0}
+
+        print(f"\n--- Sprint Iteration ---")
         
         # Phase 5: Execution
         code_exec = run_phase("05_execution.py")
         if code_exec != 0:
-            state["strikes"] += 1
+            state["strikes"]["05_execution"] += 1
+            if state["strikes"]["05_execution"] >= max_strikes:
+                break
             state["kickback_context"] = "Execution failed. Review logs."
             save_state(state)
             continue
@@ -87,7 +105,9 @@ def main():
         # Phase 6: PR Review
         code_review = run_phase("06_review.py")
         if code_review != 0:
-            state["strikes"] += 1
+            state["strikes"]["06_review"] += 1
+            if state["strikes"]["06_review"] >= max_strikes:
+                break
             state["kickback_context"] = "PR Review rejected. Fix code."
             save_state(state)
             print("Kickback triggered by PR Review. Routing back to Phase 5.")
@@ -96,7 +116,9 @@ def main():
         # Phase 7: Security Audit
         code_sec = run_phase("07_security.py")
         if code_sec != 0:
-            state["strikes"] += 1
+            state["strikes"]["07_security"] += 1
+            if state["strikes"]["07_security"] >= max_strikes:
+                break
             state["kickback_context"] = "Security audit failed. Fix vulnerabilities."
             save_state(state)
             print("Kickback triggered by Security. Routing back to Phase 5.")
@@ -107,7 +129,7 @@ def main():
         break
 
     if not success:
-        print("\n🚨 MAX STRIKES REACHED. TRIGGERING ROCKET RACCOON FAILSAFE 🚨")
+        print("\n🚨 MAX STRIKES REACHED FOR A SINGLE AGENT. TRIGGERING ROCKET RACCOON FAILSAFE 🚨")
         run_phase("rocket_failsafe.py")
         print("Pipeline Halted.")
         sys.exit(1)

@@ -21,7 +21,7 @@ def main():
     print("-> AGENT-05 (Iron Man), AGENT-12 (Hulk), AGENT-14 (Wasp), AGENT-16 (Shang-Chi) bound to core_implementation_skill.md")
     print("-> ORCHESTRATION RULE: Enforce SOLID/DRY, mandatory non-silent try/except, semantic commits via GitHub MCP.")
     
-    input_context = "Execute core implementation based on the current backlog and TDD tests.\n\n[TARGET TICKET]: BUG-004: Render 500 Error\n[TARGET FILE]: app/main.py"
+    input_context = state.get("input", "")
     if kickback:
         print(f"[!] KICKBACK CONTEXT DETECTED: Injecting downstream error logs into coder context payloads.")
         input_context += f"\n\n[KICKBACK ERROR LOGS]:\n{kickback}"

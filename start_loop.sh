@@ -1,15 +1,17 @@
 #!/bin/bash
 
+# =========================================================================
+# ZERO-DOWNTIME SWARM EXECUTION LOOP (V3 PIPELINE)
+# =========================================================================
+
+# Ensure we are in the correct directory
 cd /home/rdogen/OpenClaw_Factory/projects/Hosteva
 
-echo "🚀 IGNITING MODULAR ASSEMBLY LINE..."
+# Source the virtual environment
+source venv/bin/activate
 
-/home/rdogen/OpenClaw_Factory/projects/Hosteva/venv/bin/python workflow.py
-exit_code=$?
+# Start the V3 Scrum Master pipeline
+echo "🚀 IGNITING V3 MODULAR ASSEMBLY LINE..."
+python scrum_master.py > scrum_master.log 2>&1
 
-if [ $exit_code -ne 0 ]; then
-    echo "💥 UNKNOWN CRASH in workflow.py! Exit code: $exit_code. Halting."
-    exit 1
-fi
-
-echo "✅ FULL SPRINT PIPELINE COMPLETE."
+echo "✅ V3 Pipeline Execution Complete."

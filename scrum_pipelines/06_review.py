@@ -1,4 +1,6 @@
 import sys
+import os
+import json
 from gb_config import run_single_agent, local_config
 
 def main():
@@ -6,11 +8,18 @@ def main():
     print("  [PHASE 6] LOGIC & PULL REQUEST REVIEW")
     print("======================================================")
     
+    state_path = os.environ.get("SWARM_STATE_FILE", os.path.join(os.path.dirname(os.path.dirname(__file__)), "swarm_state.json"))
+    try:
+        with open(state_path, "r") as f:
+            state = json.load(f)
+    except FileNotFoundError:
+        state = {"skills": {}, "kickback_context": None}
+
     agent_name = "AGENT-06-LOGIC (Captain America)"
     skill_file = "pr_review_skill.md"
     
     initial_state = {
-        "input": "Review the recent core execution code changes against state machines, routing logic, and architectural contracts."
+        "input": state.get("input", "")
     }
     
     print(f"-> {agent_name} bound exclusively to {skill_file}")

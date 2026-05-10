@@ -38,7 +38,7 @@ iron_man_arch_node = Node.agent(name='Iron Man Arch', prompt='Arch', system_prom
 she_hulk_node = Node.agent(name='She-Hulk', prompt='Legal', system_prompt=load_prompt('she_hulk_rules.md'), llm_config=local_config)
 black_panther_node = Node.agent(name='Black Panther', prompt='Security', system_prompt=load_prompt('black_panther_rules.md'), llm_config=local_config)
 wasp_ui_node = Node.agent(name='Wasp UI', prompt='UI/UX', system_prompt=load_prompt('wasp_rules.md'), llm_config=coder_config)
-hawkeye_node = Node.agent(name='Hawkeye', prompt='Tickets', system_prompt=load_prompt('hawkeye_rules.md'), llm_config=local_config)
+hawkeye_node = Node.agent(name='Hawkeye', prompt=f'Generate tickets for the following backlog:\n\n{backlog_content}\n\nNote: This is a single bug fix. Do not trigger THE_SINGLE_FEATURE_RULE.', system_prompt=load_prompt('hawkeye_rules.md'), llm_config=local_config)
 hulk_node = Node.agent(name='Hulk', prompt='DB Load', system_prompt=load_prompt('hulk_rules.md'), llm_config=local_config)
 shang_chi_node = Node.agent(name='Shang-Chi', prompt='Logic Load', system_prompt=load_prompt('shang_chi_rules.md'), llm_config=local_config)
 spider_man_plan_node = Node.agent(name='Spider-Man Plan', prompt='Env Load', system_prompt=load_prompt('spider_man_rules.md'), llm_config=local_config)
