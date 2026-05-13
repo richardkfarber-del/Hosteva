@@ -1,0 +1,1 @@
+Agent halted after reaching maximum tool iterations.

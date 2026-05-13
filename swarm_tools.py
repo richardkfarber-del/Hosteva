@@ -26,20 +26,43 @@ def run_shell_command(command: str) -> str:
     except Exception as e:
         return f"CRITICAL ERROR: {str(e)}"
 
-def read_file(filepath: str) -> str:
+def read_file(path: str) -> str:
     """Reads the contents of a file from the disk."""
     try:
-        with open(filepath, 'r') as f:
+        with open(path, 'r') as f:
             return f.read()
     except Exception as e:
         return f"ERROR: {str(e)}"
 
-def write_file(filepath: str, content: str) -> str:
+def write_file(path: str, content: str) -> str:
     """Writes content to a file on the disk, creating directories if needed."""
     try:
-        os.makedirs(os.path.dirname(os.path.abspath(filepath)), exist_ok=True)
-        with open(filepath, 'w') as f:
+        os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
+        with open(path, 'w') as f:
             f.write(content)
-        return f"SUCCESS: Wrote to {filepath}"
+        return f"SUCCESS: Wrote to {path}"
     except Exception as e:
         return f"ERROR: {str(e)}"
+
+def content_search(pattern: str, path: str) -> str:
+    """Searches for a regex pattern inside a specific file and returns the matching lines with line numbers."""
+    try:
+        result = subprocess.run(
+            f"grep -n '{pattern}' {path}",
+            shell=True,
+            capture_output=True,
+            text=True,
+            cwd="/home/rdogen/OpenClaw_Factory/projects/Hosteva"
+        )
+        if result.returncode == 0:
+            return result.stdout.strip()
+        elif result.returncode == 1:
+            return "No matches found."
+        else:
+            return f"ERROR: {result.stderr.strip()}"
+    except Exception as e:
+        return f"ERROR: {str(e)}"
+
+def submit_phase_plan(plan_markdown: str) -> str:
+    """Call this tool ONLY when you have completed your analysis and are ready to submit your final markdown plan. Pass your entire final response into the plan_markdown parameter."""
+    return "PLAN_ACCEPTED"

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import json, os, sys
-from gb_config import run_single_agent, local_config
+import sys; sys.path.append("/home/rdogen/OpenClaw_Factory/projects/Hosteva"); from gb_config import run_single_agent, local_config
 
 print("======================================================")
 print("  [PHASE 13] CONSOLIDATION & MARKETING")

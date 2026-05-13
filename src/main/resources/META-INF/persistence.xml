@@ -1,0 +1,13 @@
+...
+<persistence-unit name="hosteva" transaction-type="RESOURCE_LOCAL">
+    <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
+    <!-- Add gunicorn as a dependency -->
+    <dependencies>
+        <dependency>
+            <groupId>gunicorn</groupId>
+            <artifactId>gunicorn</artifactId>
+            <version>20.0.4</version>
+        </dependency>
+    </dependencies>
+</persistence-unit>
+...

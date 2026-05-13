@@ -1,59 +1,76 @@
 import sys
 import os
 import json
-from gb_config import run_single_agent, local_config
+import re
+import subprocess
 
 def main():
     print("\n======================================================")
-    print("  [PHASE 5] CORE EXECUTION")
+    print("  [PHASE 5] CORE EXECUTION (AIDER)")
     print("======================================================")
     
-    state_path = os.environ.get("SWARM_STATE_FILE", os.path.join(os.path.dirname(os.path.dirname(__file__)), "swarm_state.json"))
+    # Resolve paths
+    project_root = os.path.dirname(os.path.dirname(__file__))
+    state_path = os.environ.get("SWARM_STATE_FILE", os.path.join(project_root, "swarm_state.json"))
+    venv_aider = os.path.join(project_root, "venv", "bin", "aider")
+    
+    # Fallback to global aider if venv aider doesn't exist
+    aider_bin = venv_aider if os.path.exists(venv_aider) else "aider"
+
     try:
         with open(state_path, "r") as f:
             state = json.load(f)
     except FileNotFoundError:
-        state = {"skills": {}, "kickback_context": None}
+        state = {}
 
-    kickback = state.get("kickback_context")
-    skill_file = "core_implementation_skill.md"
-    
-    print("-> AGENT-05 (Iron Man), AGENT-12 (Hulk), AGENT-14 (Wasp), AGENT-16 (Shang-Chi) bound to core_implementation_skill.md")
-    print("-> ORCHESTRATION RULE: Enforce SOLID/DRY, mandatory non-silent try/except, semantic commits via GitHub MCP.")
-    
-    input_context = state.get("input", "")
-    if kickback:
-        print(f"[!] KICKBACK CONTEXT DETECTED: Injecting downstream error logs into coder context payloads.")
-        input_context += f"\n\n[KICKBACK ERROR LOGS]:\n{kickback}"
-        
-    initial_state = {
-        "input": input_context
-    }
-    
-    print("-> Executing GraphBit Node...")
-    
+    # Load Phase 3 & 4 Artifacts
+    phase_3_artifact_path = os.path.join(project_root, state.get("phase_3_artifact", "03_groomed_ticket_artifact.md"))
     try:
-        result_obj = run_single_agent(
-            phase_name="Core_Execution",
-            agent_name="Core_Execution_Team",
-            skill_file=skill_file,
-            config=local_config,
-            initial_state=initial_state
-        )
-        outputs_dict = result_obj if isinstance(result_obj, dict) else {agent_name.replace(" ", "_"): str(result_obj)}
-        output_text = outputs_dict.get("Core_Execution_Team", str(outputs_dict))
-    except Exception as e:
-        output_text = f"GraphBit Execution Failed: {str(e)}"
+        with open(phase_3_artifact_path, "r") as f:
+            groomed_ticket = f.read()
+    except FileNotFoundError:
+        groomed_ticket = ""
+
+    phase_4_artifact_path = os.path.join(project_root, state.get("phase_4_artifact", "04_qa_tests_artifact.md"))
+    try:
+        with open(phase_4_artifact_path, "r") as f:
+            qa_tests = f.read()
+    except FileNotFoundError:
+        qa_tests = ""
+
+    input_context = state.get("input", "")
     
-    print("\n>>> [PHASE 5 OUTPUT]:")
-    print(output_text)
-    
-    if "### 🔴 [BLOCKING]" in output_text:
-        print("\n>>> [ORCHESTRATOR]: Blocking error detected in Execution. Halting pipeline.")
+    # Dynamically extract file path from groomed ticket
+    match = re.search(r"## File to check\s+([^\n]+)", groomed_ticket)
+    target_file = match.group(1).strip() if match else None
+
+    if not target_file:
+        print("[!] Error: Could not extract target file from groomed ticket.")
         sys.exit(1)
         
-    print("\n>>> [ORCHESTRATOR]: Phase 5 Complete. Implementation executed.")
-    sys.exit(0)
+    print(f"-> Target file dynamically identified: {target_file}")
+    print("-> AGENT-05 (Iron Man) bound to Aider CLI")
+    print("-> Model locked: ollama/qwen2.5-coder:7b")
+    
+    prompt = f"Please fix the following issue based on the groomed ticket:\n\n{groomed_ticket}\n\nQA Test Context:\n{qa_tests}\n\nEnsure you fix the syntax error."
+    
+    cmd = [
+        aider_bin,
+        "--model", "ollama/qwen2.5-coder:7b",
+        "--message", prompt,
+        "--no-auto-commits",
+        "--yes", # Auto-confirm prompts
+        target_file
+    ]
+    
+    print(f"-> Executing Aider...")
+    try:
+        # Run Aider, streaming output
+        subprocess.run(cmd, check=True)
+        print("\n>>> [ORCHESTRATOR]: Phase 5 Complete. Implementation executed via Aider.")
+    except subprocess.CalledProcessError as e:
+        print(f"\n>>> [ORCHESTRATOR]: Aider execution failed: {e}")
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()

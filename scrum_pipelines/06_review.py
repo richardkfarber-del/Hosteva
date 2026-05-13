@@ -1,7 +1,7 @@
 import sys
 import os
 import json
-from gb_config import run_single_agent, local_config
+import sys; sys.path.append("/home/rdogen/OpenClaw_Factory/projects/Hosteva"); from gb_config import run_single_agent, local_config
 
 def main():
     print("\n======================================================")
