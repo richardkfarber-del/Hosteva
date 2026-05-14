@@ -31,8 +31,17 @@ def main():
     agent_name = "AGENT-08-QA (Black Widow)"
     skill_file = "qa_generation_skill.md"
     
+    directives = (
+        "\n\nDIRECTIVES:\n"
+        "1. TRUE TDD LOGIC: Your test MUST assert the presence of the NEW expected behavior (the Jinja2 syntax). The test must FAIL against the current codebase.\n"
+        "2. DO NOT RUN THE TEST: You do not have shell access. Your ONLY job is to write the test file using the `write_file` tool, and then immediately call `submit_phase_plan`.\n"
+        "3. FILE PATHS: To write to the main project tests folder, use the absolute path `/home/rdogen/OpenClaw_Factory/projects/Hosteva/tests/test_bug_002.py`. When reading the html files in your test, use absolute paths (e.g. `/home/rdogen/OpenClaw_Factory/projects/Hosteva/app/templates/dashboard.html`, `/home/rdogen/OpenClaw_Factory/projects/Hosteva/Hosteva_Hidden/templates/dashboard.html`, `/home/rdogen/OpenClaw_Factory/projects/Hosteva/ARCHIVE_DOCS/Hosteva_Hidden/templates/dashboard.html`).\n"
+        "4. STRICT JSON: You MUST properly escape all newlines as \\n in your JSON content. Do NOT use complex Python f-strings or regex in your test, as they break JSON parsing. Keep the Python test extremely simple: just read the file and do `assert \"{{ url_for('static', filename='img/hosteva_logo.png') }}\" in content`. Call write_file FIRST, wait for the tool result, and THEN call submit_phase_plan in a separate turn.\n"
+        "5. NO SEARCH NEEDED: Skip the search and just write the test file directly using the exact paths from the groomed ticket."
+    )
+
     initial_state = {
-        "input": f"GROOMED TICKET:\n{groomed_ticket}\n\nORIGINAL INPUT:\n{state.get('input', '')}"
+        "input": f"GROOMED TICKET:\n{groomed_ticket}\n\nORIGINAL INPUT:\n{state.get('input', '')}{directives}"
     }
     
     print(f"-> {agent_name} bound exclusively to {skill_file}")
@@ -47,7 +56,7 @@ def main():
             skill_file,
             local_config,
             initial_state,
-            [read_file, write_file, run_shell_command, content_search, submit_phase_plan]
+            [read_file, write_file, content_search, submit_phase_plan]
         )
         outputs_dict = result_obj if isinstance(result_obj, dict) else {agent_name.replace(" ", "_"): str(result_obj)}
         output_text = outputs_dict.get(agent_name.replace(' ', '_'), str(outputs_dict))

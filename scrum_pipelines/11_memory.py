@@ -7,7 +7,7 @@ print("  [PHASE 11] MEMORY CONSOLIDATION")
 print("======================================================")
 print("-> AGENT-02-DREAMSTATE (Wanda) & Winter Soldier running consolidation.")
 
-state_path = os.environ.get("SWARM_STATE_FILE", "../swarm_state.json")
+state_path = os.environ.get("SWARM_STATE_FILE", "/home/rdogen/OpenClaw_Factory/projects/Hosteva/swarm_state.json")
 try:
     with open(state_path, "r") as f:
         state = json.load(f)

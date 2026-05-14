@@ -20,10 +20,22 @@ except FileNotFoundError:
     state = {}
 
 # Equip Hawkeye with actual function objects, not strings
-allowed_tools = [read_file, write_file, content_search, submit_phase_plan]
+allowed_tools = [submit_phase_plan]
+
+# Inject Phase 2 Artifact into Hawkeye's context
+phase_2_artifact_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), state.get("phase_2_artifact", "02_planning_artifact.md"))
+try:
+    with open(phase_2_artifact_path, "r") as f:
+        phase_2_notes = f.read()
+except FileNotFoundError:
+    phase_2_notes = "No Phase 2 notes found."
+
+# Preserve original state to avoid permanent bloat, but pass the artifact to the agent
+agent_state = state.copy()
+agent_state["input"] = f"{state.get('input', '')}\n\n--- PHASE 2 ARCHITECTURAL PLAN ---\n{phase_2_notes}\n\nDIRECTIVE: Groom the above plan into a strict execution ticket for the QA and coding agents. You MUST include the EXACT file paths and Jinja2 replacement strings identified by the committee."
 
 print("-> Executing GraphBit Node...")
-result = run_single_agent("hawkeye", "Hawkeye", "backlog_grooming_skill.md", local_config, state, allowed_tools)
+result = run_single_agent("hawkeye", "Hawkeye", "backlog_grooming_skill.md", local_config, agent_state, allowed_tools)
 print("\n>>> [PHASE 3 OUTPUT]:\n", result)
 
 # Save artifact

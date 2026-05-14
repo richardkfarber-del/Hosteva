@@ -61,39 +61,44 @@ def run_single_agent(agent_id, agent_name, skill_file, config, state, allowed_to
         }
         
         try:
-            response = requests.post(url, json=payload).json()
+            response = requests.post(url, json=payload, timeout=300).json()
         except Exception as e:
             return f"Error connecting to Ollama: {str(e)}"
         
         message = response.get("message", {})
         content = message.get("content", "")
+        
+        print(f"\n[RAW MODEL OUTPUT]:\n{content}\n")
+        
         messages.append(message)
         
         # Robust JSON parser
         tool_req = None
+        parse_error = None
         
-        # Try parsing exact markdown block first (find all, take the last valid one)
+        # Try parsing exact markdown block first
         matches = re.findall(r'```(?:json)?\s*(\{.*?\})\s*```', content, re.DOTALL)
-        for match_text in reversed(matches):
+        if matches:
+            match_text = matches[-1]
             try:
                 parsed = json.loads(match_text)
                 if isinstance(parsed, dict) and (parsed.get("name") or parsed.get("tool")):
                     tool_req = parsed
-                    break
-            except:
-                continue
+            except Exception as e:
+                parse_error = str(e)
                 
         # Fallback: find first { to last }
-        if not tool_req:
+        if not tool_req and not parse_error:
             start = content.find('{')
             end = content.rfind('}')
             if start != -1 and end != -1 and end > start:
+                json_str = content[start:end+1]
                 try:
-                    parsed = json.loads(content[start:end+1])
+                    parsed = json.loads(json_str)
                     if isinstance(parsed, dict) and (parsed.get("name") or parsed.get("tool")):
                         tool_req = parsed
-                except:
-                    pass
+                except Exception as e:
+                    parse_error = str(e)
 
         if tool_req and isinstance(tool_req, dict) and tool_map and (tool_req.get("name") or tool_req.get("tool")):
             func_name = tool_req.get("name") or tool_req.get("tool")
@@ -114,6 +119,11 @@ def run_single_agent(agent_id, agent_name, skill_file, config, state, allowed_to
                 "role": "user",
                 "content": f"Tool Result for {func_name}:\n{result}\n\nWhat is your next step?"
             })
+            continue
+        elif parse_error:
+            error_msg = f"SYSTEM ERROR: Invalid JSON format. {parse_error}. Remember: DO NOT escape single quotes (\\') inside JSON strings. Output exactly ONE valid JSON block."
+            print(f"-> [JSON PARSE ERROR]: Feeding error back to agent...")
+            messages.append({"role": "user", "content": error_msg})
             continue
         else:
             return content

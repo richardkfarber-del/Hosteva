@@ -8,7 +8,7 @@ def main():
     print("  [PHASE 6] LOGIC & PULL REQUEST REVIEW")
     print("======================================================")
     
-    state_path = os.environ.get("SWARM_STATE_FILE", os.path.join(os.path.dirname(os.path.dirname(__file__)), "swarm_state.json"))
+    state_path = os.environ.get("SWARM_STATE_FILE", "/home/rdogen/OpenClaw_Factory/projects/Hosteva/swarm_state.json")
     try:
         with open(state_path, "r") as f:
             state = json.load(f)

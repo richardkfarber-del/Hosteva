@@ -7,7 +7,7 @@ print("  [PHASE 9] USER ACCEPTANCE TESTING")
 print("======================================================")
 print("-> AGENT-04-FRONTEND (Spider-Man) & Wasp bound to ui_ux_specification_skill.md")
 
-state_path = os.environ.get("SWARM_STATE_FILE", "../swarm_state.json")
+state_path = os.environ.get("SWARM_STATE_FILE", "/home/rdogen/OpenClaw_Factory/projects/Hosteva/swarm_state.json")
 try:
     with open(state_path, "r") as f:
         state = json.load(f)

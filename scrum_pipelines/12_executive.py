@@ -7,7 +7,7 @@ print("  [PHASE 12] EXECUTIVE ROUTING")
 print("======================================================")
 print("-> AGENT-01-DIRECTOR (Nick Fury) & Coulson bound to team_communication_skill.md")
 
-state_path = os.environ.get("SWARM_STATE_FILE", "../swarm_state.json")
+state_path = os.environ.get("SWARM_STATE_FILE", "/home/rdogen/OpenClaw_Factory/projects/Hosteva/swarm_state.json")
 try:
     with open(state_path, "r") as f:
         state = json.load(f)

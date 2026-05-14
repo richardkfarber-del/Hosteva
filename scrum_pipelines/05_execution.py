@@ -11,7 +11,7 @@ def main():
     
     # Resolve paths
     project_root = os.path.dirname(os.path.dirname(__file__))
-    state_path = os.environ.get("SWARM_STATE_FILE", os.path.join(project_root, "swarm_state.json"))
+    state_path = os.environ.get("SWARM_STATE_FILE", "/home/rdogen/OpenClaw_Factory/projects/Hosteva/swarm_state.json")
     venv_aider = os.path.join(project_root, "venv", "bin", "aider")
     
     # Fallback to global aider if venv aider doesn't exist
