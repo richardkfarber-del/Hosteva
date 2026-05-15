@@ -74,7 +74,7 @@ def render_deploy(service_id: str) -> str:
     Triggers a deployment to Render via their REST API.
     Requires RENDER_API_KEY environment variable.
     """
-    api_key = os.environ.get("RENDER_API_KEY")
+    api_key=os.environ.get("RENDER_API_KEY")
     if not api_key:
         return "ERROR: RENDER_API_KEY environment variable not set. Cannot authenticate with Render."
     
@@ -102,3 +102,38 @@ def docker_build(image_name: str, tag: str = "latest", dockerfile_path: str = ".
     """
     command = f"docker build -t {image_name}:{tag} {dockerfile_path}"
     return run_shell_command(command)
+
+def git_push() -> str:
+    """Pushes committed changes to the remote origin/main branch."""
+    return run_shell_command("git push origin main")
+
+def verify_render_deployment(service_id="srv-d798m4chg0os73e3it70", *args, **kwargs):
+    """Polls the Render API until the deployment is live or fails."""
+    import requests, os, time
+    api_key = os.environ.get("RENDER_API_KEY")
+    if not api_key: return "ERROR: RENDER_API_KEY not found in environment."
+    
+    headers = {"Authorization": f"Bearer {api_key}", "Accept": "application/json"}
+    url = f"https://api.render.com/v1/services/{service_id}/deploys"
+    
+    print("\n-> Polling Render API for deployment status (this may take up to 5 minutes)...")
+    for _ in range(30): # Poll 30 times at 10-second intervals
+        try:
+            response = requests.get(url, headers=headers)
+            response.raise_for_status()
+            deploys = response.json()
+            if not deploys: return "ERROR: No deployments found for this service."
+            
+            status = deploys[0]["deploy"]["status"]
+            print(f"   ...Status: {status}")
+            
+            if status == "live":
+                return "STATUS: LIVE (GREEN). Health checks passed. Deployment successful."
+            elif status in ["build_failed", "update_failed", "canceled"]:
+                return f"STATUS: FAILED ({status}). The deployment crashed."
+            
+            time.sleep(10)
+        except Exception as e:
+            return f"ERROR polling Render API: {str(e)}"
+    
+    return "ERROR: Deployment timed out after 5 minutes."

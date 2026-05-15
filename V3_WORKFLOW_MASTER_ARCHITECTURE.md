@@ -13,7 +13,7 @@ This document defines the immutable 13-phase GraphBit pipeline, agent roster, bo
 
 ### PHASE 2: Sprint Planning & Architecture (`02_planning.py`)
 * **Focus:** Collaborative design phase establishing API contracts, data models, compliance boundaries, and UI specs.
-* **Roster:** AGENT-10-DATA_ARCHITECT (Vision), AGENT-23-STRATEGIST (Kang), AGENT-18-COMPLIANCE (She-Hulk), AGENT-04-FRONTEND (Spider-Man), AGENT-24-MARKETING (Star-Lord)
+* **Roster:** AGENT-10-DATA_ARCHITECT (Vision), AGENT-23-STRATEGIST (Kang), AGENT-18-COMPLIANCE (She-Hulk), AGENT-04-AUTOMATION (Spider-Man), AGENT-24-MARKETING (Star-Lord)
 * **Skills:** `architecture_skill.md`, `legal_compliance_audit_skill.md`, `ui_ux_specification_skill.md`
 * **MCP/Tools:** Gemini API Override Node, Google Stitch MCP
 * **Rule:** Assert PII/GDPR constraints immediately. Extract design DNA tokens before execution.
@@ -61,7 +61,7 @@ This document defines the immutable 13-phase GraphBit pipeline, agent roster, bo
 
 ### PHASE 9: User Acceptance Testing (`09_uat.py`)
 * **Focus:** Validating live UI/UX rendering against design variables.
-* **Roster:** AGENT-04-FRONTEND (Spider-Man), AGENT-14-FRONTEND (Wasp)
+* **Roster:** AGENT-08-QA (Black Widow), AGENT-14-FRONTEND (Wasp)
 * **Skills:** `ui_ux_specification_skill.md`
 * **Rule:** Run runtime design token assertion scripts.
 
