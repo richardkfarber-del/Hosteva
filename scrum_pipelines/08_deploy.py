@@ -28,7 +28,7 @@ except subprocess.CalledProcessError as e:
 
 sys.path.append(project_root)
 import sys; sys.path.append("/home/rdogen/OpenClaw_Factory/projects/Hosteva"); from gb_config import run_single_agent, local_config
-from swarm_tools import submit_phase_plan, render_deploy, verify_render_deployment, run_shell_command
+from swarm_tools import submit_phase_plan, render_deploy, verify_render_deployment, get_render_logs
 
 state_path = os.environ.get("SWARM_STATE_FILE", os.path.join(project_root, "swarm_state.json"))
 os.chdir(project_root)
@@ -39,7 +39,7 @@ try:
 except FileNotFoundError:
     state = {}
 
-allowed_tools = [render_deploy, verify_render_deployment, run_shell_command, submit_phase_plan]
+allowed_tools = [render_deploy, verify_render_deployment, get_render_logs, submit_phase_plan]
 
 devops_directive = """
 CRITICAL DEPLOYMENT DIRECTIVE:
@@ -54,7 +54,14 @@ STEP 2: Wait for the result. Then, verify the deployment status. Output EXACTLY 
 STEP 3: Wait for the result. 
 - If the status is LIVE (GREEN), approve the deployment. Output EXACTLY this JSON:
 {"name": "submit_phase_plan", "arguments": {"plan_markdown": "### [DEPLOYMENT APPROVED]"}}
-- If the status is FAILED, you MUST reject the deployment. You may use the `run_shell_command` tool to investigate why it failed (e.g., checking logs) before rejecting.
+- If the status is FAILED or times out, you MUST retrieve the error logs. Output EXACTLY this JSON:
+{"name": "get_render_logs", "arguments": {"service_id": "srv-d798m4chg0os73e3it70"}}
+
+STEP 4: After retrieving the logs, generate a bug ticket and reject the deployment. Output EXACTLY this JSON:
+{"name": "submit_phase_plan", "arguments": {"plan_markdown": "### [DEPLOYMENT REJECTED]
+
+**Bug Ticket:**
+<insert log details here>"}}
 """
 
 # Reset input to prevent hallucination loops from old directives

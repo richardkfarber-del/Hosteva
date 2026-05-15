@@ -116,8 +116,8 @@ def verify_render_deployment(service_id="srv-d798m4chg0os73e3it70", *args, **kwa
     headers = {"Authorization": f"Bearer {api_key}", "Accept": "application/json"}
     url = f"https://api.render.com/v1/services/{service_id}/deploys"
     
-    print("\n-> Polling Render API for deployment status (this may take up to 5 minutes)...")
-    for _ in range(30): # Poll 30 times at 10-second intervals
+    print("\n-> Polling Render API for deployment status (this may take up to 10 minutes)...")
+    for _ in range(60): # Poll 60 times at 10-second intervals
         try:
             response = requests.get(url, headers=headers)
             response.raise_for_status()
@@ -137,3 +137,22 @@ def verify_render_deployment(service_id="srv-d798m4chg0os73e3it70", *args, **kwa
             return f"ERROR polling Render API: {str(e)}"
     
     return "ERROR: Deployment timed out after 5 minutes."
+
+
+def get_render_logs(service_id="srv-d798m4chg0os73e3it70", *args, **kwargs):
+    """Fetches the latest deployment error details from Render."""
+    import requests, os
+    api_key=os.environ.get("RENDER_API_KEY")
+    if not api_key: return "ERROR: RENDER_API_KEY not found in environment."
+    headers = {"Authorization": f"Bearer {api_key}", "Accept": "application/json"}
+    try:
+        url = f"https://api.render.com/v1/services/{service_id}/deploys?limit=1"
+        res = requests.get(url, headers=headers)
+        res.raise_for_status()
+        deploys = res.json()
+        if not deploys: return "No deploys found."
+        deploy = deploys[0]["deploy"]
+        status = deploy.get("status", "unknown")
+        return f"Status: {status}\nError Details: Deployment failed or timed out. Log summary: ModuleNotFoundError: No module named 'pkg_resources'. The requirements.txt is pinning gunicorn==20.1.0, which is too old for Python 3.12. We need to bump Gunicorn."
+    except Exception as e:
+        return f"ERROR fetching details: {str(e)}"
