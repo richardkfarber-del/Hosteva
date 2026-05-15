@@ -1,7 +1,7 @@
 {
     "status": "in_progress",
-    "current_phase": "08_deploy",
-    "input": "# BUG-002: Persistent Broken Logo\n\n## Description\nFix the broken image links by replacing hardcoded HTML paths (e.g., `<img src=\"/static/img/hosteva_logo.png\">`) with proper Jinja2 dynamic routing (e.g., `<img src=\"{{ url_for('static', filename='img/hosteva_logo.png') }}\">`) globally across the repository so the logo renders correctly regardless of the route depth.\n\n## Expected Behavior\nThe logo should render correctly on all pages, using Jinja2 `url_for`.\n",
+    "current_phase": "09_uat",
+    "input": "\nCRITICAL DEPLOYMENT DIRECTIVE:\nThe code has been successfully pushed to GitHub natively. You must now trigger the deployment and verify it goes live. DO NOT output multiple JSON blocks at once. Execute these EXACT tools one by one, waiting for the result of each before proceeding to the next.\n\nSTEP 1: Trigger the Render Deployment. Output EXACTLY this JSON:\n{\"name\": \"render_deploy\", \"arguments\": {\"service_id\": \"srv-d798m4chg0os73e3it70\"}}\n\nSTEP 2: Wait for the result. Then, verify the deployment status. Output EXACTLY this JSON:\n{\"name\": \"verify_render_deployment\", \"arguments\": {\"service_id\": \"srv-d798m4chg0os73e3it70\"}}\n\nSTEP 3: Wait for the result. \n- If the status is LIVE (GREEN), approve the deployment. Output EXACTLY this JSON:\n{\"name\": \"submit_phase_plan\", \"arguments\": {\"plan_markdown\": \"### [DEPLOYMENT APPROVED]\"}}\n- If the status is FAILED, you MUST reject the deployment. You may use the `run_shell_command` tool to investigate why it failed (e.g., checking logs) before rejecting.\n",
     "kickback_context": "",
     "skills": {},
     "strikes": {
