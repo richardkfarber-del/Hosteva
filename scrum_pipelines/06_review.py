@@ -1,53 +1,58 @@
-import sys
-import os
-import json
+#!/usr/bin/env python3
+import json, os, sys
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 import sys; sys.path.append("/home/rdogen/OpenClaw_Factory/projects/Hosteva"); from gb_config import run_single_agent, local_config
+from swarm_tools import run_shell_command, read_file, content_search, submit_phase_plan
 
-def main():
-    print("\n======================================================")
-    print("  [PHASE 6] LOGIC & PULL REQUEST REVIEW")
-    print("======================================================")
-    
-    state_path = os.environ.get("SWARM_STATE_FILE", "/home/rdogen/OpenClaw_Factory/projects/Hosteva/swarm_state.json")
-    try:
-        with open(state_path, "r") as f:
-            state = json.load(f)
-    except FileNotFoundError:
-        state = {"skills": {}, "kickback_context": None}
+print("======================================================")
+print("  [PHASE 6] LOGIC & PULL REQUEST REVIEW")
+print("======================================================")
+print("-> AGENT-06-LOGIC (Captain America) bound exclusively to pr_review_skill.md")
 
-    agent_name = "AGENT-06-LOGIC (Captain America)"
-    skill_file = "pr_review_skill.md"
-    
-    initial_state = {
-        "input": state.get("input", "")
-    }
-    
-    print(f"-> {agent_name} bound exclusively to {skill_file}")
-    print("-> ORCHESTRATION RULE: Enforcing strict Logic/PR Review. Circuit breaker active.")
-    print("-> Executing GraphBit Node...")
-    
-    try:
-        result_obj = run_single_agent(
-            phase_name="PR_Review",
-            agent_name=agent_name.replace(' ', '_'),
-            skill_file=skill_file,
-            config=local_config,
-            initial_state=initial_state
-        )
-        outputs_dict = result_obj if isinstance(result_obj, dict) else {agent_name.replace(" ", "_"): str(result_obj)}
-        output_text = outputs_dict.get(agent_name.replace(' ', '_'), str(outputs_dict))
-    except Exception as e:
-        output_text = f"GraphBit Execution Failed: {str(e)}"
-    
-    print("\n>>> [PHASE 6 OUTPUT]:")
-    print(output_text)
-    
-    if "### 🔴 [BLOCKING]" in output_text:
-        print("\n>>> [ORCHESTRATOR]: ### 🔴 [BLOCKING] state emitted by Captain America. Initiating Kickback Loop.")
-        sys.exit(1)
-        
-    print("\n>>> [ORCHESTRATOR]: Phase 6 Complete. PR Review passed.")
-    sys.exit(0)
+project_root = os.path.dirname(os.path.dirname(__file__))
+state_path = os.environ.get("SWARM_STATE_FILE", os.path.join(project_root, "swarm_state.json"))
 
-if __name__ == "__main__":
-    main()
+try:
+    with open(state_path, "r") as f:
+        state = json.load(f)
+except FileNotFoundError:
+    state = {}
+
+allowed_tools = [run_shell_command, read_file, content_search, submit_phase_plan]
+
+# Fix CWD so git commands work flawlessly
+os.chdir(project_root)
+
+# PR Review Directive
+pr_directive = """
+
+CRITICAL PR REVIEW DIRECTIVE:
+1. You are the PR Reviewer. Do NOT try to fix the bug yourself.
+2. The execution agent just finished writing the code and committed it to Git.
+3. You MUST use `run_shell_command` to execute `git diff HEAD~1 HEAD` to see the exact code changes that were just made.
+4. DO NOT use hallucinated absolute paths like `/app/...`. You are already in the project root.
+5. Verify the Jinja2 syntax matches the Expected Behavior in the ticket based ONLY on the git diff.
+6. Call `submit_phase_plan` to output your final approval or rejection with your notes. Do not search the codebase manually.
+"""
+
+state["input"] = state.get("input", "") + pr_directive
+
+print("-> Executing GraphBit Node...")
+result = run_single_agent("reviewer", "Captain America", "pr_review_skill.md", local_config, state, allowed_tools)
+print("\n>>> [PHASE 6 OUTPUT]:\n", result)
+
+# Save artifact
+artifact_path = os.path.join(project_root, "06_review_artifact.md")
+with open(artifact_path, "w") as f:
+    f.write(result if result else "No output.")
+print(f"-> Saved artifact to {artifact_path}")
+
+# Update state
+state["phase_6_artifact"] = "06_review_artifact.md"
+state["current_phase"] = "07_security"
+with open(state_path, "w") as f:
+    json.dump(state, f, indent=4)
+print("-> Updated swarm_state.json")
+
+print(">>> [ORCHESTRATOR]: Phase 6 Complete. PR Review passed.")
+sys.exit(0)

@@ -1,5 +1,7 @@
 import subprocess
 import os
+import json
+import urllib.request
 
 def run_shell_command(command: str) -> str:
     """
@@ -66,3 +68,37 @@ def content_search(pattern: str, path: str) -> str:
 def submit_phase_plan(plan_markdown: str) -> str:
     """Call this tool ONLY when you have completed your analysis and are ready to submit your final markdown plan. Pass your entire final response into the plan_markdown parameter."""
     return "PLAN_ACCEPTED"
+
+def render_deploy(service_id: str) -> str:
+    """
+    Triggers a deployment to Render via their REST API.
+    Requires RENDER_API_KEY environment variable.
+    """
+    api_key = os.environ.get("RENDER_API_KEY")
+    if not api_key:
+        return "ERROR: RENDER_API_KEY environment variable not set. Cannot authenticate with Render."
+    
+    url = f"https://api.render.com/v1/services/{service_id}/deploys"
+    req = urllib.request.Request(url, method="POST")
+    req.add_header("Authorization", f"Bearer {api_key}")
+    req.add_header("Accept", "application/json")
+    
+    try:
+        with urllib.request.urlopen(req) as response:
+            if response.status == 201:
+                data = json.loads(response.read().decode())
+                deploy_id = data.get("id", "UNKNOWN")
+                return f"SUCCESS: Render deployment triggered. Deploy ID: {deploy_id}"
+            else:
+                return f"ERROR: Render API returned status {response.status}"
+    except urllib.error.HTTPError as e:
+        return f"ERROR: Render API HTTP Error: {e.code} - {e.read().decode()}"
+    except Exception as e:
+        return f"ERROR: {str(e)}"
+
+def docker_build(image_name: str, tag: str = "latest", dockerfile_path: str = ".") -> str:
+    """
+    Builds a Docker image using the local Docker daemon.
+    """
+    command = f"docker build -t {image_name}:{tag} {dockerfile_path}"
+    return run_shell_command(command)

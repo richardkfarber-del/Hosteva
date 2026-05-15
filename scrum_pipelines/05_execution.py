@@ -1,90 +1,78 @@
-import sys
-import os
-import re
-import subprocess
-import glob
-import shutil
+#!/usr/bin/env python3
+import json, os, sys, subprocess, glob, shutil
 
 def main():
-    print('\n======================================================')
-    print('  [PHASE 5] CORE EXECUTION (AIDER)')
-    print('======================================================')
+    print("======================================================")
+    print("  [PHASE 5] CORE EXECUTION (AIDER)")
+    print("======================================================")
     
-    project_root = '/home/rdogen/OpenClaw_Factory/projects/Hosteva'
-    phase_3_artifact_path = os.path.join(project_root, '03_groomed_ticket_artifact.md')
+    project_root = os.path.dirname(os.path.dirname(__file__))
+    state_path = os.environ.get("SWARM_STATE_FILE", os.path.join(project_root, "swarm_state.json"))
+    venv_aider = os.path.join(project_root, "venv", "bin", "aider")
+    aider_bin = venv_aider if os.path.exists(venv_aider) else "aider"
     
-    if not os.path.exists(phase_3_artifact_path):
-        print(f"[!] Error: Artifact not found at {phase_3_artifact_path}")
-        sys.exit(1)
-        
-    with open(phase_3_artifact_path, 'r') as f:
-        ticket_content = f.read()
-        
-    # Extract target files
-    target_files = re.findall(r'- (\./\S+)', ticket_content)
-    if not target_files:
-        print("[!] Error: Could not extract target file from groomed ticket.")
-        sys.exit(1)
-        
-    print(f"-> Target files dynamically identified: {', '.join(target_files)}")
-    print("-> AGENT-05 (Iron Man) bound to Aider CLI")
-    print("-> Model locked: ollama/qwen2.5-coder:7b")
+    try:
+        with open(state_path, "r") as f:
+            state = json.load(f)
+    except FileNotFoundError:
+        state = {}
 
-    venv_aider = os.path.join(project_root, 'venv', 'bin', 'aider')
-    aider_bin = venv_aider if os.path.exists(venv_aider) else 'aider'
+    target_files = [
+        "app/templates/dashboard.html",
+        "Hosteva_Hidden/templates/dashboard.html",
+        "ARCHIVE_DOCS/Hosteva_Hidden/templates/dashboard.html"
+    ]
 
+    ticket_text = state.get("input", "")
+    
     for current_file in target_files:
         print(f"\n--- Processing {current_file} ---")
         
-        # 1. Programmatic Memory Wipe
+        # Aggressively wipe Aider's memory between runs
         for path in glob.glob(os.path.join(project_root, ".aider*")):
             try:
-                if os.path.isfile(path):
-                    os.remove(path)
-                elif os.path.isdir(path):
-                    shutil.rmtree(path)
-            except Exception as e:
-                pass
-        
-        # 2. Dynamic Prompt Redaction
-        localized_prompt = ticket_content
+                if os.path.isfile(path): os.remove(path)
+                elif os.path.isdir(path): shutil.rmtree(path)
+            except: pass
+
+        # 1. Redact other files
+        localized_prompt = ticket_text
         for other_file in target_files:
             if other_file != current_file:
                 localized_prompt = localized_prompt.replace(other_file, f"[{other_file}_REDACTED]")
-                
-        # 3. Defang URLs
+        
+        # 2. Defang URLs
         localized_prompt = localized_prompt.replace("https://", "hxxps://").replace("http://", "hxxp://")
         
-        # 4. Psychological Bridge
-        bridge_instruction = "\n\nCRITICAL INSTRUCTION: To prevent automated web scraping, the URLs in the ticket above have been masked with 'hxxps://'. However, the actual HTML files on your disk still contain 'https://'. When you write your SEARCH/REPLACE blocks, you MUST translate 'hxxps://' back to 'https://' so your exact-match succeeds. You are modifying only the target file specified."
-        localized_prompt += bridge_instruction
+        # 3. Psychological Bridge (Now with Strict Pathing!)
+        localized_prompt += f"\n\nCRITICAL INSTRUCTION 1: To prevent automated scraping, the URLs in the ticket above are masked with 'hxxps'. When writing your SEARCH/REPLACE blocks, you MUST translate them back to the standard h-t-t-p-s protocol.\nCRITICAL INSTRUCTION 2: The HTML snippet in the ticket description is flattened. The real file has line breaks and extra spaces inside the <img> tag. Specifically, note the trailing space before the closing bracket (it looks like `;' >`). Do NOT just copy-paste the snippet from the ticket. You MUST read the actual file content to get the EXACT whitespace and line breaks for your SEARCH block, or your edit will fail.\nCRITICAL INSTRUCTION 3: You are editing `{current_file}`. Above your SEARCH/REPLACE block, you MUST output the EXACT full path `{current_file}`. Do NOT output just the basename (e.g. `dashboard.html`), or the system will crash."
 
-        # Write localized prompt to temp file
-        msg_file_path = os.path.join(project_root, "temp_aider_msg.txt")
+        msg_file_path = os.path.join(project_root, "aider_instruction.txt")
         with open(msg_file_path, "w") as f:
             f.write(localized_prompt)
 
-        # 5. Fault-Tolerant Loop & Absolute Pathing
-        abs_file_path = os.path.join(project_root, current_file.lstrip('./'))
-        
-        aider_command = [
+        aider_cmd = [
             aider_bin,
             "--model", "ollama/qwen2.5-coder:7b",
-            "--edit-format", "diff",
             "--message-file", msg_file_path,
             "--yes",
-            abs_file_path
+            "--no-auto-lint",
+            current_file
         ]
-        
-        try:
-            subprocess.run(aider_command, cwd=project_root, check=True)
-        except subprocess.CalledProcessError as e:
-            print(f"-> Aider encountered an error or couldn't match the search block in {current_file}. Continuing to next file...")
-            continue
-            
-    # Cleanup temp file
-    if os.path.exists(msg_file_path):
-        os.remove(msg_file_path)
 
-if __name__ == '__main__':
+
+
+        try:
+            # FORCE execution in project_root to prevent dummy files
+            subprocess.run(aider_cmd, check=True, cwd=project_root)
+        except subprocess.CalledProcessError:
+            print(f"-> Aider encountered an error on {current_file}. Continuing...")
+            continue
+        finally:
+            if os.path.exists(msg_file_path): os.remove(msg_file_path)
+
+    print("\n>>> [ORCHESTRATOR]: Phase 5 Complete.")
+    sys.exit(0)
+
+if __name__ == "__main__":
     main()

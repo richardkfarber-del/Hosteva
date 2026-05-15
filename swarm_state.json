@@ -1,7 +1,7 @@
 {
     "status": "in_progress",
-    "current_phase": "01_intake",
-    "input": "# BUG-002: Persistent Broken Logo\n\n## Description\nFix the broken image links by replacing hardcoded HTML paths (e.g., `<img src=\"/static/img/hosteva_logo.png\">`) with proper Jinja2 dynamic routing (e.g., `<img src=\"{{ url_for('static', filename='img/hosteva_logo.png') }}\">`) globally across the repository so the logo renders correctly regardless of the route depth.\n\n## Expected Behavior\nThe logo should render correctly on all pages, using Jinja2 `url_for`.",
+    "current_phase": "08_deploy",
+    "input": "# BUG-002: Persistent Broken Logo\n\n## Description\nFix the broken image links by replacing hardcoded HTML paths (e.g., `<img src=\"/static/img/hosteva_logo.png\">`) with proper Jinja2 dynamic routing (e.g., `<img src=\"{{ url_for('static', filename='img/hosteva_logo.png') }}\">`) globally across the repository so the logo renders correctly regardless of the route depth.\n\n## Expected Behavior\nThe logo should render correctly on all pages, using Jinja2 `url_for`.\n\nCRITICAL PR REVIEW DIRECTIVE:\n1. You are the PR Reviewer. Do NOT try to fix the bug yourself.\n2. The execution agent just finished writing the code and committed it to Git.\n3. You MUST use `run_shell_command` to execute `git show HEAD` to see the exact code changes that were just made.\n4. Verify the Jinja2 syntax matches the Expected Behavior in the ticket.\n5. Call `submit_phase_plan` to output your final approval or rejection with your notes.\n\nCRITICAL PR REVIEW DIRECTIVE:\n1. You are the PR Reviewer. Do NOT try to fix the bug yourself.\n2. The execution agent just finished writing the code and committed it to Git.\n3. You MUST use `run_shell_command` to execute `git diff HEAD~1 HEAD` to see the exact code changes that were just made.\n4. DO NOT use hallucinated absolute paths like `/app/...`. You are already in the project root.\n5. Verify the Jinja2 syntax matches the Expected Behavior in the ticket based ONLY on the git diff.\n6. Call `submit_phase_plan` to output your final approval or rejection with your notes. Do not search the codebase manually.\n",
     "kickback_context": "",
     "skills": {},
     "strikes": {
@@ -10,5 +10,7 @@
         "07_security": 0
     },
     "phase_3_artifact": "03_groomed_ticket_artifact.md",
-    "phase_4_artifact": "04_qa_tests_artifact.md"
+    "phase_4_artifact": "04_qa_tests_artifact.md",
+    "phase_6_artifact": "06_review_artifact.md",
+    "phase_7_artifact": "07_security_artifact.md"
 }
