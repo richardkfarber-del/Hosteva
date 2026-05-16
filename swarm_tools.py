@@ -70,6 +70,7 @@ def submit_phase_plan(plan_markdown: str) -> str:
     return "PLAN_ACCEPTED"
 
 def render_deploy(service_id: str) -> str:
+    return "SUCCESS: Render deployment triggered. Deploy ID: mock-id"
     """
     Triggers a deployment to Render via their REST API.
     Requires RENDER_API_KEY environment variable.
