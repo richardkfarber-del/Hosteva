@@ -109,9 +109,9 @@ def git_push() -> str:
 
 def verify_render_deployment(service_id="srv-d798m4chg0os73e3it70", *args, **kwargs):
     """Polls the Render API until the deployment is live or fails."""
-    import requests, os
+    import requests, os, time
     from dotenv import load_dotenv
-    load_dotenv("/home/rdogen/OpenClaw_Factory/projects/Hosteva/.env"), time
+    load_dotenv("/home/rdogen/OpenClaw_Factory/projects/Hosteva/.env")
     api_key = os.environ.get("RENDER_API_KEY")
     if not api_key: return "ERROR: RENDER_API_KEY not found in environment."
     
