@@ -786,18 +786,4 @@ tailwind.config = {
                     const html = `
                         <html>
                         <head><title>Compliance Report - ${data.property_name}</title>
-                        <style>body{font-family:system-ui;padding:40px;}h1{color:#0d9488;}</style>    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.68/pdfmake.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.68/vfs_fonts.js"></script>
-                        </head>
-                        <body>
-                            <h1>Compliance Report - ${data.property_name}</h1>
-                            <p>${data.report_content}</p>
-                        </body>
-                    </html>`;
-                    printWindow.document.open();
-                    printWindow.document.write(html);
-                    printWindow.document.close();
-                });
-        }
-    </script>
-</body>
-</html>
+                        <style>body{font-family:system-ui;padding:40px;}h1{color:#0d9488;}</style>    <script src="https://cdnjs.cloudflare.com
