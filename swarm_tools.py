@@ -134,7 +134,7 @@ def verify_render_deployment(service_id="srv-d798m4chg0os73e3it70", *args, **kwa
             elif status in ["build_failed", "update_failed", "canceled"]:
                 return f"STATUS: FAILED ({status}). The deployment crashed."
             
-            time.sleep(10)
+            time.sleep(1)
         except Exception as e:
             return f"ERROR polling Render API: {str(e)}"
     
