@@ -1,27 +1,16 @@
-FROM python:3.12
+# Use an official Python runtime as a parent image
+FROM python:3.12-slim
 
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
-
-# Install dependencies from pyproject.toml
-COPY pyproject.toml poetry.lock ./
-RUN pip install --no-cache-dir poetry && \
-    poetry config virtualenvs.create false && \
-    poetry install --no-interaction --no-ansi
-
-# Copy the source code over, excluding templates and static directories
-COPY app/ .
-
-# Ensure that the static files are copied correctly
-COPY app/templates ./app/templates
-COPY app/static ./app/static
-
-# Set working directory
+# Set the working directory in the container
 WORKDIR /app
 
-# Expose port 10000
-EXPOSE 10000
+# Copy the current directory contents into the container at /app
+COPY . /app
 
-# Run the FastAPI server via Gunicorn
-CMD ["gunicorn", "-k", "uvicorn.workers.UvicornWorker", "-w", "4", "-b", "0.0.0.0:10000", "app.main:app"]
+# Install dependencies using uv
+# We use the pyproject.toml to install dependencies but skip building the package
+# to ensure static files and templates are preserved exactly as they are in the directory structure.
+RUN pip install uv && uv pip install --system fastapi uvicorn gunicorn jinja2 pydantic pydantic-settings python-multipart python-jose[cryptography] passlib[bcrypt]
+
+# Run the FastAPI server using Gunicorn and Uvicorn workers
+CMD ["gunicorn", "-w", "4", "-k", "uvicorn.workers.UvicornWorker", "-b", "0.0.0.0:10000", "app.main:app"]
