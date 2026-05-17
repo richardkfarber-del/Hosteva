@@ -1,16 +1,19 @@
-# Use an official Python runtime as a parent image
 FROM python:3.12-slim
 
-# Set the working directory in the container
-WORKDIR /app
+WORKDIR /workspace
 
-# Copy the current directory contents into the container at /app
-COPY . /app
+# Install uv
+RUN pip install uv
 
-# Install dependencies using uv
-# We use the pyproject.toml to install dependencies but skip building the package
-# to ensure static files and templates are preserved exactly as they are in the directory structure.
-RUN pip install uv && uv pip install --system fastapi uvicorn gunicorn jinja2 pydantic pydantic-settings python-multipart python-jose[cryptography] passlib[bcrypt]
+# Copy dependency definition files
+COPY pyproject.toml uv.lock ./
 
-# Run the FastAPI server using Gunicorn and Uvicorn workers
-CMD ["gunicorn", "-w", "4", "-k", "uvicorn.workers.UvicornWorker", "-b", "0.0.0.0:10000", "app.main:app"]
+# Install all dependencies into the system environment
+RUN uv pip install --system .
+
+# CRITICAL: Copy the actual application files AFTER installing dependencies
+# This ensures app/templates/ and app/static/ are not dropped by the package build.
+COPY app/ /workspace/app/
+
+# Run the FastAPI server via Gunicorn
+CMD ["gunicorn", "app.main:app", "-w", "4", "-k", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:$PORT"]
