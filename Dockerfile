@@ -10,8 +10,12 @@ RUN pip install --no-cache-dir poetry && \
     poetry config virtualenvs.create false && \
     poetry install --no-interaction --no-ansi
 
-# Copy the source code over
+# Copy the source code over, excluding templates and static directories
 COPY app/ .
+
+# Ensure that the static files are copied correctly
+COPY app/templates ./app/templates
+COPY app/static ./app/static
 
 # Set working directory
 WORKDIR /app
