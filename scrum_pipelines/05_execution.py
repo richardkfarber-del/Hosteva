@@ -54,7 +54,9 @@ def main():
 
     try:
         # FORCE execution in project_root
-        subprocess.run(aider_cmd, check=True, cwd=project_root)
+        env = os.environ.copy()
+        env["BROWSER"] = "echo"
+        subprocess.run(aider_cmd, check=True, cwd=project_root, env=env)
     except subprocess.CalledProcessError:
         print(f"-> Aider encountered an error. Continuing...")
     finally:

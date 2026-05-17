@@ -5,7 +5,6 @@ import json, os, sys
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 import sys; sys.path.append("/home/rdogen/OpenClaw_Factory/projects/Hosteva"); from gb_config import run_single_agent, local_config
-from swarm_tools import read_file, write_file, content_search, submit_phase_plan
 
 print("======================================================")
 print("  [PHASE 3] BACKLOG GROOMING")
@@ -19,8 +18,8 @@ try:
 except FileNotFoundError:
     state = {}
 
-# Equip Hawkeye with actual function objects, not strings
-allowed_tools = [submit_phase_plan]
+# Equip Hawkeye with NO search tools
+allowed_tools = []
 
 # Inject Phase 2 Artifact into Hawkeye's context
 phase_2_artifact_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), state.get("phase_2_artifact", "02_planning_artifact.md"))
@@ -32,7 +31,7 @@ except FileNotFoundError:
 
 # Preserve original state to avoid permanent bloat, but pass the artifact to the agent
 agent_state = state.copy()
-agent_state["input"] = f"{state.get('input', '')}\n\n--- PHASE 2 ARCHITECTURAL PLAN ---\n{phase_2_notes}\n\nDIRECTIVE: Groom the above plan into a strict execution ticket for the QA and coding agents. You MUST include the EXACT file paths and Jinja2 replacement strings identified by the committee."
+agent_state["input"] = f"{state.get('input', '')}\n\n--- PHASE 2 ARCHITECTURAL PLAN ---\n{phase_2_notes}\n\nDIRECTIVE: Groom the above plan into a strict execution ticket for the QA and coding agents. You MUST include the EXACT absolute file paths for any files that need to be modified or deleted. The absolute path to the project root is /home/rdogen/OpenClaw_Factory/projects/Hosteva. DO NOT attempt to search for files. Rely entirely on the provided paths and trust the architectural plan."
 
 print("-> Executing GraphBit Node...")
 result = run_single_agent("hawkeye", "Hawkeye", "backlog_grooming_skill.md", local_config, agent_state, allowed_tools)

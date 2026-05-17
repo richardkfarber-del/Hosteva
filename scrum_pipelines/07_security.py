@@ -62,7 +62,17 @@ CRITICAL {agent['type'].upper()} DIRECTIVE:
         artifacts.append(f"=== {agent['name']} Audit ===\n{result}\n")
 
         if result and agent["fail_flag"] in result:
-            print(f"\n>>> [ORCHESTRATOR]: {agent['name']} triggered a circuit breaker! Halting pipeline.")
+            print(f"\n>>> [ORCHESTRATOR]: 🔴 {agent['name']} triggered a circuit breaker! Routing back to Phase 1.")
+            sprint_history = state.get("sprint_history", [])
+            sprint_history.append(f"Security/Compliance Phase Failed ({agent['name']}): {result.strip()}")
+            state["sprint_history"] = sprint_history
+            
+            history_text = "\n".join([f"{i+1}. {item}" for i, item in enumerate(sprint_history)])
+            state["input"] = f"SPRINT CONTEXT & NEW BUG REPORT:\n\nSprint History:\n{history_text}\n\nAction Required:\nGenerate a new Bug Ticket based on the latest failure to unblock the sprint."
+            state["current_phase"] = "01_intake"
+            
+            with open(state_path, "w") as f:
+                json.dump(state, f, indent=4)
             sys.exit(1)
 
     # All agents passed
@@ -72,7 +82,7 @@ CRITICAL {agent['type'].upper()} DIRECTIVE:
     print(f"\n-> Saved artifact to {artifact_path}")
 
     state["phase_7_artifact"] = "07_security_artifact.md"
-    state["current_phase"] = "08_deployment"
+    state["current_phase"] = "08_deploy"
     with open(state_path, "w") as f:
         json.dump(state, f, indent=4)
     print("-> Updated swarm_state.json")

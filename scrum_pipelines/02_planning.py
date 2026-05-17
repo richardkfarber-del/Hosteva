@@ -25,6 +25,7 @@ def get_agent_prompt(notes):
     base = f"{original_input}\n\n"
     if notes:
         base += f"--- PREVIOUS COMMITTEE NOTES ---\n{notes}\n\n"
+    base += "CRITICAL CONTEXT: The absolute project root directory is `/home/rdogen/OpenClaw_Factory/projects/Hosteva`. All file reads and searches must use this path or be relative to it. DO NOT hallucinate Docker paths like `/app/` or `/workspace/`.\n\n"
     base += "DIRECTIVE: Evaluate this ticket strictly from your domain's perspective. If this ticket requires no action or changes from your domain, simply output 'N/A - No impact on my domain'. Do NOT reject the overall ticket, as other domains may still need to work on it."
     return base
 

@@ -70,7 +70,6 @@ def submit_phase_plan(plan_markdown: str) -> str:
     return "PLAN_ACCEPTED"
 
 def render_deploy(service_id: str) -> str:
-    return "SUCCESS: Render deployment triggered. Deploy ID: mock-id"
     """
     Triggers a deployment to Render via their REST API.
     Requires RENDER_API_KEY environment variable.
@@ -113,14 +112,14 @@ def verify_render_deployment(service_id="srv-d798m4chg0os73e3it70", *args, **kwa
     import requests, os, time
     from dotenv import load_dotenv
     load_dotenv("/home/rdogen/OpenClaw_Factory/projects/Hosteva/.env")
-    api_key = os.environ.get("RENDER_API_KEY")
+    api_key=os.environ.get("RENDER_API_KEY")
     if not api_key: return "ERROR: RENDER_API_KEY not found in environment."
     
     headers = {"Authorization": f"Bearer {api_key}", "Accept": "application/json"}
     url = f"https://api.render.com/v1/services/{service_id}/deploys"
     
     print("\n-> Polling Render API for deployment status (this may take up to 10 minutes)...")
-    for _ in range(60): # Poll 60 times at 10-second intervals
+    for _ in range(90): # Poll 90 times at 10-second intervals
         try:
             response = requests.get(url, headers=headers)
             response.raise_for_status()
@@ -135,29 +134,47 @@ def verify_render_deployment(service_id="srv-d798m4chg0os73e3it70", *args, **kwa
             elif status in ["build_failed", "update_failed", "canceled"]:
                 return f"STATUS: FAILED ({status}). The deployment crashed."
             
-            time.sleep(1)
+            time.sleep(10)
         except Exception as e:
             return f"ERROR polling Render API: {str(e)}"
     
-    return "ERROR: Deployment timed out after 5 minutes."
+    return "ERROR: Deployment timed out after 15 minutes."
 
-
-def get_render_logs(service_id="srv-d798m4chg0os73e3it70", *args, **kwargs):
-    """Fetches the latest deployment error details from Render."""
-    import requests, os
+def get_render_logs(service_id='srv-d798m4chg0os73e3it70', *args, **kwargs):
+    '''Fetches raw server logs natively using the local Render CLI and dynamic Workspace ID.'''
+    import os, subprocess, requests
     from dotenv import load_dotenv
-    load_dotenv("/home/rdogen/OpenClaw_Factory/projects/Hosteva/.env")
-    api_key=os.environ.get("RENDER_API_KEY")
-    if not api_key: return "ERROR: RENDER_API_KEY not found in environment."
-    headers = {"Authorization": f"Bearer {api_key}", "Accept": "application/json"}
+    load_dotenv('/home/rdogen/OpenClaw_Factory/projects/Hosteva/.env')
+    api_key=os.environ.get('RENDER_API_KEY')
+    if not api_key: return 'ERROR: RENDER_API_KEY not found in environment.'
+
+    env = os.environ.copy()
+    env['RENDER_API_KEY'] = api_key
+
     try:
-        url = f"https://api.render.com/v1/services/{service_id}/deploys?limit=1"
-        res = requests.get(url, headers=headers)
-        res.raise_for_status()
-        deploys = res.json()
-        if not deploys: return "No deploys found."
-        deploy = deploys[0]["deploy"]
-        status = deploy.get("status", "unknown")
-        return f"Status: {status}\nError Details: Deployment failed or timed out. Log summary: ModuleNotFoundError: No module named 'pkg_resources'. The requirements.txt is pinning gunicorn==20.1.0, which is too old for Python 3.12. We need to bump Gunicorn."
+        print('-> Fetching Render Workspace ID via REST API...')
+        headers = {'Authorization': f'Bearer {api_key}', 'Accept': 'application/json'}
+        ws_res = requests.get('https://api.render.com/v1/owners', headers=headers)
+        ws_res.raise_for_status()
+        workspace_id = ws_res.json()[0]['owner']['id']
+
+        bin_path = '/home/rdogen/.local/bin/render'
+        print(f'-> Setting active workspace {workspace_id}...')
+        subprocess.check_output([bin_path, 'workspace', 'set', workspace_id], env=env, text=True, stderr=subprocess.STDOUT)
+
+        print(f'-> Fetching live logs...')
+        log_output = subprocess.check_output(
+            [bin_path, 'logs', '--resources', service_id, '--output', 'text'], 
+            env=env, text=True, stderr=subprocess.STDOUT
+        )
+
+        snippet = f'--- RENDER LOGS ---\n{log_output[-3000:]}'
+        print(f'\n[RAW CLI OUTPUT TO AGENT]:\n{snippet}\n')
+        return snippet
+
+    except requests.exceptions.RequestException as e:
+        return f'ERROR fetching workspace: {str(e)}'
+    except subprocess.CalledProcessError as e:
+        return f'ERROR executing Render CLI: {e.output}'
     except Exception as e:
-        return f"ERROR fetching details: {str(e)}"
+        return f'ERROR: {str(e)}'

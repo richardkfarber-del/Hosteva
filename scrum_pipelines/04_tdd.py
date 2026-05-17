@@ -1,11 +1,11 @@
 import sys
 import os
 import json
+import re
 
 # Fix import path BEFORE importing gb_config
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 import sys; sys.path.append("/home/rdogen/OpenClaw_Factory/projects/Hosteva"); from gb_config import run_single_agent, local_config
-from swarm_tools import read_file, write_file, run_shell_command, content_search, submit_phase_plan
 
 def main():
     print("\n======================================================")
@@ -32,12 +32,12 @@ def main():
     skill_file = "qa_generation_skill.md"
     
     directives = (
-        "\n\nDIRECTIVES:\n"
-        "1. TRUE TDD LOGIC: Your test MUST assert the presence of the NEW expected behavior (the Jinja2 syntax). The test must FAIL against the current codebase.\n"
-        "2. DO NOT RUN THE TEST: You do not have shell access. Your ONLY job is to write the test file using the `write_file` tool, and then immediately call `submit_phase_plan`.\n"
-        "3. FILE PATHS: To write to the main project tests folder, use the absolute path `/home/rdogen/OpenClaw_Factory/projects/Hosteva/tests/test_bug_002.py`. When reading the html files in your test, use absolute paths (e.g. `/home/rdogen/OpenClaw_Factory/projects/Hosteva/app/templates/dashboard.html`, `/home/rdogen/OpenClaw_Factory/projects/Hosteva/Hosteva_Hidden/templates/dashboard.html`, `/home/rdogen/OpenClaw_Factory/projects/Hosteva/ARCHIVE_DOCS/Hosteva_Hidden/templates/dashboard.html`).\n"
-        "4. STRICT JSON: You MUST properly escape all newlines as \\n in your JSON content. Do NOT use complex Python f-strings or regex in your test, as they break JSON parsing. Keep the Python test extremely simple: just read the file and do `assert \"{{ url_for('static', filename='img/hosteva_logo.png') }}\" in content`. Call write_file FIRST, wait for the tool result, and THEN call submit_phase_plan in a separate turn.\n"
-        "5. NO SEARCH NEEDED: Skip the search and just write the test file directly using the exact paths from the groomed ticket."
+        "\n\nCRITICAL DIRECTIVES:\n"
+        "1. YOU DO NOT HAVE ACCESS TO ANY TOOLS. DO NOT OUTPUT JSON TOOL CALLS.\n"
+        "2. DYNAMIC TEST CREATION: Read the GROOMED TICKET carefully. Your test MUST assert the presence of the exact fix required by the current ticket (e.g., asserting that the rogue requirements.txt is deleted). The test must FAIL against the current broken codebase.\n"
+        "3. FILE PATHS: When reading project files in your test, always use absolute paths starting with `/home/rdogen/OpenClaw_Factory/projects/Hosteva/`.\n"
+        "4. OUTPUT FORMAT: You MUST output the raw Python test code inside a standard ```python ... ``` markdown block. The system will automatically extract this block and save it to `/home/rdogen/OpenClaw_Factory/projects/Hosteva/tests/test_current_bug.py`. Do not include any other markdown code blocks.\n"
+        "5. IGNORE SPRINT HISTORY FOR TEST CREATION: The 'ORIGINAL INPUT' contains the full sprint history so you understand context, but you must ONLY write a test for the CURRENT FOCUS TARGET defined in the Groomed Ticket."
     )
 
     initial_state = {
@@ -56,7 +56,7 @@ def main():
             skill_file,
             local_config,
             initial_state,
-            [read_file, write_file, content_search, submit_phase_plan]
+            [] # Empty list to strip tools entirely
         )
         outputs_dict = result_obj if isinstance(result_obj, dict) else {agent_name.replace(" ", "_"): str(result_obj)}
         output_text = outputs_dict.get(agent_name.replace(' ', '_'), str(outputs_dict))
@@ -66,6 +66,19 @@ def main():
     print("\n>>> [PHASE 4 OUTPUT]:")
     print(output_text)
     
+    # Extract the python block and write to test file
+    test_file_path = "/home/rdogen/OpenClaw_Factory/projects/Hosteva/tests/test_current_bug.py"
+    os.makedirs(os.path.dirname(test_file_path), exist_ok=True)
+    
+    python_block_match = re.search(r"```python\s*(.*?)\s*```", output_text, re.DOTALL)
+    if python_block_match:
+        extracted_code = python_block_match.group(1)
+        with open(test_file_path, "w") as f:
+            f.write(extracted_code)
+        print(f"\n-> Extracted Python code and saved directly to {test_file_path}")
+    else:
+        print("\n-> WARNING: No ```python block found in the output. The test file was not created.")
+
     # Save artifact
     artifact_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "04_qa_tests_artifact.md")
     with open(artifact_path, "w") as f:
