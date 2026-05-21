@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, Request, Response, Depends
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, PlainTextResponse
 from fastapi.templating import Jinja2Templates
@@ -98,6 +98,30 @@ def read_wizard(request: Request):
         context={"request": request, "active_page": "compliance"}
     )
 
+@app.get("/login", include_in_schema=False)
+def read_login(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="login.html",
+        context={"request": request}
+    )
+
+@app.get("/register", include_in_schema=False)
+def read_register(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="register.html",
+        context={"request": request}
+    )
+
+@app.get("/integrations", include_in_schema=False)
+def read_integrations(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="integrations.html",
+        context={"request": request, "active_page": "integrations"}
+    )
+
 @app.get("/dashboard", name="dashboard")
 def read_dashboard(request: Request):
     return templates.TemplateResponse(
@@ -105,3 +129,32 @@ def read_dashboard(request: Request):
         name="dashboard.html", 
         context={"request": request, "google_maps_api_key": os.getenv("GOOGLE_MAPS_API_KEY", ""), "active_page": "dashboard"}
     )
+
+from app.core.security import get_current_user
+from sqlalchemy.orm import Session
+from app.database import get_db
+from app.models.host import Host
+
+@app.get("/users/me")
+@app.get("/api/v1/users/me")
+def get_current_active_user_proxy(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
+    username = current_user.get("username")
+    host = db.query(Host).filter(Host.username == username).first()
+    if not host:
+        return {"username": "Guest", "email": "", "full_name": "Guest", "tier": "Free Tier"}
+    
+    sub_tier = "Free Tier"
+    if host.subscription and host.subscription.status == "active":
+        sub_tier = host.subscription.plan_details or "Pro"
+        if isinstance(sub_tier, str):
+            sub_tier = sub_tier.capitalize() + " Host"
+        else:
+            sub_tier = "Pro Host"
+            
+    return {
+        "id": host.id,
+        "username": host.username,
+        "email": host.email,
+        "full_name": host.username,
+        "tier": sub_tier
+    }

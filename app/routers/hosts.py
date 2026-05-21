@@ -5,10 +5,8 @@ from app.database import get_db
 from app.models.host import Host
 from app.schemas.host import HostCreate, HostResponse
 from app.dependencies import get_api_key
-from passlib.context import CryptContext
+from app.core.security import get_password_hash
 import uuid
-
-pwd_context = CryptContext(schemes=["bcrypt_sha256", "bcrypt"], deprecated="auto")
 
 router = APIRouter(prefix="/api/hosts", tags=["Hosts"], dependencies=[Depends(get_api_key)])
 
@@ -19,8 +17,8 @@ def create_host(request: HostCreate, db: Session = Depends(get_db)):
     if existing_host:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username or email already exists")
     
-    # Hash password (bcrypt_sha256 handles passwords > 72 chars)
-    hashed_password = pwd_context.hash(request.password)
+    # Hash password
+    hashed_password = get_password_hash(request.password)
     
     new_host = Host(
         id=str(uuid.uuid4()),

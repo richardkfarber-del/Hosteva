@@ -9,18 +9,17 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True)
     hashed_password = Column(String)
-    subscription = relationship("Subscription", back_populates="user", uselist=False)
 
 class Subscription(Base):
     __tablename__ = "subscriptions"
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
+    user_id = Column(String, ForeignKey("hosts.id"))
     stripe_customer_id = Column(String, unique=True, index=True)
     status = Column(String, default="inactive")
     plan_details = Column(String)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
-    user = relationship("User", back_populates="subscription")
+    host = relationship("Host", back_populates="subscription")
 
 class Ordinance(Base):
     __tablename__ = "ordinances"

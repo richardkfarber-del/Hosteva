@@ -139,24 +139,6 @@ tailwind.config = {
     {% block scripts %}{% endblock %}
 
     <script>
-    document.addEventListener('DOMContentLoaded', async () => {
-        try {
-            const token = localStorage.getItem('access_token');
-            const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-            const res = await fetch('/users/me', { headers });
-            if (res.ok) {
-                const user = await res.json();
-                const name = user.full_name || user.email || 'User';
-                document.getElementById('sidebar-user-name').textContent = name;
-                document.getElementById('sidebar-user-initials').textContent = name.substring(0, 2).toUpperCase();
-                document.getElementById('sidebar-user-tier').textContent = user.tier || 'Free Tier';
-            }
-        } catch (err) {
-            console.error('Failed to load user profile', err);
-        }
-    });
-    </script>
-<script>
     document.addEventListener("DOMContentLoaded", async function() {
         try {
             const token = localStorage.getItem("token") || sessionStorage.getItem("token");

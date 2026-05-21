@@ -1,6 +1,6 @@
 import uuid
-from sqlalchemy import Column, String, Text, Index
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy import Column, String, Text, Index, JSON
+from sqlalchemy.dialects.postgresql import UUID
 from pgvector.sqlalchemy import Vector
 from app.database import Base
 
@@ -15,7 +15,7 @@ class AgentMemory(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     agent_id = Column(String, nullable=False)
     content = Column(Text, nullable=False)
-    metadata_ = Column("metadata", JSONB, nullable=False, default=dict)
+    metadata_ = Column("metadata", JSON, nullable=False, default=dict)
     embedding = Column(Vector(768))
 
     __table_args__ = (

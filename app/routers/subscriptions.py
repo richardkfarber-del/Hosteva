@@ -4,13 +4,54 @@ from typing import Optional
 import stripe
 import os
 from app.worker import redis_client
+from sqlalchemy.orm import Session
+from app.database import get_db
+from app.models.host import Host
+from app.db_models import Subscription
+from jose import jwt
+from app.core.security import SECRET_KEY, ALGORITHM
 
-def update_subscription_status(client_reference_id, stripe_customer_id, subscription_id):
+def update_subscription_status(db: Session, client_reference_id: str, stripe_customer_id: str, subscription_id: str):
     """Updates the user's subscription status in the database."""
-    # TODO: Implement actual database session injection and update logic
-    pass
+    if not client_reference_id:
+        print("update_subscription_status called with empty client_reference_id")
+        return
+        
+    # Check if host exists (client_reference_id can be host.id or host.username)
+    host = db.query(Host).filter(
+        (Host.id == client_reference_id) | 
+        (Host.username == client_reference_id) | 
+        (Host.email == client_reference_id)
+    ).first()
+    if not host:
+        print(f"Host not found for client_reference_id: {client_reference_id}")
+        return
+        
+    # Find or create subscription
+    sub = db.query(Subscription).filter(Subscription.user_id == host.id).first()
+    if not sub:
+        sub = Subscription(user_id=host.id)
+        db.add(sub)
+    sub.stripe_customer_id = stripe_customer_id
+    sub.status = "active"
+    sub.plan_details = subscription_id
+    db.commit()
+    print(f"Successfully activated subscription for host {host.id}")
 
-# from app.database import get_db
+async def get_current_user_optional(request: Request, db: Session = Depends(get_db)):
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        return None
+    token = auth_header.split(" ")[1]
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username = payload.get("sub")
+        if username:
+            return db.query(Host).filter(Host.username == username).first()
+    except Exception:
+        return None
+    return None
+
 
 router = APIRouter(prefix="/subscriptions", tags=["subscriptions"])
 
@@ -21,7 +62,10 @@ class SubscriptionRequest(BaseModel):
     tier: str
 
 @router.post("/checkout")
-async def create_checkout_session(request: SubscriptionRequest):
+async def create_checkout_session(
+    request: SubscriptionRequest, 
+    current_host: Optional[Host] = Depends(get_current_user_optional)
+):
     """
     Stripe checkout session endpoint.
     """
@@ -36,6 +80,8 @@ async def create_checkout_session(request: SubscriptionRequest):
         "premium": os.environ.get("STRIPE_PRICE_PREMIUM", "price_mock_premium")
     }
 
+    client_reference_id = current_host.id if current_host else "user_mock_123"
+
     try:
         checkout_session = stripe.checkout.Session.create(
             payment_method_types=['card'],
@@ -48,7 +94,7 @@ async def create_checkout_session(request: SubscriptionRequest):
             mode='subscription',
             success_url=os.environ.get("FRONTEND_URL", "http://localhost:3000") + '/success?session_id={CHECKOUT_SESSION_ID}',
             cancel_url=os.environ.get("FRONTEND_URL", "http://localhost:3000") + '/cancel',
-            # client_reference_id=str(current_user.id),  # In a real app
+            client_reference_id=client_reference_id,
         )
         return {
             "status": "pending",
@@ -59,13 +105,17 @@ async def create_checkout_session(request: SubscriptionRequest):
         # Fallback to mock for testing if Stripe keys aren't real
         return {
             "status": "pending",
-            "checkout_url": f"https://mock-stripe.com/checkout/session_12345?tier={request.tier}",
+            "checkout_url": f"https://mock-stripe.com/checkout/session_12345?tier={request.tier}&client_ref={client_reference_id}",
             "message": "Transaction initiated (Mock).",
             "error_caught": str(e)
         }
 
 @router.post("/webhook")
-async def stripe_webhook(request: Request, stripe_signature: Optional[str] = Header(None)):
+async def stripe_webhook(
+    request: Request, 
+    stripe_signature: Optional[str] = Header(None), 
+    db: Session = Depends(get_db)
+):
     payload = await request.body()
     
     try:
@@ -97,7 +147,6 @@ async def stripe_webhook(request: Request, stripe_signature: Optional[str] = Hea
         subscription_id = session.get('subscription')
         
         print(f"Webhook received: Fulfilling subscription for user {client_reference_id}")
-        # In a real app, update DB here
-        update_subscription_status(client_reference_id, stripe_customer_id, subscription_id)
+        update_subscription_status(db, client_reference_id, stripe_customer_id, subscription_id)
 
     return {"status": "success"}

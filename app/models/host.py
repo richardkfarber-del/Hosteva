@@ -1,5 +1,6 @@
 from sqlalchemy import Column, String, DateTime
 from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
 import uuid
 from app.database import Base
 
@@ -11,3 +12,5 @@ class Host(Base):
     password_hash = Column(String, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    
+    subscription = relationship("Subscription", back_populates="host", uselist=False)
