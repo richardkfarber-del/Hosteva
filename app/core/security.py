@@ -4,7 +4,6 @@ from typing import Optional, Any
 from jose import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from passlib.context import CryptContext
 from sqlalchemy.types import TypeDecorator, String
 
 # Vibranium Habit: Require Fernet for column encryption
