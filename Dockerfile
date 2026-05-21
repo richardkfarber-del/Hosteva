@@ -6,14 +6,15 @@ WORKDIR /workspace
 RUN pip install uv
 
 # Copy dependency definition files
-COPY pyproject.toml uv.lock ./
+COPY requirements.txt ./
 
 # Install all dependencies into the system environment
-RUN uv pip install --system .
+RUN uv pip install --system -r requirements.txt
 
 # CRITICAL: Copy the actual application files AFTER installing dependencies
 # This ensures app/templates/ and app/static/ are not dropped by the package build.
 COPY app/ /workspace/app/
+COPY README.md /workspace/
 
 # Run the FastAPI server via Gunicorn
 CMD ["gunicorn", "app.main:app", "-w", "4", "-k", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:$PORT"]
