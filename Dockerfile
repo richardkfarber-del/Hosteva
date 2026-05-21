@@ -17,4 +17,4 @@ COPY app/ /workspace/app/
 COPY README.md /workspace/
 
 # Run the FastAPI server via Gunicorn
-CMD ["gunicorn", "app.main:app", "-w", "4", "-k", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:$PORT"]
+CMD ["sh", "-c", "gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT"]
