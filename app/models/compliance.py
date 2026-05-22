@@ -4,7 +4,10 @@ from sqlalchemy.sql import func
 import uuid
 import os
 
-if "sqlite" in os.environ.get("DATABASE_URL", ""):
+db_url = os.environ.get("INTERNAL_DATABASE_URL") or os.environ.get("DATABASE_URL", "")
+is_sqlite = "sqlite" in db_url
+
+if is_sqlite:
     from sqlalchemy.types import String as TSTZRANGE
     from sqlalchemy.dialects.postgresql import UUID
 else:
@@ -21,8 +24,7 @@ class MunicipalCode(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
-    import os
-    if "sqlite" in os.environ.get("DATABASE_URL", ""):
+    if is_sqlite:
         __table_args__ = (
             CheckConstraint('length(municipality_name) > 0', name='chk_mun_name_length'),
         )
@@ -43,7 +45,7 @@ class PropertyCompliance(Base):
     valid_period = Column(TSTZRANGE, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    if "sqlite" in os.environ.get("DATABASE_URL", ""):
+    if is_sqlite:
         # SQLite doesn't support gist indexes or range types, so we don't define table args / index
         pass
     else:

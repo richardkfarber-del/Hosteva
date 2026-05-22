@@ -27,6 +27,30 @@ app = FastAPI(
     redoc_url="/redoc" if SHOW_DOCS else None
 )
 
+@app.on_event("startup")
+def on_startup():
+    print("Running database startup initialization...")
+    try:
+        # Register all models on Base before table creation
+        import app.db_models
+        import app.models
+        
+        # Enable the pgvector extension if PostgreSQL
+        if "sqlite" not in str(engine.url):
+            try:
+                with engine.connect() as conn:
+                    conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
+                    conn.commit()
+                print("pgvector extension verified/created.")
+            except Exception as e:
+                print(f"Warning: Could not create pgvector extension: {e}")
+        
+        # Create all tables
+        Base.metadata.create_all(bind=engine)
+        print("Database tables verified/created successfully.")
+    except Exception as e:
+        print(f"Error during database initialization: {e}")
+
 # Vibranium Habit: Strictly lock down Cross-Origin Resource Sharing (CORS)
 ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "https://app.hosteva.com,https://api.hosteva.com").split(",")
 

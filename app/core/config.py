@@ -2,7 +2,7 @@ import os
 from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql+psycopg://localhost/hosteva")
+    DATABASE_URL: str = os.getenv("INTERNAL_DATABASE_URL") or os.getenv("DATABASE_URL", "postgresql+psycopg://localhost/hosteva")
 
     @property
     def sqlalchemy_database_url(self) -> str:
