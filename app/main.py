@@ -13,6 +13,7 @@ from app.schemas.dashboard import HostDashboardResponse
 import os
 import traceback
 import requests
+from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -21,19 +22,25 @@ templates = Jinja2Templates(directory="app/templates")
 
 SHOW_DOCS = os.getenv("SHOW_DOCS", "True").lower() == "true"
 
-app = FastAPI(
-    title="Hosteva Zoning and Compliance Engine",
-    docs_url="/docs" if SHOW_DOCS else None,
-    redoc_url="/redoc" if SHOW_DOCS else None
-)
+_db_initialized = False
 
-@app.on_event("startup")
-def on_startup():
+def init_db():
+    global _db_initialized
+    if _db_initialized:
+        return
     print("Running database startup initialization...")
     try:
-        # Register all models on Base before table creation
+        # Explicitly import all database models so they register on Base
         import app.db_models
-        import app.models
+        import app.models.memory
+        import app.models.host
+        import app.models.property
+        import app.models.zoning
+        import app.models.job
+        import app.models.compliance
+        import app.models.swarm
+        import app.models.oauth
+        import app.integrations.ota_models
         
         # Enable the pgvector extension if PostgreSQL
         if "sqlite" not in str(engine.url):
@@ -48,8 +55,27 @@ def on_startup():
         # Create all tables
         Base.metadata.create_all(bind=engine)
         print("Database tables verified/created successfully.")
+        _db_initialized = True
     except Exception as e:
         print(f"Error during database initialization: {e}")
+        import traceback
+        traceback.print_exc()
+
+# Run initialization synchronously during module import to guarantee table creation
+init_db()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Ensure initialization runs/verifies on startup as well
+    init_db()
+    yield
+
+app = FastAPI(
+    title="Hosteva Zoning and Compliance Engine",
+    docs_url="/docs" if SHOW_DOCS else None,
+    redoc_url="/redoc" if SHOW_DOCS else None,
+    lifespan=lifespan
+)
 
 # Vibranium Habit: Strictly lock down Cross-Origin Resource Sharing (CORS)
 ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "https://app.hosteva.com,https://api.hosteva.com").split(",")
