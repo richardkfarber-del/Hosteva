@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
     <!-- Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries&v=20260522"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -39,7 +39,7 @@
     <div class="w-full max-w-md bg-white/70 backdrop-blur-xl rounded-2xl shadow-ambient border border-white/40 p-8 z-10 transition-all duration-300 hover:shadow-2xl">
         <div class="flex flex-col items-center mb-8">
             <a href="/" class="mb-4">
-                <img src="/static/img/CleanLogo.png" alt="Hosteva Logo" class="h-16 w-auto max-w-full object-contain" onerror="this.onerror=null; this.src='https://placehold.co/200x80/006576/ffffff?text=Hosteva';">
+                <img src="/static/img/CleanLogo.png?v=20260522" alt="Hosteva Logo" class="h-16 w-auto max-w-full object-contain" onerror="this.onerror=null; this.src='https://placehold.co/200x80/006576/ffffff?text=Hosteva';">
             </a>
             <h1 class="text-2xl font-headline font-bold text-slate-800 tracking-tight text-center">Welcome Back</h1>
             <p class="text-sm text-slate-500 mt-1">Sign in to manage your STR compliance</p>
@@ -129,6 +129,16 @@
                 spinner.classList.add('hidden');
             }
         });
+    </script>
+
+    <script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js')
+                .then(reg => console.log('Service Worker registered: ', reg.scope))
+                .catch(err => console.error('Service Worker registration failed: ', err));
+        });
+    }
     </script>
 </body>
 </html>

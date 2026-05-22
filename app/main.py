@@ -50,9 +50,20 @@ async def add_security_headers(request: Request, call_next):
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-XSS-Protection"] = "1; mode=block"
+    
+    content_type = response.headers.get("content-type", "")
+    if "text/html" in content_type.lower():
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+        
     return response
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
+
+@app.get("/sw.js", include_in_schema=False)
+def serve_sw():
+    return FileResponse("app/static/sw.js", media_type="application/javascript")
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
