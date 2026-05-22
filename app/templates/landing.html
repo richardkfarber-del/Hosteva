@@ -60,13 +60,19 @@
             <div class="hidden md:flex items-center gap-8">
                 <a class="text-primary font-semibold border-b-2  py-1" href="/">Home</a>
                 <a class="text-slate-600 font-medium hover:text-primary transition-all duration-300" href="/wizard">Compliance Wizard</a>
-                <a class="text-slate-600 font-medium hover:text-primary transition-all duration-300" href="{{ url_for('dashboard') }}">Dashboard</a>
+                <a class="text-slate-600 font-medium hover:text-primary transition-all duration-300 hidden" id="landing-desktop-dashboard" href="{{ url_for('dashboard') }}">Dashboard</a>
                 <a class="text-slate-600 font-medium hover:text-primary transition-all duration-300" href="/integrations">Integrations</a>
                 <a class="text-slate-600 font-medium hover:text-primary transition-all duration-300 opacity-50 cursor-not-allowed" href="#">Insights</a>
                 <a class="text-slate-600 font-medium hover:text-primary transition-all duration-300 opacity-50 cursor-not-allowed" href="#">Support</a>
             </div>
             <div class="flex items-center gap-4">
-                <a href="{{ url_for('dashboard') }}" class="md:hidden text-primary font-semibold text-sm hover:text-primary-container transition-colors">Dashboard</a>
+                <a href="{{ url_for('dashboard') }}" id="landing-mobile-dashboard" class="hidden md:hidden text-primary font-semibold text-sm hover:text-primary-container transition-colors">Dashboard</a>
+                <div id="landing-auth-buttons" class="hidden flex items-center gap-4">
+                    <a href="/login" class="text-slate-600 hover:text-primary font-semibold text-sm transition-colors">Login</a>
+                    <a href="/register" class="bg-primary text-on-primary px-5 py-2.5 rounded-[8px] font-semibold tracking-tight scale-95 active:scale-90 transition-transform primary-gradient shadow-ambient shadow-primary/20">
+                        Sign Up
+                    </a>
+                </div>
                 <a href="/wizard" class="bg-primary text-on-primary px-5 py-2.5 rounded-[8px] font-semibold tracking-tight scale-95 active:scale-90 transition-transform primary-gradient shadow-ambient shadow-primary/20">
                     Get Started
                 </a>
@@ -208,6 +214,23 @@
     </footer>
 
     <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+        const desktopDashboard = document.getElementById("landing-desktop-dashboard");
+        const mobileDashboard = document.getElementById("landing-mobile-dashboard");
+        const authButtons = document.getElementById("landing-auth-buttons");
+
+        if (token) {
+            if (desktopDashboard) desktopDashboard.classList.remove("hidden");
+            if (mobileDashboard) mobileDashboard.classList.remove("hidden");
+            if (authButtons) authButtons.classList.add("hidden");
+        } else {
+            if (desktopDashboard) desktopDashboard.classList.add("hidden");
+            if (mobileDashboard) mobileDashboard.classList.add("hidden");
+            if (authButtons) authButtons.classList.remove("hidden");
+        }
+    });
+
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('/sw.js')

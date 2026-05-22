@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
@@ -35,7 +35,7 @@ def register_user(user_data: UserRegister, db: Session = Depends(get_db)):
     return {"status": "success", "username": new_host.username}
 
 @router.post("/login")
-def login_user(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+def login_user(response: Response, form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     host = db.query(Host).filter(
         (Host.username == form_data.username) | 
         (Host.email == form_data.username)
@@ -44,6 +44,7 @@ def login_user(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = D
         raise HTTPException(status_code=401, detail="Incorrect username or password")
         
     access_token = create_access_token(data={"sub": host.username, "role": "host"})
+    response.set_cookie(key="access_token", value=access_token, httponly=True, path="/", max_age=1800, samesite="lax")
     return {"access_token": access_token, "token_type": "bearer"}
 
 @router.get("/me")

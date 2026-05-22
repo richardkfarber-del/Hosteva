@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request, Response, Depends
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, PlainTextResponse
+from fastapi.responses import FileResponse, PlainTextResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 from fastapi.middleware.cors import CORSMiddleware
@@ -135,11 +135,13 @@ def read_wizard(request: Request):
 
 @app.get("/login", include_in_schema=False)
 def read_login(request: Request):
-    return templates.TemplateResponse(
+    res = templates.TemplateResponse(
         request=request,
         name="login.html",
         context={"request": request}
     )
+    res.delete_cookie(key="access_token", path="/")
+    return res
 
 @app.get("/register", include_in_schema=False)
 def read_register(request: Request):
@@ -159,6 +161,20 @@ def read_integrations(request: Request):
 
 @app.get("/dashboard", name="dashboard")
 def read_dashboard(request: Request):
+    # Verify cookie-based JWT access token to protect dashboard from 500 errors
+    token = request.cookies.get("access_token")
+    if not token:
+        return RedirectResponse(url="/login", status_code=303)
+    try:
+        from app.core.security import SECRET_KEY, ALGORITHM
+        from jose import jwt
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            return RedirectResponse(url="/login", status_code=303)
+    except Exception:
+        return RedirectResponse(url="/login", status_code=303)
+
     return templates.TemplateResponse(
         request=request,
         name="dashboard.html", 
