@@ -13,7 +13,6 @@ from app.schemas.dashboard import HostDashboardResponse
 import os
 import traceback
 import requests
-from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -22,59 +21,26 @@ templates = Jinja2Templates(directory="app/templates")
 
 SHOW_DOCS = os.getenv("SHOW_DOCS", "True").lower() == "true"
 
-_db_initialized = False
+def import_models():
+    # Explicitly import all database models so they register on Base and relationships are mapped
+    import app.db_models
+    import app.models.memory
+    import app.models.host
+    import app.models.property
+    import app.models.zoning
+    import app.models.job
+    import app.models.compliance
+    import app.models.swarm
+    import app.models.oauth
+    import app.integrations.ota_models
 
-def init_db():
-    global _db_initialized
-    if _db_initialized:
-        return
-    print("Running database startup initialization...")
-    try:
-        # Explicitly import all database models so they register on Base
-        import app.db_models
-        import app.models.memory
-        import app.models.host
-        import app.models.property
-        import app.models.zoning
-        import app.models.job
-        import app.models.compliance
-        import app.models.swarm
-        import app.models.oauth
-        import app.integrations.ota_models
-        
-        # Enable the pgvector extension if PostgreSQL
-        if "sqlite" not in str(engine.url):
-            try:
-                with engine.connect() as conn:
-                    conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
-                    conn.commit()
-                print("pgvector extension verified/created.")
-            except Exception as e:
-                print(f"Warning: Could not create pgvector extension: {e}")
-        
-        # Create all tables
-        Base.metadata.create_all(bind=engine)
-        print("Database tables verified/created successfully.")
-        _db_initialized = True
-    except Exception as e:
-        print(f"Error during database initialization: {e}")
-        import traceback
-        traceback.print_exc()
-
-# Run initialization synchronously during module import to guarantee table creation
-init_db()
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Ensure initialization runs/verifies on startup as well
-    init_db()
-    yield
+# Register models to ensure mapping metadata is configured correctly
+import_models()
 
 app = FastAPI(
     title="Hosteva Zoning and Compliance Engine",
     docs_url="/docs" if SHOW_DOCS else None,
-    redoc_url="/redoc" if SHOW_DOCS else None,
-    lifespan=lifespan
+    redoc_url="/redoc" if SHOW_DOCS else None
 )
 
 # Vibranium Habit: Strictly lock down Cross-Origin Resource Sharing (CORS)

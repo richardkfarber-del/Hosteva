@@ -15,6 +15,7 @@ RUN uv pip install --system -r requirements.txt
 # This ensures app/templates/ and app/static/ are not dropped by the package build.
 COPY app/ /workspace/app/
 COPY README.md /workspace/
+COPY init_db.py /workspace/
 
-# Run the FastAPI server via Gunicorn
-CMD ["sh", "-c", "gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT"]
+# Run database initialization and then the FastAPI server via Gunicorn
+CMD ["sh", "-c", "python init_db.py && gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT"]
