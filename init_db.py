@@ -21,15 +21,16 @@ def main():
         import app.models.oauth
         import app.integrations.ota_models
         
-        # Enable the pgvector extension if PostgreSQL
+        # Enable PostgreSQL extensions if PostgreSQL
         if "sqlite" not in str(engine.url):
             try:
                 with engine.connect() as conn:
                     conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
+                    conn.execute(text("CREATE EXTENSION IF NOT EXISTS btree_gist;"))
                     conn.commit()
-                print("pgvector extension verified/created.")
+                print("pgvector and btree_gist extensions verified/created.")
             except Exception as e:
-                print(f"Warning: Could not create pgvector extension: {e}")
+                print(f"Warning: Could not create database extensions (vector, btree_gist): {e}")
         
         # Create all tables
         Base.metadata.create_all(bind=engine)
