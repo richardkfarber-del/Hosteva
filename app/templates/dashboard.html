@@ -923,9 +923,14 @@ Processing Time: ${data.estimated_processing_time}`);
                 
                 if (properties.length === 0) {
                     grid.innerHTML = `
-                        <div class="col-span-full text-center py-12 text-slate-500 font-medium">
-                            <span class="material-symbols-outlined text-4xl mb-2 text-slate-300">home</span>
-                            <p>No properties onboarded yet. Click "Onboard Property" to add your first listing.</p>
+                        <div class="col-span-full text-center py-16 bg-white/5 border border-white/5 rounded-2xl p-8 flex flex-col items-center justify-center">
+                            <span class="material-symbols-outlined text-5xl mb-4 text-[#52aecd] animate-bounce">home</span>
+                            <h3 class="text-xl font-bold font-headline text-on-surface uppercase tracking-tight italic mb-2">No properties found</h3>
+                            <p class="text-gray-500 text-sm max-w-sm mb-6">Onboard your first property to start monitoring local short-term rental compliance and zoning regulations in real-time.</p>
+                            <button onclick="openAddPropertyModal()" class="px-6 py-2.5 bg-gradient-to-br from-primary to-primary-container text-on-surface font-headline tracking-tight font-bold rounded-[8px] hover:opacity-90 transition-opacity flex items-center gap-2 shadow-teal-600/20 uppercase italic tracking-widest text-xs">
+                                <span class="material-symbols-outlined text-sm">add</span>
+                                Onboard Property
+                            </button>
                         </div>
                     `;
                     // Nominals
@@ -1013,9 +1018,25 @@ Processing Time: ${data.estimated_processing_time}`);
             window.location.href = '/api/stripe/checkout-session';
         }
 
+        async function fetchUserProfile() {
+            try {
+                const response = await fetch('/api/v1/users/me', { headers });
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('sidebar-user-name').innerText = data.full_name || data.username || 'User';
+                    document.getElementById('sidebar-user-tier').innerText = data.tier || 'Free Tier';
+                    const name = data.full_name || data.username || 'U';
+                    document.getElementById('sidebar-user-initials').innerText = name.charAt(0).toUpperCase();
+                }
+            } catch (err) {
+                console.error('Failed to fetch user profile:', err);
+            }
+        }
+
         // Initialize dashboard state
         document.addEventListener('DOMContentLoaded', () => {
             fetchProperties();
+            fetchUserProfile();
         });
 
         // Register Service Worker

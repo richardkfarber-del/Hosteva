@@ -38,12 +38,12 @@ def get_properties(
     result = [
         {
             "id": p.id,
-            "address": p.address,
-            "location": f"{p.city}, {p.state}",
-            "zoning_status": p.zoning_status,
+            "address": p.address or "Unknown Address",
+            "location": f"{p.city or ''}, {p.state or ''}".strip(", "),
+            "zoning_status": p.zoning_status or "Pending",
             "beds": 3,
             "baths": 2,
-            "price": 149 if p.property_type.lower() == "condo" else 249,
+            "price": 149 if p.property_type and p.property_type.lower() == "condo" else 249,
             "image_url": "",
             "lat": 34.0901,
             "lng": -118.3617
@@ -51,7 +51,7 @@ def get_properties(
         for p in properties
     ]
     if status:
-        result = [p for p in result if p["zoning_status"].lower() == status.lower()]
+        result = [p for p in result if p["zoning_status"] and p["zoning_status"].lower() == status.lower()]
     return result
 
 
