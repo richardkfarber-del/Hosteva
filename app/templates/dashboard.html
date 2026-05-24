@@ -23,12 +23,58 @@ tailwind.config = {
         'primary-container': '#1c7f92',
         'on-surface': '#001c37',
         'outline-variant': '#bec8cc',
-        'tertiary-fixed': '#75fbbf'
+        'tertiary-fixed': '#75fbbf',
+        "inverse-surface": "#19324d",
+        "surface-tint": "#006879",
+        "on-tertiary": "#ffffff",
+        "on-primary-fixed": "#001f26",
+        "outline": "#6e797c",
+        "on-tertiary-container": "#f5fff7",
+        "on-secondary": "#ffffff",
+        "on-surface-variant": "#3e484b",
+        "secondary-fixed": "#c8e6ff",
+        "on-tertiary-fixed": "#002114",
+        "on-primary-fixed-variant": "#004e5b",
+        "secondary-container": "#a0d5fd",
+        "tertiary-fixed-dim": "#56dea5",
+        "primary-fixed": "#a8edff",
+        "on-tertiary-fixed-variant": "#005237",
+        "inverse-primary": "#7ed3e7",
+        "on-background": "#001c37",
+        "error": "#ba1a1a",
+        "background": "#f8f9ff",
+        "on-primary-container": "#f9fdff",
+        "secondary": "#2a6486",
+        "surface-variant": "#d2e4ff",
+        "on-error": "#ffffff",
+        "surface-bright": "#f8f9ff",
+        "primary-fixed-dim": "#7ed3e7",
+        "error-container": "#ffdad6",
+        "on-secondary-fixed-variant": "#034c6d",
+        "surface-container-highest": "#d2e4ff",
+        "on-primary": "#ffffff",
+        "on-error-container": "#93000a",
+        "tertiary-container": "#00855c",
+        "surface-dim": "#c4dcff",
+        "surface-container": "#e5eeff",
+        "secondary-fixed-dim": "#97cdf4",
+        "on-secondary-fixed": "#001e2f",
+        "tertiary": "#006948",
+        "inverse-on-surface": "#eaf1ff",
+        "on-secondary-container": "#225d80"
+      },
+      borderRadius: {
+        "DEFAULT": "0.5rem",
+        "lg": "0.75rem",
+        "xl": "1rem",
+        "2xl": "1.5rem",
+        "full": "9999px"
       },
       fontFamily: {
         'display': ['Manrope', 'sans-serif'],
         'headline': ['Manrope', 'sans-serif'],
-        'body': ['Inter', 'sans-serif']
+        'body': ['Inter', 'sans-serif'],
+        'label': ['Inter', 'sans-serif']
       },
       boxShadow: {
         'ambient': '0 20px 40px rgba(0, 28, 55, 0.08)',
@@ -72,6 +118,24 @@ tailwind.config = {
         @keyframes pulse-banner {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.85; }
+        }
+        .glass-effect {
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .hero-gradient {
+            background: linear-gradient(135deg, #006576 0%, #1c7f92 100%);
+        }
+        .ambient-glow {
+            box-shadow: 0 20px 40px rgba(0, 28, 55, 0.04);
+        }
+        .insight-prism {
+            border-left: 3px solid #75fbbf;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
         }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.5/purify.min.js"></script>
@@ -251,225 +315,379 @@ tailwind.config = {
             </div>
         </div>
 
-        <section class="mb-12">
-            <div class="flex justify-between items-end mb-8">
-                <div>
-                    <h2 class="text-4xl font-black tracking-tight text-on-surface font-headline uppercase italic mb-2">Systems Status</h2>
-                    <p class="text-gray-500 font-medium">Monitoring zoning compliance across property grid</p>
-                </div>
-                <div class="flex gap-4">
-                    <button onclick="openFilterModal()" class="px-6 py-2 bg-white/10 text-white text-on-surface font-headline tracking-tight font-bold rounded-[8px] hover:bg-white/10 text-white/80 transition-colors flex items-center gap-2">
-                        <span class="material-symbols-outlined text-sm">filter_list</span>
-                        Filter
-                    </button>
-                    <button onclick="openAddPropertyModal()" class="px-6 py-2 bg-gradient-to-br from-primary to-primary-container text-on-surface font-headline tracking-tight font-bold rounded-[8px] hover:opacity-90 transition-opacity flex items-center gap-2 shadow-teal-600/20 uppercase italic tracking-widest">
-                        <span class="material-symbols-outlined text-sm">add</span>
-                        Onboard
-                    </button>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
-                <div class="col-span-1 md:col-span-2 bg-gradient-to-br from-gray-50 to-gray-100 p-8 rounded-[8px] relative overflow-hidden group">
-                    <div class="absolute right-0 top-0 w-32 h-32 bg-gradient-to-br from-primary to-primary-container/5 rounded-full -mr-16 -mt-16"></div>
-                    <p class="text-primary font-bold text-xs uppercase tracking-widest mb-4">Total Portfolio Revenue</p>
-                    <div class="flex items-baseline gap-2">
-                        <h3 class="text-5xl font-black text-on-surface font-headline tracking-tight tracking-tighter italic">$1,420,850.00</h3>
-                        <span class="text-success font-bold text-sm tracking-tighter">+12.4%</span>
-                    </div>
-                </div>
-                <div class="bg-white/10 text-white p-8 rounded-[8px]">
-                    <p class="text-gray-500 font-bold text-xs uppercase tracking-widest mb-4">Compliance Score</p>
-                    <div class="flex items-baseline gap-2">
-                        <h3 class="text-4xl font-black text-on-surface font-headline tracking-tight tracking-tighter italic compliance-score">99.1%</h3>
-                        <span class="material-symbols-outlined text-success" style="font-variation-settings: 'FILL' 1;">bolt</span>
-                    </div>
-                </div>
-                <div class="bg-white/10 text-white p-8 rounded-[8px]">
-                    <p class="text-gray-500 font-bold text-xs uppercase tracking-widest mb-4">Active Alerts</p>
-                    <div class="flex items-baseline gap-2">
-                        <h3 class="text-4xl font-black text-on-surface font-headline tracking-tight tracking-tighter italic active-alerts">01</h3>
-                        <span class="text-primary font-bold text-sm">High Priority</span>
-                    </div>
-                </div>
-            </div>
-
-            
-<template id="property-card-template">
-    <div class="group bg-white/10 text-white overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-teal-600/10 relative property-card-root">
-        <div class="violation-banner absolute top-0 left-0 right-0 z-20 px-4 py-2 flex items-center gap-2 hidden">
-            <span class="material-symbols-outlined text-white text-sm" style="font-variation-settings: 'FILL' 1;">warning</span>
-            <span class="text-white text-xs font-black uppercase tracking-widest">Critical Violation</span>
-        </div>
-        <div class="relative h-64 overflow-hidden property-card-clip property-image-container">
-            <img src="{{ url_for('static', path='img/CleanLogo.png') }}?v=20260522" alt="" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 property-image">
-            <div class="absolute top-4 left-4 property-status-badge"></div>
-            <button class="absolute top-4 right-4 p-2 bg-white/10 border/90 rounded-[8px] hover:bg-white/10 transition-colors property-export-btn" title="Export PDF">
-                <span class="material-symbols-outlined text-gray-700 text-sm">picture_as_pdf</span>
-            </button>
-            <div class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-gray-200 to-transparent">
-                <p class="text-on-surface font-headline tracking-tight font-black text-xl italic uppercase property-name"></p>
+        <!-- Dynamic dashboard content container -->
+        <div id="dashboard-dynamic-content" class="w-full">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="animate-pulse bg-slate-100 border border-slate-200 h-96 rounded-2xl"></div>
+                <div class="animate-pulse bg-slate-100 border border-slate-200 h-96 rounded-2xl"></div>
+                <div class="animate-pulse bg-slate-100 border border-slate-200 h-96 rounded-2xl"></div>
             </div>
         </div>
-        <div class="p-6">
-            <div class="flex justify-between items-start mb-6">
-                <div><p class="text-gray-500 text-sm font-medium property-location"></p></div>
-                <div class="text-right">
-                    <p class="text-primary font-black text-xl italic tracking-tighter property-price"></p>
-                    <p class="text-gray-500 text-[10px] uppercase font-bold tracking-tight">per night</p>
-                </div>
-            </div>
-            <div class="flex justify-between items-center pt-4 border-t border-white/5">
-                <div class="flex gap-4">
-                    <div class="flex items-center gap-1 text-gray-500 text-xs"><span class="material-symbols-outlined text-sm">bed</span> <span class="property-beds"></span></div>
-                    <div class="flex items-center gap-1 text-gray-500 text-xs"><span class="material-symbols-outlined text-sm">bathtub</span> <span class="property-baths"></span></div>
-                </div>
-                <button class="text-primary font-bold text-sm hover:underline italic uppercase tracking-widest">Access</button>
-            </div>
-            <div class="mt-4 p-4 bg-white/10 rounded-[8px] flex flex-col gap-3">
-                <div class="flex justify-between items-center">
-                    <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Compliance Engine</p>
-                    <span class="px-2 py-1 text-[10px] font-black uppercase rounded-[8px] bg-green-500/20 text-green-600 property-county"></span>
-                </div>
-                <div class="flex justify-between items-center">
-                    <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Listing Sync</p>
-                    <div class="flex items-center gap-2">
-                        <!-- Airbnb sync omitted per FEAT-016-B -->
-                        <span class="px-2 py-1 text-[10px] font-black uppercase rounded-[8px] bg-white/10 text-indigo-600 flex items-center gap-1">VRBO <span class="material-symbols-outlined text-[12px] text-green-500">sync</span></span>
+
+        <!-- Google Stitch Empty Layout Template -->
+        <template id="layout-empty">
+            <!-- Hero Section -->
+            <section class="mt-12 mb-16 flex flex-col md:flex-row items-center justify-between gap-12">
+                <div class="flex-1 space-y-6">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-fixed-dim/20 text-primary-fixed-dim">
+                        <span class="material-symbols-outlined text-sm text-[#006576]">colors_spark</span>
+                        <span class="text-[10px] font-bold uppercase tracking-widest text-[#006576]">Digital Concierge Active</span>
                     </div>
-                </div>
-
-                <!-- FEAT-005 visible: Automated Permit Application Generator -->
-                <button class="mt-2 w-full px-4 py-2 bg-primary/10 text-primary hover:bg-primary/20 rounded-[8px] font-bold text-xs uppercase tracking-widest transition-colors flex items-center justify-center gap-2 property-permit-btn">
-                    <span class="material-symbols-outlined text-sm">description</span>
-                    Generate Permit Application
-                </button>
-
-                <!-- FEAT-006: Listing Optimization Recommendation Engine -->
-                <div class="mt-2 p-3 bg-white/10 rounded-[8px] recommendations-container">
-                    <div class="flex items-center justify-between mb-2">
-                        <div class="flex items-center gap-2">
-                            <span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">lightbulb</span>
-                            <p class="text-xs font-bold text-on-surface uppercase tracking-widest">Optimization Ideas</p>
-                        </div>
-                        <button class="text-primary hover:text-primary-container transition-colors property-refresh-btn" title="Refresh recommendations">
-                            <span class="material-symbols-outlined text-sm">refresh</span>
+                    <h1 class="font-headline text-5xl md:text-6xl font-extrabold tracking-tight text-on-surface leading-[1.1]">
+                        Your Portfolio, <br/>
+                        <span class="text-primary-container">Perfectly Orchestrated.</span>
+                    </h1>
+                    <p class="text-on-surface-variant text-lg max-w-xl leading-relaxed">
+                        Welcome to the next generation of property management. Hosteva's AI-driven platform handles the complexities of hosting so you can focus on the guest experience.
+                    </p>
+                    <div class="flex flex-wrap gap-4 pt-4">
+                        <button onclick="openAddPropertyModal()" class="hero-gradient text-white font-bold px-8 py-4 rounded-xl shadow-lg hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2">
+                            <span class="material-symbols-outlined">add_business</span>
+                            Add Your First Property
+                        </button>
+                        <button class="bg-surface-container-highest text-primary font-bold px-8 py-4 rounded-xl hover:bg-surface-container-high transition-colors">
+                            Take a Tour
                         </button>
                     </div>
-                    <div class="recommendations-content">
-                        <ul class="text-xs text-gray-600 space-y-1 list-disc list-inside">
-                            <li>Loading recommendations...</li>
+                </div>
+                <div class="flex-1 w-full relative">
+                    <div class="aspect-square w-full max-w-md mx-auto relative">
+                        <!-- Decorative elements for the empty state illustration -->
+                        <div class="absolute inset-0 bg-primary/5 rounded-[40px] rotate-6"></div>
+                        <div class="absolute inset-0 bg-surface-container-lowest rounded-[40px] shadow-2xl border border-outline-variant/10 flex items-center justify-center overflow-hidden">
+                            <img class="w-full h-full object-cover opacity-60" src="https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=800&q=80"/>
+                            <div class="absolute inset-0 bg-gradient-to-t from-surface via-transparent to-transparent"></div>
+                            <div class="absolute bottom-8 left-8 right-8 p-6 glass-effect bg-white/40 rounded-2xl border border-white/40 backdrop-blur-md">
+                                <p class="font-headline font-bold text-on-surface mb-2">Ready for your first listing</p>
+                                <p class="text-xs text-on-surface-variant leading-relaxed">Connect your first property to unlock real-time revenue tracking and automated compliance monitoring.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Placeholder Insights Bento Grid -->
+            <section class="pb-24">
+                <div class="mb-10 flex items-end justify-between">
+                    <div>
+                        <h2 class="font-headline text-3xl font-bold text-on-surface">System Readiness</h2>
+                        <p class="text-on-surface-variant mt-2">Components awaiting your first property data.</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Insight Prism Card (Empty State Variation) -->
+                    <div class="md:col-span-2 bg-surface-container-lowest rounded-2xl p-8 shadow-sm relative overflow-hidden group border border-outline-variant/5">
+                        <div class="absolute top-0 left-0 w-1 h-full bg-tertiary-fixed"></div>
+                        <div class="flex items-start justify-between">
+                            <div class="space-y-4">
+                                <div class="w-12 h-12 rounded-xl bg-tertiary-fixed/20 flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-tertiary" style="font-variation-settings: 'FILL' 1;">insights</span>
+                                </div>
+                                <h3 class="font-headline text-2xl font-bold text-on-surface">The Insight Prism</h3>
+                                <p class="text-on-surface-variant max-w-md">Our AI engine is ready to analyze your property's performance. Add a listing to see predictive revenue modeling and local market comparisons appear here.</p>
+                            </div>
+                            <div class="hidden lg:block">
+                                <!-- Abstract Graphic Placeholder -->
+                                <div class="w-48 h-48 rounded-full border-[16px] border-surface-container-low border-t-tertiary-fixed/30 animate-spin-slow"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Compliance Shield -->
+                    <div class="bg-surface-container-low rounded-2xl p-8 flex flex-col justify-between">
+                        <div class="space-y-4">
+                            <span class="material-symbols-outlined text-secondary text-3xl">verified_user</span>
+                            <h4 class="font-headline text-xl font-bold text-on-surface">Compliance Shield</h4>
+                            <div class="space-y-2">
+                                <div class="h-2 w-full bg-surface-container-high rounded-full overflow-hidden">
+                                    <div class="h-full bg-outline-variant w-1/3 opacity-30"></div>
+                                </div>
+                                <p class="text-xs text-on-surface-variant">Regulatory tracking dormant</p>
+                            </div>
+                        </div>
+                        <p class="text-sm text-on-surface-variant mt-6 italic">Waiting for address validation...</p>
+                    </div>
+                    <!-- Revenue Stats Placeholder -->
+                    <div class="bg-surface-container-lowest rounded-2xl p-8 border border-outline-variant/5 shadow-sm">
+                        <div class="flex items-center justify-between mb-8">
+                            <span class="font-label text-xs font-bold uppercase tracking-widest text-on-surface-variant">Revenue Target</span>
+                            <span class="material-symbols-outlined text-primary-container">monitoring</span>
+                        </div>
+                        <div class="space-y-6">
+                            <div class="h-10 w-2/3 bg-surface-container-low rounded-lg animate-pulse"></div>
+                            <div class="h-4 w-full bg-surface-container-low rounded-full animate-pulse"></div>
+                            <div class="h-4 w-1/2 bg-surface-container-low rounded-full animate-pulse"></div>
+                        </div>
+                        <div class="mt-8 pt-8 border-t border-outline-variant/10">
+                            <p class="text-xs text-on-surface-variant leading-relaxed">Once active, you'll see a breakdown of nightly rates, occupancy, and projected payouts.</p>
+                        </div>
+                    </div>
+                    <!-- Local Market Snapshot -->
+                    <div class="bg-surface-container-lowest rounded-2xl p-8 border border-outline-variant/5 shadow-sm md:col-span-2 flex flex-col md:flex-row gap-8 items-center">
+                        <div class="flex-1 space-y-4">
+                            <h4 class="font-headline text-xl font-bold text-on-surface">Local Market Snapshot</h4>
+                            <p class="text-sm text-on-surface-variant leading-relaxed">We provide hyper-local data for over 400 global markets. Tell us where your property is to unlock competitive pricing insights.</p>
+                            <button class="text-primary font-bold text-sm flex items-center gap-1 group">
+                                Explore supported regions
+                                <span class="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                            </button>
+                        </div>
+                        <div class="w-full md:w-64 aspect-video rounded-xl overflow-hidden bg-surface-container-low border border-outline-variant/20">
+                            <img class="w-full h-full object-cover grayscale opacity-50" src="https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=400&q=80"/>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </template>
+
+        <!-- Google Stitch Single Property Layout Template -->
+        <template id="layout-single">
+            <!-- Welcome Header -->
+            <section class="mb-10">
+                <h1 class="font-headline text-4xl font-extrabold tracking-tight mb-2">Welcome back, <span class="single-user-name">Host</span>.</h1>
+                <p class="text-on-surface-variant text-lg">Your property is performing at peak efficiency today.</p>
+            </section>
+            
+            <!-- Bento Grid Layout -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Primary Property Card (Large) -->
+                <div class="lg:col-span-8 group">
+                    <div class="bg-surface-container-lowest rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 relative">
+                        <div class="relative h-[400px] overflow-hidden">
+                            <img class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700 single-prop-image" src=""/>
+                            <div class="absolute inset-0 bg-gradient-to-t from-on-surface/80 via-transparent to-transparent"></div>
+                            <div class="absolute bottom-8 left-8 right-8 flex justify-between items-end">
+                                <div>
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <span class="bg-tertiary-fixed text-on-tertiary-fixed px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 single-prop-badge">
+                                            <span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                                            ACTIVE
+                                        </span>
+                                    </div>
+                                    <h2 class="font-headline text-4xl font-bold text-white tracking-tight single-prop-name">Sunset Villa</h2>
+                                    <p class="text-white/80 flex items-center gap-1 mt-1">
+                                        <span class="material-symbols-outlined text-sm">location_on</span> 
+                                        <span class="single-prop-location">Malibu High-Lands, CA</span>
+                                    </p>
+                                </div>
+                                <button class="bg-white text-on-surface font-semibold px-6 py-3 rounded-lg hover:bg-primary-container hover:text-white transition-all active:scale-95 single-prop-manage-btn">
+                                    Manage listing
+                                </button>
+                            </div>
+                        </div>
+                        <div class="p-8 flex flex-col md:flex-row gap-8 items-center bg-surface-container-low/30 backdrop-blur-sm">
+                            <div class="flex items-center gap-4">
+                                <div class="relative w-20 h-20">
+                                    <svg class="w-full h-full" viewbox="0 0 36 36">
+                                        <path class="text-outline-variant opacity-20" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="3"></path>
+                                        <path class="text-primary single-compliance-progress" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="100, 100" stroke-linecap="round" stroke-width="3"></path>
+                                    </svg>
+                                    <div class="absolute inset-0 flex items-center justify-center">
+                                        <span class="text-lg font-bold single-compliance-text">100%</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-lg text-on-surface">Compliance Score</h3>
+                                    <p class="text-on-surface-variant text-sm single-compliance-desc">Elite Host Status maintained</p>
+                                </div>
+                            </div>
+                            <div class="h-12 w-px bg-outline-variant/30 hidden md:block"></div>
+                            <div class="flex-1 grid grid-cols-2 gap-4 w-full">
+                                <div class="p-4 bg-surface-container-lowest rounded-xl">
+                                    <span class="text-xs text-on-surface-variant font-medium block mb-1">OCCUPANCY</span>
+                                    <span class="text-xl font-bold text-primary">88%</span>
+                                </div>
+                                <div class="p-4 bg-surface-container-lowest rounded-xl">
+                                    <span class="text-xs text-on-surface-variant font-medium block mb-1">AVG. RATING</span>
+                                    <span class="text-xl font-bold text-primary">4.96</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Side Column -->
+                <div class="lg:col-span-4 space-y-6">
+                    <!-- Revenue Summary -->
+                    <div class="bg-primary-container text-on-primary-container p-8 rounded-2xl shadow-lg relative overflow-hidden">
+                        <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
+                        <div class="relative z-10">
+                            <div class="flex justify-between items-start mb-6">
+                                <h3 class="font-headline text-xl font-bold text-white">Revenue Summary</h3>
+                                <span class="text-xs font-bold bg-white/20 px-2 py-1 rounded text-white uppercase font-label">MARCH</span>
+                            </div>
+                            <div class="mb-6">
+                                <span class="text-4xl font-black tracking-tighter text-white single-total-rev">$14,280.00</span>
+                                <div class="flex items-center gap-1 text-tertiary-fixed mt-1">
+                                    <span class="material-symbols-outlined text-sm text-tertiary-fixed">trending_up</span>
+                                    <span class="text-xs font-bold text-tertiary-fixed">+12.4% from last month</span>
+                                </div>
+                            </div>
+                            <div class="space-y-3 text-white">
+                                <div class="flex justify-between items-center text-sm opacity-90">
+                                    <span>Bookings (14)</span>
+                                    <span class="font-bold single-bookings-rev">$12,400</span>
+                                </div>
+                                <div class="flex justify-between items-center text-sm opacity-90">
+                                    <span>Add-on services</span>
+                                    <span class="font-bold single-addons-rev">$1,880</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- AI Insights Prism (Active Alerts) -->
+                    <div class="insight-prism bg-surface-container-lowest p-6 rounded-r-2xl shadow-[0_10px_30px_rgba(0,28,55,0.03)] border border-outline-variant/10">
+                        <div class="flex items-center gap-2 mb-4 text-tertiary">
+                            <span class="material-symbols-outlined text-tertiary" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+                            <h3 class="font-bold text-on-surface">Compliance Alerts</h3>
+                        </div>
+                        <ul class="space-y-4 single-alerts-list">
+                            <!-- Dynamic Alerts will be injected here -->
                         </ul>
+                        <button onclick="openAddPropertyModal()" class="mt-6 w-full py-3 text-sm font-bold text-primary hover:bg-surface-container-low rounded-lg transition-colors border border-primary/10">
+                            View All Tasks
+                        </button>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-</template>
-
-<template id="property-card-skeleton">
-    <div class="animate-pulse bg-gray-100 overflow-hidden transition-all duration-300 rounded-xl h-full flex flex-col border border-gray-200">
-        <div class="h-64 bg-gray-200 w-full relative">
-            <div class="absolute top-4 left-4 h-6 w-24 bg-gray-300 rounded-lg"></div>
-            <div class="absolute top-4 right-4 h-8 w-8 bg-gray-300 rounded-lg"></div>
-        </div>
-        <div class="p-6 flex-1 flex flex-col">
-            <div class="flex justify-between items-start mb-6">
-                <div class="h-4 bg-gray-200 rounded w-1/2"></div>
-                <div class="text-right flex flex-col items-end">
-                    <div class="h-6 bg-gray-200 rounded w-16 mb-1"></div>
-                    <div class="h-3 bg-gray-200 rounded w-12"></div>
+            <!-- Secondary Section: Recent Activity / Quick Actions -->
+            <section class="mt-12">
+                <h3 class="font-headline text-2xl font-bold mb-6">Quick Actions</h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <button class="flex flex-col items-center justify-center gap-3 p-6 bg-surface-container-low hover:bg-surface-container-high transition-all rounded-2xl group active:scale-95">
+                        <span class="material-symbols-outlined text-3xl text-primary group-hover:scale-110 transition-transform">calendar_month</span>
+                        <span class="font-label text-sm font-semibold uppercase tracking-wider">Bookings</span>
+                    </button>
+                    <button class="flex flex-col items-center justify-center gap-3 p-6 bg-surface-container-low hover:bg-surface-container-high transition-all rounded-2xl group active:scale-95">
+                        <span class="material-symbols-outlined text-3xl text-primary group-hover:scale-110 transition-transform">message</span>
+                        <span class="font-label text-sm font-semibold uppercase tracking-wider">Messages</span>
+                    </button>
+                    <button class="flex flex-col items-center justify-center gap-3 p-6 bg-surface-container-low hover:bg-surface-container-high transition-all rounded-2xl group active:scale-95">
+                        <span class="material-symbols-outlined text-3xl text-primary group-hover:scale-110 transition-transform">construction</span>
+                        <span class="font-label text-sm font-semibold uppercase tracking-wider">Maintenance</span>
+                    </button>
+                    <button onclick="openAddPropertyModal()" class="flex flex-col items-center justify-center gap-3 p-6 bg-surface-container-low hover:bg-surface-container-high transition-all rounded-2xl group active:scale-95">
+                        <span class="material-symbols-outlined text-3xl text-primary group-hover:scale-110 transition-transform">add_business</span>
+                        <span class="font-label text-sm font-semibold uppercase tracking-wider">Add Property</span>
+                    </button>
                 </div>
-            </div>
-            <div class="flex justify-between items-center pt-4 border-t border-gray-200">
-                <div class="flex gap-4">
-                    <div class="h-4 bg-gray-200 rounded w-12"></div>
-                    <div class="h-4 bg-gray-200 rounded w-12"></div>
-                </div>
-                <div class="h-4 bg-gray-200 rounded w-16"></div>
-            </div>
-            <div class="mt-4 p-4 bg-gray-50 rounded-lg flex flex-col gap-3 border border-gray-100">
-                <div class="flex justify-between items-center">
-                    <div class="h-3 bg-gray-200 rounded w-24"></div>
-                    <div class="h-4 bg-gray-200 rounded w-16"></div>
-                </div>
-                <div class="h-8 w-full bg-gray-200 rounded-lg mt-2"></div>
-                <div class="h-20 w-full bg-gray-200 rounded-lg mt-2"></div>
-            </div>
-        </div>
-    </div>
-</template>
+            </section>
+        </template>
 
-<template id="system-degraded-error">
-    <div class="col-span-full bg-red-900/20 border border-red-500/50 rounded-[8px] p-8 text-center text-white">
-        <span class="material-symbols-outlined text-red-500 text-4xl mb-4">cloud_off</span>
-        <h3 class="text-xl font-bold font-headline tracking-tight uppercase italic mb-2">System Degraded</h3>
-        <p class="text-gray-400 text-sm mb-6">Unable to connect to the backend properties service.</p>
-        <button onclick="fetchProperties()" class="px-6 py-2 bg-red-500/20 text-red-500 hover:bg-red-500/30 rounded-[8px] font-bold text-xs uppercase tracking-widest transition-colors inline-flex items-center gap-2">
-            <span class="material-symbols-outlined text-sm">refresh</span>
-            Refresh Connection
-        </button>
-    </div>
-</template>
-
-            <div id="property-grid" class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
-                <div class="animate-pulse bg-gray-100 border border-gray-200 h-96 rounded-xl"></div>
-                <div class="animate-pulse bg-gray-100 border border-gray-200 h-96 rounded-xl"></div>
-                <div class="animate-pulse bg-gray-100 border border-gray-200 h-96 rounded-xl"></div>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-                <!-- License Tracker -->
-                <div class="bg-white/10 p-8 rounded-[8px] shadow-ambient-light">
-                    <h3 class="text-2xl font-black tracking-tight text-on-surface font-headline uppercase italic mb-6 flex items-center gap-3">
-                        <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">assignment</span>
-                        License Tracker
-                    </h3>
-                    <div class="space-y-4">
-                        <div class="flex justify-between items-center p-4 bg-white/10 rounded-[8px]">
-                            <div>
-                                <p class="text-on-surface font-bold font-headline tracking-tight">Business Tax Receipt (BTR)</p>
-                                <p class="text-gray-500 text-xs">Expires: Oct 31, 2026</p>
+        <!-- Google Stitch Multi Property Layout Template -->
+        <template id="layout-multi">
+            <!-- Summary Section (The Insight Prism Influence) -->
+            <section class="grid grid-cols-1 md:grid-cols-12 gap-6 mb-12">
+                <div class="md:col-span-8 bg-surface-container-lowest p-8 rounded-xl shadow-[0_20px_40px_rgba(0,28,55,0.04)] relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform duration-700">
+                        <span class="material-symbols-outlined text-9xl text-slate-300">trending_up</span>
+                    </div>
+                    <div class="relative z-10">
+                        <p class="text-on-surface-variant font-medium mb-2 uppercase tracking-widest text-xs">Portfolio Performance</p>
+                        <h1 class="text-5xl font-extrabold tracking-tight text-on-surface mb-6 multi-portfolio-revenue">$0.00</h1>
+                        <div class="flex flex-wrap gap-8">
+                            <div class="flex items-center gap-3">
+                                <div class="p-3 bg-tertiary-fixed/30 text-tertiary rounded-xl">
+                                    <span class="material-symbols-outlined">verified_user</span>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-on-surface-variant font-semibold">AVG COMPLIANCE</p>
+                                    <p class="text-xl font-bold multi-avg-compliance">100%</p>
+                                </div>
                             </div>
-                            <span class="px-3 py-1 text-xs font-black uppercase rounded-[8px] bg-green-500/20 text-green-600">Active</span>
-                        </div>
-                        <div class="flex justify-between items-center p-4 bg-white/10 rounded-[8px]">
-                            <div>
-                                <p class="text-on-surface font-bold font-headline tracking-tight">Florida State DBPR License</p>
-                                <p class="text-gray-500 text-xs">Expires: Dec 31, 2026</p>
+                            <div class="flex items-center gap-3">
+                                <div class="p-3 bg-secondary-fixed/30 text-secondary rounded-xl">
+                                    <span class="material-symbols-outlined">home_work</span>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-on-surface-variant font-semibold">ACTIVE ASSETS</p>
+                                    <p class="text-xl font-bold multi-active-assets">0 Properties</p>
+                                </div>
                             </div>
-                            <span class="px-3 py-1 text-xs font-black uppercase rounded-[8px] bg-green-500/20 text-green-600">Active</span>
                         </div>
                     </div>
                 </div>
+                <!-- AI Insight Card -->
+                <div class="md:col-span-4 bg-surface-container-lowest p-8 rounded-xl shadow-[0_20px_40px_rgba(0,28,55,0.04)] border-l-4 border-tertiary-fixed relative">
+                    <div class="flex items-center gap-2 mb-4 text-tertiary">
+                        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+                        <span class="text-xs font-bold uppercase tracking-widest">Concierge AI</span>
+                    </div>
+                    <h3 class="font-headline text-lg font-bold mb-3 leading-tight multi-insight-title">Revenue Opportunity</h3>
+                    <p class="text-body-md text-on-surface-variant mb-6 multi-insight-desc">Your properties are fully optimized today. No current rate optimizations required.</p>
+                    <button onclick="openAddPropertyModal()" class="w-full py-3 bg-gradient-to-r from-primary to-primary-container text-white font-bold rounded-lg hover:shadow-lg active:scale-[0.98] transition-all">Add Property</button>
+                </div>
+            </section>
+            <!-- Properties Grid Header -->
+            <div class="flex justify-between items-end mb-8">
+                <div>
+                    <h2 class="text-2xl font-black text-on-surface tracking-tight">Active Portfolio</h2>
+                    <p class="text-on-surface-variant font-medium multi-portfolio-sub">Managing active locations</p>
+                </div>
+                <button onclick="openAddPropertyModal()" class="group flex items-center gap-2 bg-on-surface text-white px-6 py-3 rounded-full font-bold hover:bg-primary transition-all active:scale-95 shadow-xl">
+                    <span class="material-symbols-outlined">add</span>
+                    <span>Add Property</span>
+                </button>
+            </div>
+            <!-- Property Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 multi-property-grid">
+                <!-- Dynamic property cards will be injected here -->
+            </div>
+        </template>
 
-                <!-- Document Vault -->
-                <div class="bg-white/10 p-8 rounded-[8px] shadow-ambient-light">
-                    <h3 class="text-2xl font-black tracking-tight text-on-surface font-headline uppercase italic mb-6 flex items-center gap-3">
-                        <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">folder_secure</span>
-                        Document Vault
-                    </h3>
-                    <div class="flex gap-4 h-full max-h-[160px]">
-                        <div class="rounded-[8px] p-4 flex flex-col items-center justify-center bg-white/10 hover:bg-gray-50 transition-colors cursor-pointer flex-1">
-                            <span class="material-symbols-outlined text-4xl text-gray-400 mb-2">cloud_upload</span>
-                            <p class="text-on-surface font-bold font-headline tracking-tight text-center text-sm">Upload Documents</p>
+        <!-- Dynamic Multi Property Card Template -->
+        <template id="multi-property-card-template">
+            <div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-[0_20px_40px_rgba(0,28,55,0.04)] group hover:translate-y-[-4px] transition-all duration-300">
+                <div class="h-56 relative overflow-hidden">
+                    <img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 property-card-img" src=""/>
+                    <div class="absolute top-4 right-4 property-card-badge px-3 py-1 rounded-full text-xs font-black flex items-center gap-1 shadow-sm">
+                        <!-- Status badge content -->
+                    </div>
+                </div>
+                <div class="p-6">
+                    <h3 class="font-headline text-xl font-bold mb-1 group-hover:text-primary transition-colors property-card-title"></h3>
+                    <p class="text-sm text-on-surface-variant mb-6 flex items-center gap-1 property-card-location">
+                        <span class="material-symbols-outlined text-sm">location_on</span>
+                        <span class="property-card-location-text"></span>
+                    </p>
+                    
+                    <div class="grid grid-cols-2 gap-4 pt-4 border-t border-surface-container mb-4">
+                        <div>
+                            <p class="text-[10px] text-on-surface-variant font-bold uppercase tracking-wider">MONTHLY REV</p>
+                            <p class="text-lg font-black text-on-surface property-card-rev">$0.00</p>
                         </div>
-                        <div onclick="generateCompliancePDF()" class="border-teal-200 rounded-[8px] p-4 flex flex-col items-center justify-center bg-teal-50/50 hover:bg-teal-50 transition-colors cursor-pointer flex-1">
-                            <span class="material-symbols-outlined text-4xl text-teal-600 mb-2">picture_as_pdf</span>
-                            <p class="text-on-surface font-bold font-headline tracking-tight text-center text-sm text-teal-800">Generate Compliance PDF</p>
+                        <div>
+                            <p class="text-[10px] text-on-surface-variant font-bold uppercase tracking-wider">OCCUPANCY</p>
+                            <p class="text-lg font-black text-on-surface property-card-occupancy">88%</p>
                         </div>
+                    </div>
+
+                    <!-- compliance hooks inside the card -->
+                    <div class="flex justify-between items-center pt-2 gap-2 border-t border-slate-100">
+                        <button class="text-xs font-bold text-primary hover:underline uppercase tracking-wider flex items-center gap-1 property-permit-btn">
+                            <span class="material-symbols-outlined text-xs">description</span>
+                            Permit
+                        </button>
+                        <button class="text-xs font-bold text-gray-500 hover:text-primary uppercase tracking-wider flex items-center gap-1 property-export-btn">
+                            <span class="material-symbols-outlined text-xs">picture_as_pdf</span>
+                            Audit
+                        </button>
                     </div>
                 </div>
             </div>
+        </template>
 
-            <div class="mt-12 mb-8">
-                <h3 class="text-2xl font-black tracking-tight text-on-surface font-headline uppercase italic mb-6 flex items-center gap-3">
-                    <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">map</span>
-                    Geospatial Parcel Map
-                </h3>
-                <div id="parcel-map" class="h-96 rounded-[8px] overflow-hidden"></div>
+        <!-- System Degraded Error Template -->
+        <template id="system-degraded-error">
+            <div class="col-span-full bg-red-900/20 border border-red-500/50 rounded-[8px] p-8 text-center text-white">
+                <span class="material-symbols-outlined text-red-500 text-4xl mb-4">cloud_off</span>
+                <h3 class="text-xl font-bold font-headline tracking-tight uppercase italic mb-2">System Degraded</h3>
+                <p class="text-gray-400 text-sm mb-6">Unable to connect to the backend properties service.</p>
+                <button onclick="fetchProperties()" class="px-6 py-2 bg-red-500/20 text-red-500 hover:bg-red-500/30 rounded-[8px] font-bold text-xs uppercase tracking-widest transition-colors inline-flex items-center gap-2">
+                    <span class="material-symbols-outlined text-sm">refresh</span>
+                    Refresh Connection
+                </button>
             </div>
-        </section>
+        </template>
+
     </main>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js?v=20260522"></script>
@@ -663,6 +881,9 @@ tailwind.config = {
         let mapMarkers = [];
 
         function initParcelMap(properties) {
+            const mapEl = document.getElementById('parcel-map');
+            if (!mapEl) return;
+
             if (!map) {
                 map = L.map('parcel-map', {
                     center: [27.9944, -81.7603], // Default Florida
@@ -749,8 +970,7 @@ County: ${data.county}
 Status: ${data.compliance_status}
 
 Required Documents:
-${data.required_documents.join('
-')}
+${data.required_documents.join('\n')}
 
 Processing Time: ${data.estimated_processing_time}`);
                 
@@ -767,7 +987,9 @@ Processing Time: ${data.estimated_processing_time}`);
             if (event) event.stopPropagation();
             
             const container = document.querySelector(`.recommendations-container[data-property-id="${propertyId}"]`);
+            if (!container) return;
             const contentDiv = container.querySelector('.recommendations-content');
+            if (!contentDiv) return;
             
             try {
                 contentDiv.innerHTML = DOMPurify.sanitize('<p class="text-xs text-gray-500 animate-pulse">Loading recommendations...</p>');
@@ -902,11 +1124,13 @@ Processing Time: ${data.estimated_processing_time}`);
         }
 
         async function fetchProperties(filterStatus = null) {
-            const grid = document.getElementById('property-grid');
-            grid.innerHTML = `
-                <div class="animate-pulse bg-slate-100 border border-slate-200 h-96 rounded-2xl"></div>
-                <div class="animate-pulse bg-slate-100 border border-slate-200 h-96 rounded-2xl"></div>
-                <div class="animate-pulse bg-slate-100 border border-slate-200 h-96 rounded-2xl"></div>
+            const dynamicContent = document.getElementById('dashboard-dynamic-content');
+            dynamicContent.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="animate-pulse bg-slate-100 border border-slate-200 h-96 rounded-2xl"></div>
+                    <div class="animate-pulse bg-slate-100 border border-slate-200 h-96 rounded-2xl"></div>
+                    <div class="animate-pulse bg-slate-100 border border-slate-200 h-96 rounded-2xl"></div>
+                </div>
             `;
             
             try {
@@ -921,94 +1145,214 @@ Processing Time: ${data.estimated_processing_time}`);
                 }
                 
                 const properties = await response.json();
-                grid.innerHTML = '';
+                dynamicContent.innerHTML = '';
                 
                 if (properties.length === 0) {
-                    grid.innerHTML = `
-                        <div class="col-span-full text-center py-16 bg-white/5 border border-white/5 rounded-2xl p-8 flex flex-col items-center justify-center">
-                            <span class="material-symbols-outlined text-5xl mb-4 text-[#52aecd] animate-bounce">home</span>
-                            <h3 class="text-xl font-bold font-headline text-on-surface uppercase tracking-tight italic mb-2">No properties found</h3>
-                            <p class="text-gray-500 text-sm max-w-sm mb-6">Onboard your first property to start monitoring local short-term rental compliance and zoning regulations in real-time.</p>
-                            <button onclick="openAddPropertyModal()" class="px-6 py-2.5 bg-gradient-to-br from-primary to-primary-container text-on-surface font-headline tracking-tight font-bold rounded-[8px] hover:opacity-90 transition-opacity flex items-center gap-2 shadow-teal-600/20 uppercase italic tracking-widest text-xs">
-                                <span class="material-symbols-outlined text-sm">add</span>
-                                Onboard Property
-                            </button>
-                        </div>
-                    `;
-                    // Nominals
-                    document.querySelector('.compliance-score').innerText = '100%';
-                    document.querySelector('.active-alerts').innerText = '00';
+                    const template = document.getElementById('layout-empty');
+                    const clone = template.content.cloneNode(true);
+                    
+                    // Attach click handler for Add Your First Property button
+                    const addBtn = clone.querySelector('button.hero-gradient');
+                    if (addBtn) {
+                        addBtn.addEventListener('click', openAddPropertyModal);
+                    }
+                    
+                    dynamicContent.appendChild(clone);
                     return;
                 }
                 
-                const cardTemplate = document.getElementById('property-card-template');
-                
-                let violations = 0;
-                
-                properties.forEach(p => {
-                    const clone = cardTemplate.content.cloneNode(true);
+                if (properties.length === 1) {
+                    const template = document.getElementById('layout-single');
+                    const clone = template.content.cloneNode(true);
                     
-                    const root = clone.querySelector('.property-card-root');
-                    root.querySelector('.property-name').innerText = p.address;
-                    root.querySelector('.property-location').innerText = p.location;
-                    root.querySelector('.property-beds').innerText = `${p.beds} Beds`;
-                    root.querySelector('.property-baths').innerText = `${p.baths} Baths`;
-                    root.querySelector('.property-price').innerText = `$${p.price}`;
-                    root.querySelector('.property-county').innerText = p.location.split(',')[1]?.trim() || 'FL';
+                    const p = properties[0];
                     
-                    // Recommendations container data attribute
-                    const recContainer = clone.querySelector('.recommendations-container');
-                    recContainer.setAttribute('data-property-id', p.id);
+                    // Welcome greeting name
+                    const userNameSpan = clone.querySelector('.single-user-name');
+                    if (userNameSpan) {
+                        userNameSpan.innerText = document.getElementById('sidebar-user-name')?.innerText.split(' ')[0] || 'Host';
+                    }
                     
-                    // Image randomizer based on ID
-                    const img = clone.querySelector('.property-image');
+                    // Single card details
+                    clone.querySelector('.single-prop-name').innerText = p.address;
+                    clone.querySelector('.single-prop-location').innerText = p.location;
+                    
+                    const img = clone.querySelector('.single-prop-image');
                     const imgIndex = p.id.charCodeAt(0) % 5 + 1;
                     img.src = `/static/img/property_${imgIndex}.jpg`;
                     img.onerror = () => {
                         img.src = 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=800&q=80';
                     };
                     
-                    const badge = clone.querySelector('.property-status-badge');
-                    badge.innerText = p.zoning_status;
+                    // Compliance details
+                    const badge = clone.querySelector('.single-prop-badge');
+                    const progress = clone.querySelector('.single-compliance-progress');
+                    const compText = clone.querySelector('.single-compliance-text');
+                    const compDesc = clone.querySelector('.single-compliance-desc');
                     
+                    let complianceScore = 100;
                     if (p.zoning_status === 'Compliant') {
-                        badge.className = 'absolute top-4 left-4 px-2.5 py-1 text-xs font-bold uppercase rounded-lg bg-green-500/90 text-white shadow-sm';
+                        badge.className = 'bg-tertiary-fixed text-on-tertiary-fixed px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1';
+                        badge.innerHTML = `<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">check_circle</span> COMPLIANT`;
+                        complianceScore = 100;
+                        compDesc.innerText = 'Elite Host Status maintained';
                     } else if (p.zoning_status === 'Pending') {
-                        badge.className = 'absolute top-4 left-4 px-2.5 py-1 text-xs font-bold uppercase rounded-lg bg-yellow-500/90 text-slate-800 shadow-sm';
-                    } else if (p.zoning_status === 'Violation') {
-                        badge.className = 'absolute top-4 left-4 px-2.5 py-1 text-xs font-bold uppercase rounded-lg bg-red-500/90 text-white shadow-sm';
-                        clone.querySelector('.violation-banner').classList.remove('hidden');
-                        violations++;
+                        badge.className = 'bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1';
+                        badge.innerHTML = `<span class="material-symbols-outlined text-sm">schedule</span> PENDING`;
+                        complianceScore = 50;
+                        compDesc.innerText = 'Zoning verification in progress';
+                    } else { // Violation
+                        badge.className = 'bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1';
+                        badge.innerHTML = `<span class="material-symbols-outlined text-sm">warning</span> VIOLATION`;
+                        complianceScore = 0;
+                        compDesc.innerText = 'Immediate action required';
                     }
                     
-                    // Binds
-                    clone.querySelector('.property-export-btn').addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        exportPDF(p.id);
+                    if (progress) {
+                        progress.setAttribute('stroke-dasharray', `${complianceScore}, 100`);
+                    }
+                    if (compText) {
+                        compText.innerText = `${complianceScore}%`;
+                    }
+                    
+                    // Calculations for Revenue Summary
+                    const bookingsRevVal = Math.round(p.price * 0.88 * 30);
+                    const addonsRevVal = Math.round(bookingsRevVal * 0.15);
+                    const totalRevVal = bookingsRevVal + addonsRevVal;
+                    
+                    clone.querySelector('.single-total-rev').innerText = `$${totalRevVal.toLocaleString()}`;
+                    clone.querySelector('.single-bookings-rev').innerText = `$${bookingsRevVal.toLocaleString()}`;
+                    clone.querySelector('.single-addons-rev').innerText = `$${addonsRevVal.toLocaleString()}`;
+                    
+                    // Compliance Alerts
+                    const alertsList = clone.querySelector('.single-alerts-list');
+                    alertsList.innerHTML = '';
+                    if (p.zoning_status === 'Violation') {
+                        alertsList.innerHTML = `
+                            <li class="flex gap-4 items-start group cursor-pointer" onclick="generatePermit(null, '${p.id}')">
+                                <div class="mt-1 w-8 h-8 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                                    <span class="material-symbols-outlined text-red-600 text-lg">description</span>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-semibold group-hover:text-primary transition-colors">Safety Permit Renewal</p>
+                                    <p class="text-xs text-on-surface-variant">Action required: zoning compliance violation detected.</p>
+                                </div>
+                            </li>
+                        `;
+                    } else if (p.zoning_status === 'Pending') {
+                        alertsList.innerHTML = `
+                            <li class="flex gap-4 items-start group cursor-pointer">
+                                <div class="mt-1 w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center shrink-0">
+                                    <span class="material-symbols-outlined text-yellow-600 text-lg">verified</span>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-semibold group-hover:text-primary transition-colors">Pending Local License</p>
+                                    <p class="text-xs text-on-surface-variant">Reviewing state regulatory files. Under process.</p>
+                                </div>
+                            </li>
+                        `;
+                    } else {
+                        alertsList.innerHTML = `
+                            <li class="flex gap-4 items-start group cursor-pointer">
+                                <div class="mt-1 w-8 h-8 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                                    <span class="material-symbols-outlined text-green-600 text-lg">check_circle</span>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-semibold group-hover:text-primary transition-colors">Zoning is fully Compliant</p>
+                                    <p class="text-xs text-on-surface-variant">All regulations checked. No active compliance issues.</p>
+                                </div>
+                            </li>
+                        `;
+                    }
+                    
+                    // Manage listing button
+                    const manageBtn = clone.querySelector('button.single-prop-manage-btn');
+                    if (manageBtn) {
+                        manageBtn.addEventListener('click', () => {
+                            alert(`Managing ${p.address}...`);
+                        });
+                    }
+                    
+                    dynamicContent.appendChild(clone);
+                    return;
+                }
+                
+                if (properties.length >= 2) {
+                    const template = document.getElementById('layout-multi');
+                    const clone = template.content.cloneNode(true);
+                    
+                    let totalRevenue = 0;
+                    let compliantCount = 0;
+                    
+                    const grid = clone.querySelector('.multi-property-grid');
+                    const cardTemplate = document.getElementById('multi-property-card-template');
+                    
+                    properties.forEach(p => {
+                        const cardClone = cardTemplate.content.cloneNode(true);
+                        
+                        cardClone.querySelector('.property-card-title').innerText = p.address;
+                        cardClone.querySelector('.property-card-location-text').innerText = p.location;
+                        
+                        const bookingsRevVal = Math.round(p.price * 0.88 * 30);
+                        const addonsRevVal = Math.round(bookingsRevVal * 0.15);
+                        const totalRevVal = bookingsRevVal + addonsRevVal;
+                        totalRevenue += totalRevVal;
+                        
+                        cardClone.querySelector('.property-card-rev').innerText = `$${totalRevVal.toLocaleString()}`;
+                        
+                        const img = cardClone.querySelector('.property-card-img');
+                        const imgIndex = p.id.charCodeAt(0) % 5 + 1;
+                        img.src = `/static/img/property_${imgIndex}.jpg`;
+                        img.onerror = () => {
+                            img.src = 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=800&q=80';
+                        };
+                        
+                        const badge = cardClone.querySelector('.property-card-badge');
+                        if (p.zoning_status === 'Compliant') {
+                            badge.className = 'absolute top-4 right-4 bg-tertiary-fixed text-on-tertiary-fixed px-3 py-1 rounded-full text-xs font-black flex items-center gap-1 shadow-sm';
+                            badge.innerHTML = `<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">check_circle</span> COMPLIANT`;
+                            compliantCount++;
+                        } else if (p.zoning_status === 'Pending') {
+                            badge.className = 'absolute top-4 right-4 bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-black flex items-center gap-1 shadow-sm';
+                            badge.innerHTML = `<span class="material-symbols-outlined text-sm">schedule</span> PENDING`;
+                        } else {
+                            badge.className = 'absolute top-4 right-4 bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-black flex items-center gap-1 shadow-sm';
+                            badge.innerHTML = `<span class="material-symbols-outlined text-sm">warning</span> ATTENTION`;
+                        }
+                        
+                        // Bind buttons inside the card
+                        cardClone.querySelector('.property-permit-btn').addEventListener('click', (e) => generatePermit(e, p.id));
+                        cardClone.querySelector('.property-export-btn').addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            exportPDF(p.id);
+                        });
+                        
+                        grid.appendChild(cardClone);
                     });
-                    clone.querySelector('.property-permit-btn').addEventListener('click', (e) => generatePermit(e, p.id));
-                    clone.querySelector('.property-refresh-btn').addEventListener('click', (e) => loadRecommendations(e, p.id));
                     
-                    grid.appendChild(clone);
+                    // Update stats
+                    clone.querySelector('.multi-portfolio-revenue').innerText = `$${totalRevenue.toLocaleString()}`;
                     
-                    // Trigger dynamic recommendation load
-                    loadRecommendations(null, p.id);
-                });
-                
-                // Update compliance header scores
-                const total = properties.length;
-                const score = total > 0 ? Math.round(((total - violations) / total) * 100) : 100;
-                document.querySelector('.compliance-score').innerText = `${score}%`;
-                document.querySelector('.active-alerts').innerText = violations.toString().padStart(2, '0');
-                
-                // Initialize map with coords
-                initParcelMap(properties);
+                    const avgComp = Math.round((compliantCount / properties.length) * 100);
+                    clone.querySelector('.multi-avg-compliance').innerText = `${avgComp}%`;
+                    clone.querySelector('.multi-active-assets').innerText = `${properties.length} Properties`;
+                    clone.querySelector('.multi-portfolio-sub').innerText = `Managing ${properties.length} locations`;
+                    
+                    // Concierge AI card description
+                    if (properties.length > 0) {
+                        const randomProp = properties[0];
+                        clone.querySelector('.multi-insight-title').innerText = 'Revenue Opportunity Detected';
+                        clone.querySelector('.multi-insight-desc').innerText = `Your ${randomProp.address} is seeing a 20% surge in local demand. Consider adjusting rates.`;
+                    }
+                    
+                    dynamicContent.appendChild(clone);
+                }
                 
             } catch (err) {
                 console.error(err);
                 const errTemplate = document.getElementById('system-degraded-error');
-                grid.innerHTML = '';
-                grid.appendChild(errTemplate.content.cloneNode(true));
+                dynamicContent.innerHTML = '';
+                dynamicContent.appendChild(errTemplate.content.cloneNode(true));
             }
         }
 
@@ -1025,10 +1369,16 @@ Processing Time: ${data.estimated_processing_time}`);
                 const response = await fetch('/api/v1/users/me', { headers });
                 if (response.ok) {
                     const data = await response.json();
-                    document.getElementById('sidebar-user-name').innerText = data.full_name || data.username || 'User';
+                    const name = data.full_name || data.username || 'User';
+                    document.getElementById('sidebar-user-name').innerText = name;
                     document.getElementById('sidebar-user-tier').innerText = data.tier || 'Free Tier';
-                    const name = data.full_name || data.username || 'U';
                     document.getElementById('sidebar-user-initials').innerText = name.charAt(0).toUpperCase();
+                    
+                    // Also update greeting inside the single-property featured card if present
+                    const singleUserEl = document.querySelector('.single-user-name');
+                    if (singleUserEl) {
+                        singleUserEl.innerText = name.split(' ')[0];
+                    }
                 }
             } catch (err) {
                 console.error('Failed to fetch user profile:', err);
