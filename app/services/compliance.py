@@ -13,7 +13,7 @@ def run_gemini_audit(city: str, county: str, state: str, address: str, address_c
     
     print(f"Gemini Compliance Engine: Auditing address='{address}', city='{city}', county='{county}', state='{state}'")
     
-    # If the address is from Spring Hill / Stable Run or similar, we want to simulate the HOA detection
+    # If the address is from Spring Hill / Stable Run or similar, we simulate finding the 3-month restriction
     is_spring_hill = "spring hill" in address.lower() or "stable run" in address.lower()
     
     if not api_key:
@@ -22,16 +22,16 @@ def run_gemini_audit(city: str, county: str, state: str, address: str, address_c
             return {
                 "legal_subdivision_name": "Lone Star Townhomes",
                 "hoa_detected": True,
-                "hoa_rules_available": False,
-                "eligibility_status": "Action Required",
+                "hoa_rules_available": True,
+                "eligibility_status": "Violation",
                 "required_permits": [
-                    "Pasco County Business Tax Receipt (BTR)",
-                    "HOA Detected: Public rules unavailable. Please upload governing documents for AI scanning."
+                    "Pasco County Business Tax Receipt (BTR)"
                 ],
                 "local_restrictions": {
                     "Noise": "Quiet hours observed daily from 10 PM to 7 AM. Noise level must not exceed 55 dBA.",
                     "Parking": "Maximum 2 vehicles permitted on-site. Parking on lawns or shared neighborhood easements is prohibited.",
-                    "Trash": "Trash must be stored in approved bins and kept out of public view except on scheduled collection days."
+                    "Trash": "Trash must be stored in approved bins and kept out of public view except on scheduled collection days.",
+                    "HOA Rules": "HOA CC&Rs Section 4.2: Leases must be for a minimum duration of three (3) consecutive months. Rentals of shorter duration (such as daily or weekly short-term rentals) are strictly prohibited."
                 }
             }
         else:
@@ -54,7 +54,7 @@ def run_gemini_audit(city: str, county: str, state: str, address: str, address_c
 
     prompt = f"""
     You are an expert zoning analyst and short-term rental compliance officer.
-    Perform a Forensic HOA and zoning compliance audit on the following property:
+    Perform an aggressive Forensic HOA and zoning compliance audit on the following property:
     Address: {address}
     City: {city}
     County: {county}
@@ -63,13 +63,14 @@ def run_gemini_audit(city: str, county: str, state: str, address: str, address_c
     
     Your goals:
     1. Extract the Legal Subdivision Name of the property from the address and geocoding components (e.g. identifying developments like 'Lone Star Townhomes', 'Sunset Valley', 'Oak Ridge', or similar for Spring Hill or other addresses). If no subdivision can be extracted, provide a name representing the immediate neighborhood or development.
-    2. Audit: Search for publicly recorded CC&Rs or HOA presence linked to that subdivision.
-    3. Determine the HOA status:
+    2. Audit CC&Rs: Specifically cross-reference the identified subdivision name against the Florida Secretary of State (Sunbiz) and County Clerk Official Records for recorded HOA presence or CC&R covenants.
+    3. Prioritize Rent Covenants: Search for any lease covenants, minimum stay rules, or lease frequency regulations (e.g., minimum of 3 months lease, sub-leasing bans, occupancy limits).
+    4. Determine the HOA status:
        - Set "hoa_detected" to true if an HOA/CC&R presence is found or highly suspected.
-       - Set "hoa_rules_available" to true if public HOA rules/restrictions are available.
-       - If an HOA/CC&R presence is detected/suspected but the rules are NOT available or confirmed online, set "eligibility_status" to "Action Required", and add the exact task: "HOA Detected: Public rules unavailable. Please upload governing documents for AI scanning." to the "required_permits" array.
-       - If rules are found, summarize the specific STR restrictions in "local_restrictions" (under a key "HOA").
-       - If no HOA/CC&Rs exist, analyze standard zoning and set "eligibility_status" to "Compliant" (or "Violation" if city/county zoning bans STR).
+       - Set "hoa_rules_available" to true if public HOA rules/restrictions/CC&Rs are found.
+       - If public rules are found, summarize the specific STR restrictions under local_restrictions (specifically mentioning 'Minimum Stay' or 'Lease Duration' limits). If rules prohibit standard daily STR (e.g. demanding a 3-month minimum duration), set "eligibility_status" to "Violation".
+       - Only if an HOA/CC&R presence is suspected/confirmed but a deep search yields zero rules/documents, set "hoa_rules_available" to false, "eligibility_status" to "Action Required", and add the exact task: "HOA Detected: Public rules unavailable. Please upload governing documents for AI scanning." to the "required_permits" array.
+       - If no HOA/CC&Rs exist at all, analyze standard zoning and set "eligibility_status" to "Compliant" or "Violation".
     
     Return a JSON object conforming exactly to this schema:
     {{
@@ -82,7 +83,7 @@ def run_gemini_audit(city: str, county: str, state: str, address: str, address_c
             "Noise": "Details of quiet hours or noise limits",
             "Parking": "Details of parking spaces or vehicle limits",
             "Trash": "Details of trash collection schedules and bin storage rules",
-            "HOA": "Summary of HOA restrictions (if rules found)"
+            "HOA Rules": "Summary of HOA lease / STR restrictions (if rules found)"
         }}
     }}
     
@@ -112,7 +113,7 @@ def run_gemini_audit(city: str, county: str, state: str, address: str, address_c
             
             parsed_data = json.loads(text_response)
             
-            # Make sure we force Action Required if HOA detected but rules are not available
+            # Post-process to ensure Action Required is set if rules are unavailable
             if parsed_data.get("hoa_detected") and not parsed_data.get("hoa_rules_available"):
                 parsed_data["eligibility_status"] = "Action Required"
                 task_msg = "HOA Detected: Public rules unavailable. Please upload governing documents for AI scanning."
@@ -131,16 +132,16 @@ def run_gemini_audit(city: str, county: str, state: str, address: str, address_c
         return {
             "legal_subdivision_name": "Lone Star Townhomes",
             "hoa_detected": True,
-            "hoa_rules_available": False,
-            "eligibility_status": "Action Required",
+            "hoa_rules_available": True,
+            "eligibility_status": "Violation",
             "required_permits": [
-                "Pasco County Business Tax Receipt (BTR)",
-                "HOA Detected: Public rules unavailable. Please upload governing documents for AI scanning."
+                "Pasco County Business Tax Receipt (BTR)"
             ],
             "local_restrictions": {
                 "Noise": "Quiet hours observed daily from 10 PM to 7 AM. Noise level must not exceed 55 dBA.",
                 "Parking": "Maximum 2 vehicles permitted on-site. Parking on lawns or shared neighborhood easements is prohibited.",
-                "Trash": "Trash must be stored in approved bins and kept out of public view except on scheduled collection days."
+                "Trash": "Trash must be stored in approved bins and kept out of public view except on scheduled collection days.",
+                "HOA Rules": "HOA CC&Rs Section 4.2: Leases must be for a minimum duration of three (3) consecutive months. Rentals of shorter duration (such as daily or weekly short-term rentals) are strictly prohibited."
             }
         }
 

@@ -28,6 +28,7 @@ def fetch_real_property_image(address: str) -> str:
     
     print(f"DEBUG: Google Street View Onboarding: Fetching image for address: {address}")
     
+    import uuid
     # 1. Try Google Street View metadata first to check availability
     try:
         metadata_url = "https://maps.googleapis.com/maps/api/streetview/metadata"
@@ -46,8 +47,16 @@ def fetch_real_property_image(address: str) -> str:
             if status == "OK":
                 escaped_addr = urllib.parse.quote(address)
                 street_view_url = f"https://maps.googleapis.com/maps/api/streetview?size=800x600&location={escaped_addr}&key={api_key}"
-                print("DEBUG: Google Street View Onboarding: Successfully resolved Street View image URL.")
-                return street_view_url
+                print("DEBUG: Google Street View Onboarding: Successfully resolved Street View metadata. Downloading image server-side...")
+                img_resp = requests.get(street_view_url, timeout=10)
+                if img_resp.status_code == 200:
+                    img_uuid = str(uuid.uuid4())
+                    os.makedirs("app/static/property_images", exist_ok=True)
+                    file_path = f"app/static/property_images/{img_uuid}.jpg"
+                    with open(file_path, "wb") as f:
+                        f.write(img_resp.content)
+                    print(f"DEBUG: Downloaded Street View image to local static file: {file_path}")
+                    return f"/static/property_images/{img_uuid}.jpg"
     except Exception as e:
         print(f"DEBUG: Error checking Street View metadata: {e}")
         
@@ -73,8 +82,16 @@ def fetch_real_property_image(address: str) -> str:
                 if photos:
                     photo_ref = photos[0].get("photo_reference")
                     places_url = f"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference={photo_ref}&key={api_key}"
-                    print("DEBUG: Google Street View Onboarding: Successfully resolved Places photo URL.")
-                    return places_url
+                    print("DEBUG: Google Street View Onboarding: Successfully resolved Places photo. Downloading image server-side...")
+                    img_resp = requests.get(places_url, timeout=10)
+                    if img_resp.status_code == 200:
+                        img_uuid = str(uuid.uuid4())
+                        os.makedirs("app/static/property_images", exist_ok=True)
+                        file_path = f"app/static/property_images/{img_uuid}.jpg"
+                        with open(file_path, "wb") as f:
+                            f.write(img_resp.content)
+                        print(f"DEBUG: Downloaded Places photo to local static file: {file_path}")
+                        return f"/static/property_images/{img_uuid}.jpg"
     except Exception as e:
         print(f"DEBUG: Error checking Places API photo: {e}")
         
