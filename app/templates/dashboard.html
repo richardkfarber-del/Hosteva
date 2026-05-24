@@ -695,50 +695,62 @@ tailwind.config = {
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js?v=20260522"></script>
     <script>
-        window.initGoogleAutocomplete = function() {
-            const addressInput = document.getElementById('add-property-address');
-            if (!addressInput) return;
-            const autocomplete = new google.maps.places.Autocomplete(addressInput, {
-                types: ['address'],
-                componentRestrictions: { country: 'us' }
-            });
-            
-            autocomplete.addListener('place_changed', function() {
-                const place = autocomplete.getPlace();
-                if (!place.address_components) return;
+        window.initGoogleAutocomplete = async function() {
+            try {
+                const addressInput = document.getElementById('add-property-address');
+                if (!addressInput) return;
                 
-                let streetNumber = '';
-                let route = '';
-                let city = '';
-                let state = '';
-                let zip = '';
+                // Modern Places Library loading using importLibrary
+                const { Autocomplete } = await google.maps.importLibrary("places");
                 
-                for (let i = 0; i < place.address_components.length; i++) {
-                    const component = place.address_components[i];
-                    const types = component.types;
-                    if (types.includes('street_number')) {
-                        streetNumber = component.long_name;
-                    } else if (types.includes('route')) {
-                        route = component.long_name;
-                    } else if (types.includes('locality')) {
-                        city = component.long_name;
-                    } else if (types.includes('administrative_area_level_1')) {
-                        state = component.short_name;
-                    } else if (types.includes('postal_code')) {
-                        zip = component.long_name;
+                const autocomplete = new Autocomplete(addressInput, {
+                    types: ['address'],
+                    componentRestrictions: { country: 'us' }
+                });
+                
+                autocomplete.addListener('place_changed', function() {
+                    try {
+                        const place = autocomplete.getPlace();
+                        if (!place || !place.address_components) return;
+                        
+                        let streetNumber = '';
+                        let route = '';
+                        let city = '';
+                        let state = '';
+                        let zip = '';
+                        
+                        for (let i = 0; i < place.address_components.length; i++) {
+                            const component = place.address_components[i];
+                            const types = component.types;
+                            if (types.includes('street_number')) {
+                                streetNumber = component.long_name;
+                            } else if (types.includes('route')) {
+                                route = component.long_name;
+                            } else if (types.includes('locality')) {
+                                city = component.long_name;
+                            } else if (types.includes('administrative_area_level_1')) {
+                                state = component.short_name;
+                            } else if (types.includes('postal_code')) {
+                                zip = component.long_name;
+                            }
+                        }
+                        
+                        const streetAddress = [streetNumber, route].filter(Boolean).join(' ');
+                        
+                        const form = document.getElementById('add-property-form');
+                        if (form) {
+                            form.querySelector('input[name="address"]').value = streetAddress || place.formatted_address || addressInput.value;
+                            form.querySelector('input[name="city"]').value = city;
+                            form.querySelector('input[name="state"]').value = state;
+                            form.querySelector('input[name="zip_code"]').value = zip;
+                        }
+                    } catch (err) {
+                        console.warn("Google Maps Places selection error:", err);
                     }
-                }
-                
-                const streetAddress = [streetNumber, route].filter(Boolean).join(' ');
-                
-                const form = document.getElementById('add-property-form');
-                if (form) {
-                    form.querySelector('input[name="address"]').value = streetAddress || place.formatted_address || addressInput.value;
-                    form.querySelector('input[name="city"]').value = city;
-                    form.querySelector('input[name="state"]').value = state;
-                    form.querySelector('input[name="zip_code"]').value = zip;
-                }
-            });
+                });
+            } catch (error) {
+                console.warn("Google Maps Autocomplete failed to initialize, falling back to standard input field:", error);
+            }
         };
 
         const token = localStorage.getItem("token") || sessionStorage.getItem("token");
