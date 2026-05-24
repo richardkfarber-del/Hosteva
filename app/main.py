@@ -60,18 +60,29 @@ if os.getenv("ENVIRONMENT") == "production":
 
 @app.middleware("http")
 async def add_security_headers(request: Request, call_next):
-    response = await call_next(request)
-    # Vibranium Habit: Strict-Transport-Security and other browser security headers applied globally
-    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload"
-    response.headers["X-Content-Type-Options"] = "nosniff"
-    response.headers["X-Frame-Options"] = "DENY"
-    response.headers["X-XSS-Protection"] = "1; mode=block"
-    
-    content_type = response.headers.get("content-type", "")
-    if "text/html" in content_type.lower():
-        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
-        response.headers["Pragma"] = "no-cache"
-        response.headers["Expires"] = "0"
+    # Defensive programming: Ensure request.state has user initialized to None if not present
+    if not hasattr(request.state, "user"):
+        request.state.user = None
+        
+    try:
+        response = await call_next(request)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise e
+
+    if response is not None and hasattr(response, "headers"):
+        # Vibranium Habit: Strict-Transport-Security and other browser security headers applied globally
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        
+        content_type = response.headers.get("content-type", "")
+        if content_type and "text/html" in content_type.lower():
+            response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+            response.headers["Pragma"] = "no-cache"
+            response.headers["Expires"] = "0"
         
     return response
 

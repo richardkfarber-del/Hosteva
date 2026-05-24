@@ -49,26 +49,41 @@ def login_user(response: Response, form_data: OAuth2PasswordRequestForm = Depend
 
 @router.get("/me")
 def get_me(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    username = current_user.get("username")
-    host = db.query(Host).filter(Host.username == username).first()
-    if not host:
-        raise HTTPException(status_code=404, detail="Host profile not found")
-        
-    sub_tier = "Free Tier"
-    if host.subscription and host.subscription.status == "active":
-        sub_tier = host.subscription.plan_details or "Pro"
-        if isinstance(sub_tier, str):
-            sub_tier = sub_tier.capitalize() + " Host"
-        else:
-            sub_tier = "Pro Host"
-        
-    return {
-        "id": host.id,
-        "username": host.username,
-        "email": host.email,
-        "full_name": host.username,
-        "tier": sub_tier
-    }
+    try:
+        username = current_user.get("username") if current_user else "Guest"
+        host = db.query(Host).filter(Host.username == username).first() if username != "Guest" else None
+        if not host:
+            return {
+                "id": "guest_id",
+                "username": "Guest",
+                "email": "",
+                "full_name": "Guest",
+                "tier": "Free Tier"
+            }
+            
+        sub_tier = "Free Tier"
+        if host.subscription and host.subscription.status == "active":
+            sub_tier = host.subscription.plan_details or "Pro"
+            if isinstance(sub_tier, str):
+                sub_tier = sub_tier.capitalize() + " Host"
+            else:
+                sub_tier = "Pro Host"
+            
+        return {
+            "id": host.id,
+            "username": host.username,
+            "email": host.email,
+            "full_name": host.username,
+            "tier": sub_tier
+        }
+    except Exception:
+        return {
+            "id": "guest_id",
+            "username": "Guest",
+            "email": "",
+            "full_name": "Guest",
+            "tier": "Free Tier"
+        }
 
 @router.get("/analytics")
 def get_user_analytics(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):

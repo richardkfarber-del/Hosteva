@@ -686,7 +686,9 @@ tailwind.config = {
             const bounds = [];
 
             properties.forEach(p => {
-                if (p.latitude && p.longitude) {
+                const lat = p.lat || p.latitude;
+                const lng = p.lng || p.longitude;
+                if (lat && lng) {
                     const markerColor = p.zoning_status === 'Compliant' ? '#00c853' : 
                                        p.zoning_status === 'Pending' ? '#ffd600' : '#ff3d00';
                                        
@@ -697,7 +699,7 @@ tailwind.config = {
                         iconAnchor: [7, 7]
                     });
 
-                    const m = L.marker([p.latitude, p.longitude], { icon: markerIcon }).addTo(map);
+                    const m = L.marker([lat, lng], { icon: markerIcon }).addTo(map);
                     
                     const popupHTML = `
                         <div class="p-2" style="font-family: 'Inter', sans-serif;">
@@ -708,7 +710,7 @@ tailwind.config = {
                     `;
                     m.bindPopup(popupHTML);
                     mapMarkers.push(m);
-                    bounds.push([p.latitude, p.longitude]);
+                    bounds.push([lat, lng]);
                 }
             });
 
