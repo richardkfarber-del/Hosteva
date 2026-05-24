@@ -21,9 +21,10 @@ router = APIRouter(prefix="/api/properties", tags=["Properties"])
 
 def fetch_real_property_image(address: str) -> str:
     api_key = os.getenv("GOOGLE_MAPS_API_KEY")
+    fallback_url = "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=1200&q=80"
     if not api_key:
         print("DEBUG: Google Street View Onboarding: GOOGLE_MAPS_API_KEY is not configured.")
-        return ""
+        return fallback_url
     
     print(f"DEBUG: Google Street View Onboarding: Fetching image for address: {address}")
     
@@ -78,18 +79,18 @@ def fetch_real_property_image(address: str) -> str:
         print(f"DEBUG: Error checking Places API photo: {e}")
         
     print("DEBUG: Google Street View Onboarding: No real image found. Falling back to default property image.")
-    return ""
+    return fallback_url
 
 
 def geocode_address(address: str) -> dict:
     """
     Geocodes an address to identify locality (City), administrative_area_level_2 (County),
-    and administrative_area_level_1 (State).
+    and administrative_area_level_1 (State), and raw address components.
     """
     api_key = os.getenv("GOOGLE_MAPS_API_KEY")
     if not api_key:
         print("Geocoding address WARNING: GOOGLE_MAPS_API_KEY is not configured.")
-        return {"city": "", "county": "", "state": ""}
+        return {"city": "", "county": "", "state": "", "address_components": []}
     try:
         url = "https://maps.googleapis.com/maps/api/geocode/json"
         params = {"address": address, "key": api_key}
@@ -112,10 +113,10 @@ def geocode_address(address: str) -> dict:
                     elif "administrative_area_level_1" in types:
                         state = c.get("short_name", "")
                 print(f"Geocoded result: city='{city}', county='{county}', state='{state}'")
-                return {"city": city, "county": county, "state": state}
+                return {"city": city, "county": county, "state": state, "address_components": components}
     except Exception as e:
         print(f"Error geocoding address: {e}")
-    return {"city": "", "county": "", "state": ""}
+    return {"city": "", "county": "", "state": "", "address_components": []}
 
 
 class PropertyCreate(BaseModel):
@@ -185,7 +186,8 @@ def create_property(
         city=city_name,
         county=county_name,
         state=state_name,
-        address=full_address
+        address=full_address,
+        address_components=geocoded.get("address_components")
     )
 
     db_property = Property(
@@ -195,7 +197,7 @@ def create_property(
         state=state_name,
         zip_code=property_data.zip_code,
         property_type=property_data.property_type,
-        hoa_status=property_data.hoa_status,
+        hoa_status=audit_results.get("hoa_detected", False),
         zoning_status=audit_results.get("eligibility_status", "Pending"),
         image_url=image_url,
         required_permits=json.dumps(audit_results.get("required_permits", [])),
