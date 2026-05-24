@@ -36,23 +36,24 @@ def main():
         Base.metadata.create_all(bind=engine)
         print("Database tables created successfully")
 
-        # Check and add image_url column if missing
+        # Check and add columns if missing
         from sqlalchemy import inspect
         inspector = inspect(engine)
         try:
             columns = [c["name"] for c in inspector.get_columns("properties")]
-            if "image_url" not in columns:
-                with engine.connect() as conn:
-                    if "sqlite" in str(engine.url):
-                        conn.execute(text("ALTER TABLE properties ADD COLUMN image_url VARCHAR;"))
-                    else:
-                        conn.execute(text("ALTER TABLE properties ADD COLUMN IF NOT EXISTS image_url VARCHAR;"))
-                    conn.commit()
-                print("Added image_url column to properties table.")
-            else:
-                print("image_url column already exists in properties table.")
+            for col_name in ["image_url", "required_permits", "local_restrictions"]:
+                if col_name not in columns:
+                    with engine.connect() as conn:
+                        if "sqlite" in str(engine.url):
+                            conn.execute(text(f"ALTER TABLE properties ADD COLUMN {col_name} VARCHAR;"))
+                        else:
+                            conn.execute(text(f"ALTER TABLE properties ADD COLUMN IF NOT EXISTS {col_name} VARCHAR;"))
+                        conn.commit()
+                    print(f"Added {col_name} column to properties table.")
+                else:
+                    print(f"{col_name} column already exists in properties table.")
         except Exception as col_err:
-            print(f"Warning: Could not check/add image_url column: {col_err}")
+            print(f"Warning: Could not check/add columns: {col_err}")
 
         # Data Cleanup: Delete all existing property records as requested by user
         try:

@@ -1238,38 +1238,56 @@ Processing Time: ${data.estimated_processing_time}`);
                     // Compliance Alerts
                     const alertsList = clone.querySelector('.single-alerts-list');
                     alertsList.innerHTML = '';
-                    if (p.zoning_status === 'Violation') {
+                    
+                    if (p.required_permits && p.required_permits.length > 0) {
+                        p.required_permits.forEach(permit => {
+                            const iconColor = p.zoning_status === 'Violation' ? 'text-red-600' : p.zoning_status === 'Pending' ? 'text-yellow-600' : 'text-primary';
+                            const bgColor = p.zoning_status === 'Violation' ? 'bg-red-100' : p.zoning_status === 'Pending' ? 'bg-yellow-100' : 'bg-primary/10';
+                            const icon = p.zoning_status === 'Violation' ? 'warning' : 'assignment';
+                            
+                            alertsList.innerHTML += `
+                                <li class="flex gap-4 items-start group">
+                                    <div class="mt-1 w-8 h-8 rounded-full ${bgColor} flex items-center justify-center shrink-0">
+                                        <span class="material-symbols-outlined ${iconColor} text-lg">${icon}</span>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-semibold text-on-surface">${permit}</p>
+                                        <p class="text-xs text-on-surface-variant">Required permit for local STR compliance.</p>
+                                    </div>
+                                </li>
+                            `;
+                        });
+                    }
+                    
+                    if (p.local_restrictions) {
+                        for (const [key, value] of Object.entries(p.local_restrictions)) {
+                            let icon = 'info';
+                            if (key.toLowerCase().includes('noise')) icon = 'volume_off';
+                            else if (key.toLowerCase().includes('parking')) icon = 'local_parking';
+                            else if (key.toLowerCase().includes('trash') || key.toLowerCase().includes('garbage')) icon = 'delete';
+                            
+                            alertsList.innerHTML += `
+                                <li class="flex gap-4 items-start group">
+                                    <div class="mt-1 w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
+                                        <span class="material-symbols-outlined text-slate-600 text-lg">${icon}</span>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-semibold text-on-surface">${key} Regulation</p>
+                                        <p class="text-xs text-on-surface-variant">${value}</p>
+                                    </div>
+                                </li>
+                            `;
+                        }
+                    }
+                    
+                    if (alertsList.innerHTML === '') {
                         alertsList.innerHTML = `
-                            <li class="flex gap-4 items-start group cursor-pointer" onclick="generatePermit(null, '${p.id}')">
-                                <div class="mt-1 w-8 h-8 rounded-full bg-red-100 flex items-center justify-center shrink-0">
-                                    <span class="material-symbols-outlined text-red-600 text-lg">description</span>
-                                </div>
-                                <div>
-                                    <p class="text-sm font-semibold group-hover:text-primary transition-colors">Safety Permit Renewal</p>
-                                    <p class="text-xs text-on-surface-variant">Action required: zoning compliance violation detected.</p>
-                                </div>
-                            </li>
-                        `;
-                    } else if (p.zoning_status === 'Pending') {
-                        alertsList.innerHTML = `
-                            <li class="flex gap-4 items-start group cursor-pointer">
-                                <div class="mt-1 w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center shrink-0">
-                                    <span class="material-symbols-outlined text-yellow-600 text-lg">verified</span>
-                                </div>
-                                <div>
-                                    <p class="text-sm font-semibold group-hover:text-primary transition-colors">Pending Local License</p>
-                                    <p class="text-xs text-on-surface-variant">Reviewing state regulatory files. Under process.</p>
-                                </div>
-                            </li>
-                        `;
-                    } else {
-                        alertsList.innerHTML = `
-                            <li class="flex gap-4 items-start group cursor-pointer">
+                            <li class="flex gap-4 items-start group">
                                 <div class="mt-1 w-8 h-8 rounded-full bg-green-100 flex items-center justify-center shrink-0">
                                     <span class="material-symbols-outlined text-green-600 text-lg">check_circle</span>
                                 </div>
                                 <div>
-                                    <p class="text-sm font-semibold group-hover:text-primary transition-colors">Zoning is fully Compliant</p>
+                                    <p class="text-sm font-semibold text-on-surface">Zoning is fully Compliant</p>
                                     <p class="text-xs text-on-surface-variant">All regulations checked. No active compliance issues.</p>
                                 </div>
                             </li>
