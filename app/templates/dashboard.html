@@ -139,6 +139,9 @@ tailwind.config = {
         }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.5/purify.min.js"></script>
+    {% if google_maps_api_key %}
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&libraries=places&callback=initGoogleAutocomplete" async defer></script>
+    {% endif %}
 </head>
 <body class="bg-white/10 font-body text-gray-800 antialiased min-h-screen">
     <aside class="hidden md:flex w-[260px] h-screen fixed left-0 top-0 bg-white/80 border-r border-slate-200/60 shadow-2xl flex-col py-8 px-4 gap-2 z-50 mobile-hidden">
@@ -220,8 +223,8 @@ tailwind.config = {
     </header>
 
     <div id="add-property-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center">
-        <div class="bg-white/10 rounded-[8px] shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
-            <div class="flex items-center justify-between px-6 py-4 bg-white/10">
+        <div class="bg-white rounded-[8px] shadow-2xl w-full max-w-lg mx-4 overflow-hidden border border-slate-100">
+            <div class="flex items-center justify-between px-6 py-4 bg-slate-50 border-b border-slate-100">
                 <h3 class="text-xl font-bold text-on-surface font-headline tracking-tight uppercase italic">Add Property</h3>
                 <button onclick="closeAddPropertyModal()" class="text-gray-500 hover:text-gray-700 transition-colors">
                     <span class="material-symbols-outlined">close</span>
@@ -230,26 +233,26 @@ tailwind.config = {
             <form id="add-property-form" class="p-6 space-y-4">
                 <div>
                     <label class="block text-sm font-bold text-gray-700 mb-1">Address</label>
-                    <input type="text" name="address" required class="w-full px-4 py-2 rounded-[8px] focus:ring-2 focus:ring-teal-600 focus:border-transparent text-gray-800">
+                    <input type="text" id="add-property-address" name="address" required class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-[8px] focus:ring-2 focus:ring-teal-600 focus:bg-white focus:border-transparent text-gray-800">
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-bold text-gray-700 mb-1">City</label>
-                        <input type="text" name="city" required class="w-full px-4 py-2 rounded-[8px] focus:ring-2 focus:ring-teal-600 focus:border-transparent text-gray-800">
+                        <input type="text" name="city" required class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-[8px] focus:ring-2 focus:ring-teal-600 focus:bg-white focus:border-transparent text-gray-800">
                     </div>
                     <div>
                         <label class="block text-sm font-bold text-gray-700 mb-1">State</label>
-                        <input type="text" name="state" required class="w-full px-4 py-2 rounded-[8px] focus:ring-2 focus:ring-teal-600 focus:border-transparent text-gray-800">
+                        <input type="text" name="state" required class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-[8px] focus:ring-2 focus:ring-teal-600 focus:bg-white focus:border-transparent text-gray-800">
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-bold text-gray-700 mb-1">ZIP Code</label>
-                        <input type="text" name="zip_code" class="w-full px-4 py-2 rounded-[8px] focus:ring-2 focus:ring-teal-600 focus:border-transparent text-gray-800">
+                        <input type="text" name="zip_code" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-[8px] focus:ring-2 focus:ring-teal-600 focus:bg-white focus:border-transparent text-gray-800">
                     </div>
                     <div>
                         <label class="block text-sm font-bold text-gray-700 mb-1">Property Type</label>
-                        <input type="text" name="property_type" placeholder="e.g., Single Family" class="w-full px-4 py-2 rounded-[8px] focus:ring-2 focus:ring-teal-600 focus:border-transparent text-gray-800">
+                        <input type="text" name="property_type" placeholder="e.g., Single Family" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-[8px] focus:ring-2 focus:ring-teal-600 focus:bg-white focus:border-transparent text-gray-800">
                     </div>
                 </div>
                 <div class="flex items-center gap-2">
@@ -257,7 +260,7 @@ tailwind.config = {
                     <label for="hoa_status" class="text-sm font-bold text-gray-700">HOA Property</label>
                 </div>
                 <div class="flex justify-end gap-3 pt-4">
-                    <button type="button" onclick="closeAddPropertyModal()" class="px-6 py-2 bg-white/10 text-white text-on-surface font-headline tracking-tight font-bold rounded-[8px] hover:bg-gray-200 transition-colors">Cancel</button>
+                    <button type="button" onclick="closeAddPropertyModal()" class="px-6 py-2 bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 font-headline tracking-tight font-bold rounded-[8px] transition-colors">Cancel</button>
                     <button type="submit" class="px-6 py-2 bg-gradient-to-br from-primary to-primary-container text-on-surface font-headline tracking-tight font-bold rounded-[8px] hover:opacity-90 transition-opacity">Add Property</button>
                 </div>
             </form>
@@ -265,8 +268,8 @@ tailwind.config = {
     </div>
 
     <div id="filter-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center">
-        <div class="bg-white/10 rounded-[8px] shadow-2xl w-full max-w-md mx-4 overflow-hidden">
-            <div class="flex items-center justify-between px-6 py-4 bg-white/10">
+        <div class="bg-white rounded-[8px] shadow-2xl w-full max-w-md mx-4 overflow-hidden border border-slate-100">
+            <div class="flex items-center justify-between px-6 py-4 bg-slate-50 border-b border-slate-100">
                 <h3 class="text-xl font-bold text-on-surface font-headline tracking-tight uppercase italic">Filter Properties</h3>
                 <button onclick="closeFilterModal()" class="text-gray-500 hover:text-gray-700 transition-colors">
                     <span class="material-symbols-outlined">close</span>
@@ -275,7 +278,7 @@ tailwind.config = {
             <div class="p-6 space-y-4">
                 <div>
                     <label class="block text-sm font-bold text-gray-700 mb-2">Zoning Status</label>
-                    <select id="filter-status" class="w-full px-4 py-2 rounded-[8px] focus:ring-2 focus:ring-teal-600 focus:border-transparent text-gray-800">
+                    <select id="filter-status" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-[8px] focus:ring-2 focus:ring-teal-600 focus:bg-white focus:border-transparent text-gray-800">
                         <option value="">All Statuses</option>
                         <option value="Compliant">Compliant</option>
                         <option value="Pending">Pending</option>
@@ -284,7 +287,7 @@ tailwind.config = {
                 </div>
                 <div>
                     <label class="block text-sm font-bold text-gray-700 mb-2">Property Type</label>
-                    <select id="filter-type" class="w-full px-4 py-2 rounded-[8px] focus:ring-2 focus:ring-teal-600 focus:border-transparent text-gray-800">
+                    <select id="filter-type" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-[8px] focus:ring-2 focus:ring-teal-600 focus:bg-white focus:border-transparent text-gray-800">
                         <option value="">All Types</option>
                         <option value="Single Family">Single Family</option>
                         <option value="Condo">Condo</option>
@@ -292,7 +295,7 @@ tailwind.config = {
                     </select>
                 </div>
                 <div class="flex justify-end gap-3 pt-4">
-                    <button onclick="clearFilters()" class="px-6 py-2 bg-white/10 text-white text-on-surface font-headline tracking-tight font-bold rounded-[8px] hover:bg-gray-200 transition-colors">Clear</button>
+                    <button onclick="clearFilters()" class="px-6 py-2 bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 font-headline tracking-tight font-bold rounded-[8px] transition-colors">Clear</button>
                     <button onclick="applyFilters()" class="px-6 py-2 bg-gradient-to-br from-primary to-primary-container text-on-surface font-headline tracking-tight font-bold rounded-[8px] hover:opacity-90 transition-opacity">Apply Filters</button>
                 </div>
             </div>
@@ -692,6 +695,52 @@ tailwind.config = {
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js?v=20260522"></script>
     <script>
+        window.initGoogleAutocomplete = function() {
+            const addressInput = document.getElementById('add-property-address');
+            if (!addressInput) return;
+            const autocomplete = new google.maps.places.Autocomplete(addressInput, {
+                types: ['address'],
+                componentRestrictions: { country: 'us' }
+            });
+            
+            autocomplete.addListener('place_changed', function() {
+                const place = autocomplete.getPlace();
+                if (!place.address_components) return;
+                
+                let streetNumber = '';
+                let route = '';
+                let city = '';
+                let state = '';
+                let zip = '';
+                
+                for (let i = 0; i < place.address_components.length; i++) {
+                    const component = place.address_components[i];
+                    const types = component.types;
+                    if (types.includes('street_number')) {
+                        streetNumber = component.long_name;
+                    } else if (types.includes('route')) {
+                        route = component.long_name;
+                    } else if (types.includes('locality')) {
+                        city = component.long_name;
+                    } else if (types.includes('administrative_area_level_1')) {
+                        state = component.short_name;
+                    } else if (types.includes('postal_code')) {
+                        zip = component.long_name;
+                    }
+                }
+                
+                const streetAddress = [streetNumber, route].filter(Boolean).join(' ');
+                
+                const form = document.getElementById('add-property-form');
+                if (form) {
+                    form.querySelector('input[name="address"]').value = streetAddress || place.formatted_address || addressInput.value;
+                    form.querySelector('input[name="city"]').value = city;
+                    form.querySelector('input[name="state"]').value = state;
+                    form.querySelector('input[name="zip_code"]').value = zip;
+                }
+            });
+        };
+
         const token = localStorage.getItem("token") || sessionStorage.getItem("token");
         if (!token) {
             window.location.href = "/login";
@@ -1178,8 +1227,12 @@ Processing Time: ${data.estimated_processing_time}`);
                     clone.querySelector('.single-prop-location').innerText = p.location;
                     
                     const img = clone.querySelector('.single-prop-image');
-                    const imgIndex = p.id.charCodeAt(0) % 5 + 1;
-                    img.src = `/static/img/property_${imgIndex}.jpg`;
+                    if (p.image_url) {
+                        img.src = p.image_url;
+                    } else {
+                        const imgIndex = p.id.charCodeAt(0) % 5 + 1;
+                        img.src = `/static/img/property_${imgIndex}.jpg`;
+                    }
                     img.onerror = () => {
                         img.src = 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=800&q=80';
                     };
@@ -1301,8 +1354,12 @@ Processing Time: ${data.estimated_processing_time}`);
                         cardClone.querySelector('.property-card-rev').innerText = `$${totalRevVal.toLocaleString()}`;
                         
                         const img = cardClone.querySelector('.property-card-img');
-                        const imgIndex = p.id.charCodeAt(0) % 5 + 1;
-                        img.src = `/static/img/property_${imgIndex}.jpg`;
+                        if (p.image_url) {
+                            img.src = p.image_url;
+                        } else {
+                            const imgIndex = p.id.charCodeAt(0) % 5 + 1;
+                            img.src = `/static/img/property_${imgIndex}.jpg`;
+                        }
                         img.onerror = () => {
                             img.src = 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=800&q=80';
                         };

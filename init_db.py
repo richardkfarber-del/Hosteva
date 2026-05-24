@@ -35,6 +35,33 @@ def main():
         # Create all tables
         Base.metadata.create_all(bind=engine)
         print("Database tables created successfully")
+
+        # Check and add image_url column if missing
+        from sqlalchemy import inspect
+        inspector = inspect(engine)
+        try:
+            columns = [c["name"] for c in inspector.get_columns("properties")]
+            if "image_url" not in columns:
+                with engine.connect() as conn:
+                    if "sqlite" in str(engine.url):
+                        conn.execute(text("ALTER TABLE properties ADD COLUMN image_url VARCHAR;"))
+                    else:
+                        conn.execute(text("ALTER TABLE properties ADD COLUMN IF NOT EXISTS image_url VARCHAR;"))
+                    conn.commit()
+                print("Added image_url column to properties table.")
+            else:
+                print("image_url column already exists in properties table.")
+        except Exception as col_err:
+            print(f"Warning: Could not check/add image_url column: {col_err}")
+
+        # Data Cleanup: Delete all existing property records as requested by user
+        try:
+            with engine.connect() as conn:
+                conn.execute(text("DELETE FROM properties;"))
+                conn.commit()
+            print("Database cleanup: Deleted all property records successfully.")
+        except Exception as cleanup_err:
+            print(f"Warning: Could not clear properties table: {cleanup_err}")
     except Exception as e:
         print(f"Error during database initialization: {e}")
         import traceback

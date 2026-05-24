@@ -6,6 +6,8 @@ from pydantic import BaseModel
 from app.database import get_db
 import sys
 import os
+import requests
+import urllib.parse
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from app.services.email_service import dispatch_email_alert
 from app.models.property import Property
@@ -13,6 +15,51 @@ from app.models.host import Host
 from app.core.security import get_current_user
 
 router = APIRouter(prefix="/api/properties", tags=["Properties"])
+
+
+def fetch_real_property_image(address: str) -> str:
+    api_key = os.getenv("GOOGLE_MAPS_API_KEY")
+    if not api_key:
+        return ""
+    
+    # 1. Try Google Street View metadata first to check availability
+    try:
+        metadata_url = "https://maps.googleapis.com/maps/api/streetview/metadata"
+        params = {
+            "location": address,
+            "key": api_key
+        }
+        resp = requests.get(metadata_url, params=params, timeout=5)
+        if resp.status_code == 200:
+            data = resp.json()
+            if data.get("status") == "OK":
+                escaped_addr = urllib.parse.quote(address)
+                return f"https://maps.googleapis.com/maps/api/streetview?size=800x600&location={escaped_addr}&key={api_key}"
+    except Exception as e:
+        print(f"Error checking Street View metadata: {e}")
+        
+    # 2. Try Google Places API to find a photo if Street View is not available
+    try:
+        find_place_url = "https://maps.googleapis.com/maps/api/place/findplacefromtext/json"
+        params = {
+            "input": address,
+            "inputtype": "textquery",
+            "fields": "photos",
+            "key": api_key
+        }
+        resp = requests.get(find_place_url, params=params, timeout=5)
+        if resp.status_code == 200:
+            data = resp.json()
+            candidates = data.get("candidates", [])
+            if candidates:
+                photos = candidates[0].get("photos", [])
+                if photos:
+                    photo_ref = photos[0].get("photo_reference")
+                    return f"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference={photo_ref}&key={api_key}"
+    except Exception as e:
+        print(f"Error checking Places API photo: {e}")
+        
+    return ""
 
 
 class PropertyCreate(BaseModel):
@@ -44,7 +91,7 @@ def get_properties(
             "beds": 3,
             "baths": 2,
             "price": 149 if p.property_type and p.property_type.lower() == "condo" else 249,
-            "image_url": "",
+            "image_url": p.image_url or "",
             "lat": 34.0901,
             "lng": -118.3617
         }
@@ -65,6 +112,10 @@ def create_property(
     if not host:
         raise HTTPException(status_code=404, detail="Host profile not found")
         
+    # Fetch real property imagery
+    full_address = f"{property_data.address}, {property_data.city}, {property_data.state} {property_data.zip_code}".strip()
+    image_url = fetch_real_property_image(full_address)
+
     db_property = Property(
         user_id=host.id,
         address=property_data.address,
@@ -73,7 +124,8 @@ def create_property(
         zip_code=property_data.zip_code,
         property_type=property_data.property_type,
         hoa_status=property_data.hoa_status,
-        zoning_status="Compliant"  # default to Compliant for demo purposes
+        zoning_status="Compliant",  # default to Compliant for demo purposes
+        image_url=image_url
     )
     db.add(db_property)
     db.commit()
@@ -86,7 +138,7 @@ def create_property(
         "beds": 3,
         "baths": 2,
         "price": 249,
-        "image_url": ""
+        "image_url": db_property.image_url or ""
     }
 
 
