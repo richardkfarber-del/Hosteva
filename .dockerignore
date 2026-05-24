@@ -1,0 +1,7 @@
+_QUARANTINE/
+.git/
+.venv/
+__pycache__/
+*.db
+hosteva_login.zip
+hosteva_login.zip:Zone.Identifier
