@@ -8,6 +8,7 @@ load_dotenv()
 
 def main():
     print("Running standalone database initialization...")
+    os.makedirs("app/static/property_images", exist_ok=True)
     try:
         # Explicitly import all database models so they register on Base
         import app.db_models

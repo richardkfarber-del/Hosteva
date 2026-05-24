@@ -86,6 +86,7 @@ async def add_security_headers(request: Request, call_next):
         
     return response
 
+os.makedirs("app/static/property_images", exist_ok=True)
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 @app.get("/sw.js", include_in_schema=False)
