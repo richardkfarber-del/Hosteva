@@ -22,10 +22,10 @@ router = APIRouter(prefix="/api/properties", tags=["Properties"])
 def fetch_real_property_image(address: str) -> str:
     api_key = os.getenv("GOOGLE_MAPS_API_KEY")
     if not api_key:
-        print("Google Street View Onboarding: GOOGLE_MAPS_API_KEY is not configured.")
+        print("DEBUG: Google Street View Onboarding: GOOGLE_MAPS_API_KEY is not configured.")
         return ""
     
-    print(f"Google Street View Onboarding: Fetching image for address: {address}")
+    print(f"DEBUG: Google Street View Onboarding: Fetching image for address: {address}")
     
     # 1. Try Google Street View metadata first to check availability
     try:
@@ -37,18 +37,18 @@ def fetch_real_property_image(address: str) -> str:
         resp = requests.get(metadata_url, params=params, timeout=5)
         status_code = resp.status_code
         print(f"DEBUG: Image fetch status for {address}: {status_code}")
-        print(f"Google Street View API Metadata response code: {resp.status_code}")
+        print(f"DEBUG: Google Street View API Metadata response text: {resp.text}")
         if resp.status_code == 200:
             data = resp.json()
             status = data.get("status")
-            print(f"Google Street View API Metadata status: {status}")
+            print(f"DEBUG: Google Street View API Metadata status field: {status}")
             if status == "OK":
                 escaped_addr = urllib.parse.quote(address)
                 street_view_url = f"https://maps.googleapis.com/maps/api/streetview?size=800x600&location={escaped_addr}&key={api_key}"
-                print("Google Street View Onboarding: Successfully resolved Street View image URL.")
+                print("DEBUG: Google Street View Onboarding: Successfully resolved Street View image URL.")
                 return street_view_url
     except Exception as e:
-        print(f"Error checking Street View metadata: {e}")
+        print(f"DEBUG: Error checking Street View metadata: {e}")
         
     # 2. Try Google Places API to find a photo if Street View is not available
     try:
@@ -60,23 +60,24 @@ def fetch_real_property_image(address: str) -> str:
             "key": api_key
         }
         resp = requests.get(find_place_url, params=params, timeout=5)
-        print(f"Google Places API Find Place response code: {resp.status_code}")
+        print(f"DEBUG: Google Places API Find Place response code: {resp.status_code}")
+        print(f"DEBUG: Google Places API Find Place response text: {resp.text}")
         if resp.status_code == 200:
             data = resp.json()
             candidates = data.get("candidates", [])
-            print(f"Google Places API Find Place candidates count: {len(candidates)}")
+            print(f"DEBUG: Google Places API Find Place candidates count: {len(candidates)}")
             if candidates:
                 photos = candidates[0].get("photos", [])
-                print(f"Google Places API Find Place photos count: {len(photos)}")
+                print(f"DEBUG: Google Places API Find Place photos count: {len(photos)}")
                 if photos:
                     photo_ref = photos[0].get("photo_reference")
                     places_url = f"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference={photo_ref}&key={api_key}"
-                    print("Google Street View Onboarding: Successfully resolved Places photo URL.")
+                    print("DEBUG: Google Street View Onboarding: Successfully resolved Places photo URL.")
                     return places_url
     except Exception as e:
-        print(f"Error checking Places API photo: {e}")
+        print(f"DEBUG: Error checking Places API photo: {e}")
         
-    print("Google Street View Onboarding: No real image found. Falling back to default property image.")
+    print("DEBUG: Google Street View Onboarding: No real image found. Falling back to default property image.")
     return ""
 
 
