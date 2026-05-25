@@ -122,6 +122,17 @@ app.include_router(queue.router)
 
 @app.get("/", include_in_schema=False)
 def read_root(request: Request):
+    token = request.cookies.get("access_token")
+    if token:
+        try:
+            from app.core.security import SECRET_KEY, ALGORITHM
+            from jose import jwt
+            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            username: str = payload.get("sub")
+            if username is not None:
+                return RedirectResponse(url="/dashboard", status_code=303)
+        except Exception:
+            pass
     return templates.TemplateResponse(
         request=request,
         name="landing.html", 
