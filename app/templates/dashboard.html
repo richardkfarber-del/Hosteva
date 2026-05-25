@@ -668,6 +668,10 @@ tailwind.config = {
 
                     <!-- compliance hooks inside the card -->
                     <div class="flex justify-between items-center pt-2 gap-2 border-t border-slate-100">
+                        <button class="text-xs font-bold text-primary hover:underline uppercase tracking-wider flex items-center gap-1 property-manage-btn">
+                            <span class="material-symbols-outlined text-xs">settings</span>
+                            Manage
+                        </button>
                         <button class="text-xs font-bold text-primary hover:underline uppercase tracking-wider flex items-center gap-1 property-permit-btn">
                             <span class="material-symbols-outlined text-xs">description</span>
                             Permit
@@ -1408,7 +1412,7 @@ Processing Time: ${data.estimated_processing_time}`);
                     const manageBtn = clone.querySelector('button.single-prop-manage-btn');
                     if (manageBtn) {
                         manageBtn.addEventListener('click', () => {
-                            alert(`Managing ${p.address}...`);
+                            window.location.href = `/manage/${p.id}`;
                         });
                     }
                     
@@ -1471,6 +1475,10 @@ Processing Time: ${data.estimated_processing_time}`);
                         }
                         
                         // Bind buttons inside the card
+                        cardClone.querySelector('.property-manage-btn').addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            window.location.href = `/manage/${p.id}`;
+                        });
                         cardClone.querySelector('.property-permit-btn').addEventListener('click', (e) => generatePermit(e, p.id));
                         cardClone.querySelector('.property-export-btn').addEventListener('click', (e) => {
                             e.stopPropagation();

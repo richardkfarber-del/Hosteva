@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, File, UploadFile
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from typing import List, Dict, Any
@@ -287,3 +287,35 @@ def evaluate_compliance(
         dispatch_email_alert(host.email, property_id, old_status, new_status)
         
     return {"message": "Property evaluated", "status": new_status}
+
+
+@router.post("/{property_id}/upload-vision")
+def upload_vision(
+    property_id: str,
+    file: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Drag-and-drop file upload endpoint that accepts photos of property rooms,
+    sends them to the Gemini 1.5 Pro model for analysis, and returns the results.
+    """
+    host = db.query(Host).filter(Host.username == current_user.get("username")).first()
+    if not host:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Host profile not found")
+        
+    property_item = db.query(Property).filter(Property.id == property_id, Property.user_id == host.id).first()
+    if not property_item:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Property not found")
+        
+    try:
+        from app.services.compliance import run_gemini_vision
+        contents = file.file.read()
+        mime_type = file.content_type or "image/jpeg"
+        
+        # Analyze the photo using Gemini 1.5 Pro Vision
+        result = run_gemini_vision(contents, mime_type)
+        return result
+    except Exception as e:
+        print(f"DEBUG: Vision upload error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

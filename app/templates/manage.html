@@ -1,0 +1,466 @@
+{% extends "base.html" %}
+
+{% block title %}Hosteva | Manage Property Details{% endblock %}
+
+{% block extra_head %}
+<style>
+    .bento-grid {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        gap: 1.5rem;
+    }
+    .card-shadow {
+        box-shadow: 0 20px 40px rgba(0, 28, 55, 0.04);
+    }
+</style>
+{% endblock %}
+
+{% block header_title %}Manage Listing - {{ property_address }}{% endblock %}
+
+{% block content %}
+<main class="pb-16 max-w-screen-2xl mx-auto">
+    <!-- Hero Section: Vision Uploader -->
+    <section class="mb-8 group">
+        <div id="drop-zone" class="relative overflow-hidden rounded-xl bg-white border-2 border-dashed border-primary-container/30 p-12 transition-all duration-300 hover:border-primary-container/60 hover:bg-primary-container/5 cursor-pointer">
+            <div class="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-tertiary/5 opacity-50"></div>
+            <div class="relative z-10 flex flex-col items-center text-center">
+                <div id="upload-icon-container" class="w-20 h-20 mb-6 rounded-2xl bg-primary/10 flex items-center justify-center transition-transform duration-500">
+                    <span id="upload-icon" class="material-symbols-outlined text-4xl text-primary" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+                    <span id="upload-spinner" class="hidden material-symbols-outlined text-4xl text-primary animate-spin">progress_activity</span>
+                </div>
+                <h2 id="upload-title" class="font-display text-2xl md:text-3xl font-extrabold tracking-tight text-slate-800 mb-4">Vision Uploader</h2>
+                <p id="upload-desc" class="font-body text-slate-500 max-w-xl text-lg mb-8">Upload room photos and let our AI detect your amenities automatically.</p>
+                <button type="button" id="browse-btn" class="bg-gradient-to-r from-primary to-primary-container text-white px-8 py-3 rounded-lg font-bold shadow-lg active:scale-95 transition-all">
+                    Browse Media
+                </button>
+            </div>
+            <input type="file" id="vision-file-input" accept="image/*" class="hidden" />
+        </div>
+    </section>
+
+    <!-- Bento Grid Section -->
+    <div class="bento-grid">
+        <!-- Listing Strength Gauge -->
+        <div class="col-span-12 lg:col-span-4 bg-white rounded-xl p-8 card-shadow border border-slate-200/40 flex flex-col items-center justify-center relative overflow-hidden">
+            <div class="absolute top-0 right-0 p-4 opacity-10">
+                <span class="material-symbols-outlined text-6xl text-slate-400">query_stats</span>
+            </div>
+            <h3 class="font-headline text-lg font-bold text-slate-800 self-start mb-8">Listing Strength</h3>
+            <div class="relative w-48 h-48 flex items-center justify-center">
+                <svg class="w-full h-full transform -rotate-90">
+                    <circle class="text-slate-100" cx="96" cy="96" fill="transparent" r="80" stroke="currentColor" stroke-width="12"></circle>
+                    <circle class="text-primary" cx="96" cy="96" fill="transparent" r="80" stroke="currentColor" stroke-dasharray="502.6" stroke-dashoffset="175.9" stroke-linecap="round" stroke-width="12"></circle>
+                </svg>
+                <div class="absolute inset-0 flex flex-col items-center justify-center">
+                    <span class="font-display text-4xl font-black text-primary">65%</span>
+                    <span class="font-label text-xs uppercase tracking-widest text-slate-400 font-bold">Healthy</span>
+                </div>
+            </div>
+            <p class="font-body text-sm text-center mt-8 text-slate-500">Add more photos to reach 85%.</p>
+        </div>
+
+        <!-- The Blueprint Card -->
+        <div class="col-span-12 md:col-span-6 lg:col-span-5 bg-white rounded-xl p-8 card-shadow border border-slate-200/40">
+            <div class="flex items-center gap-3 mb-8">
+                <div class="w-10 h-10 rounded-lg bg-teal-50 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-primary">architecture</span>
+                </div>
+                <h3 class="font-headline text-lg font-bold text-slate-800">The Blueprint</h3>
+            </div>
+            <div class="space-y-6">
+                <div class="flex items-center justify-between">
+                    <span class="font-body text-slate-600">Bedrooms</span>
+                    <div class="flex gap-2">
+                        <button id="btn-beds-3" class="bed-btn px-4 py-1.5 rounded-full border border-slate-300 text-sm font-medium hover:bg-slate-50 transition-colors">3</button>
+                        <button id="btn-beds-4" class="bed-btn px-4 py-1.5 rounded-full bg-primary-container text-white text-sm font-bold">4</button>
+                        <button id="btn-beds-5" class="bed-btn px-4 py-1.5 rounded-full border border-slate-300 text-sm font-medium hover:bg-slate-50 transition-colors">5+</button>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="font-body text-slate-600">Bathrooms</span>
+                    <div class="flex gap-2">
+                        <button class="px-4 py-1.5 rounded-full border border-slate-300 text-sm font-medium hover:bg-slate-50 transition-colors">2</button>
+                        <button class="px-4 py-1.5 rounded-full bg-primary-container text-white text-sm font-bold">3.5</button>
+                        <button class="px-4 py-1.5 rounded-full border border-slate-300 text-sm font-medium hover:bg-slate-50 transition-colors">4</button>
+                    </div>
+                </div>
+                <div class="pt-4 border-t border-slate-100">
+                    <label class="block font-label text-xs text-slate-400 uppercase tracking-widest mb-2 font-bold">Total Space</label>
+                    <div class="flex items-center bg-slate-50 rounded-lg p-4">
+                        <input class="bg-transparent border-none focus:ring-0 p-0 font-display text-2xl font-bold text-slate-800 w-full" type="text" value="2,450"/>
+                        <span class="font-label font-bold text-slate-400">SQ FT</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Parking & Vehicles Card -->
+        <div class="col-span-12 md:col-span-6 lg:col-span-3 bg-white rounded-xl p-8 card-shadow border border-slate-200/40">
+            <div class="flex items-center gap-3 mb-8">
+                <div class="w-10 h-10 rounded-lg bg-teal-50 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-primary">directions_car</span>
+                </div>
+                <h3 class="font-headline text-lg font-bold text-slate-800">Parking</h3>
+            </div>
+            <div class="space-y-4">
+                <div class="flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 transition-colors group">
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors">garage</span>
+                        <span class="font-body text-sm font-medium text-slate-600">Garage</span>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input id="toggle-garage" checked="" class="sr-only peer" type="checkbox"/>
+                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                    </label>
+                </div>
+                <div class="flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 transition-colors group">
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors">road</span>
+                        <span class="font-body text-sm font-medium text-slate-600">Driveway</span>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input id="toggle-driveway" checked="" class="sr-only peer" type="checkbox"/>
+                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                    </label>
+                </div>
+                <div class="flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 transition-colors group">
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors">streetview</span>
+                        <span class="font-body text-sm font-medium text-slate-600">Street</span>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input id="toggle-street" class="sr-only peer" type="checkbox"/>
+                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Smart Amenities Grid (Full Width Featured Section) -->
+        <div class="col-span-12 bg-white rounded-xl p-8 card-shadow border border-slate-200/40">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg bg-teal-50 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-primary">star</span>
+                    </div>
+                    <div>
+                        <h3 class="font-headline text-lg font-bold text-slate-800">Smart Amenities</h3>
+                        <p class="font-body text-xs text-slate-400">Verified by Hosteva AI Engine</p>
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    <span class="bg-teal-50 text-primary px-4 py-1.5 rounded-full text-xs font-bold flex items-center gap-1">
+                        <span class="material-symbols-outlined text-sm">verified</span> AI Scanned
+                    </span>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Pool with Compliance -->
+                <div class="p-6 rounded-xl border border-slate-100 bg-slate-50/50 relative">
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="material-symbols-outlined text-3xl text-primary">pool</span>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input id="toggle-pool" class="sr-only peer" type="checkbox"/>
+                            <div class="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                        </label>
+                    </div>
+                    <p class="font-headline font-bold text-slate-800 mb-1">Pool</p>
+                    <span id="badge-pool" class="inline-flex items-center gap-1 text-[10px] font-bold text-tertiary bg-tertiary/10 px-2 py-0.5 rounded-full mb-3 hidden ai-verified-badge">
+                        <span class="material-symbols-outlined text-[12px]" style="font-variation-settings: 'FILL' 1;">verified</span>
+                        Verified by Hosteva AI
+                    </span>
+                    <div class="flex items-start gap-2 bg-error-container/20 p-2 rounded-lg mt-2">
+                        <span class="material-symbols-outlined text-error text-lg" style="font-variation-settings: 'FILL' 1;">warning</span>
+                        <p class="text-[10px] font-bold text-on-error-container leading-tight">Requires safety fence verification.</p>
+                    </div>
+                </div>
+
+                <!-- Hot Tub -->
+                <div class="p-6 rounded-xl border border-slate-100 bg-slate-50/50 relative group">
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="material-symbols-outlined text-3xl text-slate-400 group-hover:text-primary transition-colors">hot_tub</span>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input id="toggle-hottub" class="sr-only peer" type="checkbox"/>
+                            <div class="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                        </label>
+                    </div>
+                    <p class="font-headline font-bold text-slate-800 transition-colors mb-1">Hot Tub</p>
+                    <span id="badge-hottub" class="inline-flex items-center gap-1 text-[10px] font-bold text-tertiary bg-tertiary/10 px-2 py-0.5 rounded-full mt-1.5 hidden ai-verified-badge">
+                        <span class="material-symbols-outlined text-[12px]" style="font-variation-settings: 'FILL' 1;">verified</span>
+                        Verified by Hosteva AI
+                    </span>
+                </div>
+
+                <!-- Stove / Oven -->
+                <div class="p-6 rounded-xl border border-slate-100 bg-slate-50/50 relative group">
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="material-symbols-outlined text-3xl text-slate-400 group-hover:text-primary transition-colors">countertops</span>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input id="toggle-stove" class="sr-only peer" type="checkbox"/>
+                            <div class="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                        </label>
+                    </div>
+                    <p class="font-headline font-bold text-slate-800 transition-colors mb-1">Stove / Oven</p>
+                    <span id="badge-stove" class="inline-flex items-center gap-1 text-[10px] font-bold text-tertiary bg-tertiary/10 px-2 py-0.5 rounded-full mt-1.5 hidden ai-verified-badge">
+                        <span class="material-symbols-outlined text-[12px]" style="font-variation-settings: 'FILL' 1;">verified</span>
+                        Verified by Hosteva AI
+                    </span>
+                </div>
+
+                <!-- Gym -->
+                <div class="p-6 rounded-xl border border-slate-100 bg-slate-50/50 relative group">
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="material-symbols-outlined text-3xl text-slate-400 group-hover:text-primary transition-colors">fitness_center</span>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input id="toggle-gym" class="sr-only peer" type="checkbox"/>
+                            <div class="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                        </label>
+                    </div>
+                    <p class="font-headline font-bold text-slate-800 transition-colors">Private Gym</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Safety Checklist -->
+        <div class="col-span-12 bg-white rounded-xl p-8 card-shadow border border-slate-200/40">
+            <div class="flex items-center gap-3 mb-10">
+                <div class="w-10 h-10 rounded-lg bg-red-50 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-error">shield</span>
+                </div>
+                <h3 class="font-headline text-lg font-bold text-slate-800">Safety Checklist</h3>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="flex items-start gap-4">
+                    <label class="relative inline-flex items-center cursor-pointer mt-1">
+                        <input id="toggle-smoke" checked="" class="sr-only peer" type="checkbox"/>
+                        <div class="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                    </label>
+                    <div>
+                        <p class="font-headline font-bold text-sm mb-1 text-slate-800">Smoke Detectors</p>
+                        <p class="font-body text-xs text-slate-400">Active & tested on Feb 12</p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-4">
+                    <label class="relative inline-flex items-center cursor-pointer mt-1">
+                        <input id="toggle-fire" checked="" class="sr-only peer" type="checkbox"/>
+                        <div class="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                    </label>
+                    <div>
+                        <p class="font-headline font-bold text-sm mb-1 text-slate-800">Fire Extinguishers</p>
+                        <p class="font-body text-xs text-slate-400">Located in Kitchen & Garage</p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-4">
+                    <label class="relative inline-flex items-center cursor-pointer mt-1">
+                        <input id="toggle-firstaid" class="sr-only peer" type="checkbox"/>
+                        <div class="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                    </label>
+                    <div>
+                        <p class="font-headline font-bold text-sm mb-1 text-slate-800">First Aid Kit</p>
+                        <p class="font-body text-xs text-error font-medium">Missing or expired</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- The Insight Prism (AI Component) -->
+    <div class="mt-12 bg-white rounded-xl p-8 card-shadow relative overflow-hidden border-l-4 border-tertiary-fixed border border-slate-200/40">
+        <div class="flex items-start gap-6">
+            <div class="hidden md:flex w-16 h-16 rounded-full bg-teal-50 items-center justify-center flex-shrink-0">
+                <span class="material-symbols-outlined text-primary text-3xl" style="font-variation-settings: 'FILL' 1;">insights</span>
+            </div>
+            <div>
+                <h4 class="font-headline font-bold text-xl mb-2 text-slate-800">Concierge Tip</h4>
+                <p class="font-body text-slate-500 leading-relaxed">Properties in your area with a <strong>'Hot Tub'</strong> amenity see a 24% higher booking rate during winter months. Our AI suggests highlighting this in your listing description if you plan to install one soon.</p>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('vision-file-input');
+        const browseBtn = document.getElementById('browse-btn');
+        const uploadIcon = document.getElementById('upload-icon');
+        const uploadSpinner = document.getElementById('upload-spinner');
+        const uploadTitle = document.getElementById('upload-title');
+        const uploadDesc = document.getElementById('upload-desc');
+
+        // Simple button active transitions
+        document.querySelectorAll('button, a').forEach(el => {
+            el.addEventListener('click', () => {
+                el.classList.add('scale-95');
+                setTimeout(() => el.classList.remove('scale-95'), 100);
+            });
+        });
+
+        // Trigger file input
+        dropZone.addEventListener('click', (e) => {
+            if (e.target !== browseBtn && !browseBtn.contains(e.target)) {
+                fileInput.click();
+            }
+        });
+        browseBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                handleUpload(file);
+            }
+        });
+
+        // Drag & Drop event bindings
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('border-primary', 'bg-primary-container/10');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('border-primary', 'bg-primary-container/10');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('border-primary', 'bg-primary-container/10');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                handleUpload(file);
+            }
+        });
+
+        async function handleUpload(file) {
+            // Enter loading state
+            uploadIcon.classList.add('hidden');
+            uploadSpinner.classList.remove('hidden');
+            uploadTitle.innerText = "Analyzing Photo...";
+            uploadDesc.innerText = "AI Vision Engine is scanning for features and verifying amenities...";
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+                const headers = {};
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+                
+                const propertyId = "{{ property_id }}";
+                const response = await fetch(`/api/properties/${propertyId}/upload-vision`, {
+                    method: 'POST',
+                    headers: headers,
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Vision scan failed');
+                }
+                
+                const data = await response.json();
+                console.log("Vision scan response:", data);
+                
+                // Show success state
+                uploadTitle.innerText = "Scan Complete!";
+                uploadDesc.innerText = `Detected Room Type: ${data.room_type || 'Unknown'}`;
+                setTimeout(() => {
+                    uploadIcon.classList.remove('hidden');
+                    uploadSpinner.classList.add('hidden');
+                    uploadTitle.innerText = "Vision Uploader";
+                    uploadDesc.innerText = "Upload room photos and let our AI detect your amenities automatically.";
+                }, 3500);
+
+                // Helper to check for feature presence
+                const checkFeature = (key) => {
+                    return data[key] === true || (data.features && data.features[key] === true);
+                };
+
+                // 1. Pool
+                if (checkFeature('pool')) {
+                    const toggle = document.getElementById('toggle-pool');
+                    if (toggle) {
+                        toggle.checked = true;
+                        document.getElementById('badge-pool')?.classList.remove('hidden');
+                    }
+                }
+                
+                // 2. Hot Tub
+                if (checkFeature('hot_tub') || checkFeature('hottub') || checkFeature('jacuzzi') || checkFeature('spa')) {
+                    const toggle = document.getElementById('toggle-hottub');
+                    if (toggle) {
+                        toggle.checked = true;
+                        document.getElementById('badge-hottub')?.classList.remove('hidden');
+                    }
+                }
+
+                // 3. Stove / Oven
+                if (checkFeature('stove_oven') || checkFeature('stove') || checkFeature('oven') || checkFeature('cooktop')) {
+                    const toggle = document.getElementById('toggle-stove');
+                    if (toggle) {
+                        toggle.checked = true;
+                        document.getElementById('badge-stove')?.classList.remove('hidden');
+                    }
+                }
+
+                // 4. Gym
+                if (checkFeature('gym') || checkFeature('private_gym') || checkFeature('fitness_center')) {
+                    const toggle = document.getElementById('toggle-gym');
+                    if (toggle) {
+                        toggle.checked = true;
+                    }
+                }
+
+                // 5. Bedrooms
+                const bedsCount = data.bedrooms || (data.features && data.features.bedrooms);
+                if (bedsCount) {
+                    const bedButtons = document.querySelectorAll('.bed-btn');
+                    bedButtons.forEach(btn => {
+                        btn.className = 'bed-btn px-4 py-1.5 rounded-full border border-slate-300 text-sm font-medium hover:bg-slate-50 transition-colors';
+                    });
+                    
+                    let selectedBtn;
+                    if (bedsCount === 3) {
+                        selectedBtn = document.getElementById('btn-beds-3');
+                    } else if (bedsCount === 4) {
+                        selectedBtn = document.getElementById('btn-beds-4');
+                    } else if (bedsCount >= 5) {
+                        selectedBtn = document.getElementById('btn-beds-5');
+                    }
+                    
+                    if (selectedBtn) {
+                        selectedBtn.className = 'bed-btn px-4 py-1.5 rounded-full bg-primary-container text-white text-sm font-bold';
+                    }
+                }
+                
+            } catch (err) {
+                console.error("Vision upload error:", err);
+                uploadTitle.innerText = "Scan Failed";
+                uploadDesc.innerText = "There was a problem communicating with the AI Vision Engine. Please try again.";
+                setTimeout(() => {
+                    uploadIcon.classList.remove('hidden');
+                    uploadSpinner.classList.add('hidden');
+                    uploadTitle.innerText = "Vision Uploader";
+                    uploadDesc.innerText = "Upload room photos and let our AI detect your amenities automatically.";
+                }, 3500);
+            }
+        }
+
+        // Subtly animate dragover atmospheric gradients
+        const hero = document.getElementById('drop-zone');
+        if (hero) {
+            hero.addEventListener('mousemove', (e) => {
+                const { left, top, width, height } = hero.getBoundingClientRect();
+                const x = ((e.clientX - left) / width) * 100;
+                const y = ((e.clientY - top) / height) * 100;
+                hero.querySelector('.absolute.inset-0').style.background = `radial-gradient(circle at ${x}% ${y}%, rgba(0, 101, 118, 0.08), transparent)`;
+            });
+        }
+    });
+</script>
+{% endblock %}

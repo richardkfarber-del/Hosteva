@@ -6,7 +6,8 @@ from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional
 from sqlalchemy import text
-from app.database import engine, Base
+from sqlalchemy.orm import Session
+from app.database import engine, Base, get_db
 from app.routers import user, listings, ordinances, zoning, compliance, hosts, properties, notifications, dashboard_api, eligibility, florida_compliance, listing_optimizer, permit_generator, recommendations, subscriptions, documents, market_intelligence, pricing
 from app.integrations.ota_routes import router as ota_router
 from app.api.routes import swarm, queue, properties as v1_properties
@@ -202,9 +203,44 @@ def read_dashboard(request: Request):
         context={"request": request, "google_maps_api_key": os.getenv("GOOGLE_MAPS_API_KEY", ""), "active_page": "dashboard"}
     )
 
+@app.get("/manage/{property_id}", name="manage_property")
+def read_manage_property(property_id: str, request: Request, db: Session = Depends(get_db)):
+    token = request.cookies.get("access_token")
+    if not token:
+        return RedirectResponse(url="/login", status_code=303)
+    try:
+        from app.core.security import SECRET_KEY, ALGORITHM
+        from jose import jwt
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            return RedirectResponse(url="/login", status_code=303)
+    except Exception:
+        return RedirectResponse(url="/login", status_code=303)
+
+    from app.models.property import Property
+    from app.models.host import Host
+    host = db.query(Host).filter(Host.username == username).first()
+    if not host:
+        return RedirectResponse(url="/login", status_code=303)
+        
+    property_item = db.query(Property).filter(Property.id == property_id, Property.user_id == host.id).first()
+    if not property_item:
+        return RedirectResponse(url="/dashboard", status_code=303)
+
+    return templates.TemplateResponse(
+        request=request,
+        name="manage.html", 
+        context={
+            "request": request, 
+            "property_id": property_id, 
+            "property_address": property_item.address,
+            "google_maps_api_key": os.getenv("GOOGLE_MAPS_API_KEY", ""), 
+            "active_page": "dashboard"
+        }
+    )
+
 from app.core.security import get_current_user
-from sqlalchemy.orm import Session
-from app.database import get_db
 from app.models.host import Host
 
 @app.get("/users/me")
