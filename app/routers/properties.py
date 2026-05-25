@@ -68,6 +68,8 @@ def fetch_real_property_image(address: str) -> str:
                         f.write(img_resp.content)
                     print(f"DEBUG: Real image successfully saved to {file_path}", flush=True)
                     logger.info(f"DEBUG: Real image successfully saved to {file_path}")
+                    print("DEBUG: Success! Image retrieved using New Key via Street View API.", flush=True)
+                    logger.info("DEBUG: Success! Image retrieved using New Key via Street View API.")
                     return f"/static/property_images/{img_uuid}.jpg"
     except Exception as e:
         print(f"DEBUG: Error checking Street View metadata: {e}", flush=True)
@@ -110,6 +112,8 @@ def fetch_real_property_image(address: str) -> str:
                             f.write(img_resp.content)
                         print(f"DEBUG: Real image successfully saved to {file_path}", flush=True)
                         logger.info(f"DEBUG: Real image successfully saved to {file_path}")
+                        print("DEBUG: Success! Image retrieved using New Key via Places API.", flush=True)
+                        logger.info("DEBUG: Success! Image retrieved using New Key via Places API.")
                         return f"/static/property_images/{img_uuid}.jpg"
     except Exception as e:
         print(f"DEBUG: Error checking Places API photo: {e}", flush=True)

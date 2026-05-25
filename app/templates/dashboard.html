@@ -1303,14 +1303,23 @@ Processing Time: ${data.estimated_processing_time}`);
                         complianceScore = 30;
                         compDesc.innerText = 'HOA scanned rules required';
                     } else { // Violation
-                        badge.className = 'bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1';
-                        badge.innerHTML = `<span class="material-symbols-outlined text-sm">warning</span> VIOLATION`;
+                        badge.className = 'bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1';
+                        badge.innerHTML = `<span class="material-symbols-outlined text-sm">warning</span> NEEDS ATTENTION`;
                         complianceScore = 50;
                         compDesc.innerText = 'Immediate action required';
                     }
                     
                     if (progress) {
                         progress.setAttribute('stroke-dasharray', `${complianceScore}, 100`);
+                        if (complianceScore === 100) {
+                            progress.style.color = '';
+                        } else if (complianceScore === 50) {
+                            progress.style.color = '#ca8a04'; // Yellow-600
+                        } else if (complianceScore === 30) {
+                            progress.style.color = '#ea580c'; // Orange-600
+                        } else {
+                            progress.style.color = '#dc2626'; // Red-600
+                        }
                     }
                     if (compText) {
                         compText.innerText = `${complianceScore}%`;
@@ -1446,8 +1455,8 @@ Processing Time: ${data.estimated_processing_time}`);
                             badge.className = 'absolute top-4 right-4 bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-xs font-black flex items-center gap-1 shadow-sm';
                             badge.innerHTML = `<span class="material-symbols-outlined text-sm">warning</span> ACTION REQUIRED`;
                         } else {
-                            badge.className = 'absolute top-4 right-4 bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-black flex items-center gap-1 shadow-sm';
-                            badge.innerHTML = `<span class="material-symbols-outlined text-sm">warning</span> ATTENTION`;
+                            badge.className = 'absolute top-4 right-4 bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-black flex items-center gap-1 shadow-sm';
+                            badge.innerHTML = `<span class="material-symbols-outlined text-sm">warning</span> NEEDS ATTENTION`;
                         }
                         
                         // Bind buttons inside the card
