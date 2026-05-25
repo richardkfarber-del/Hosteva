@@ -150,20 +150,15 @@ tailwind.config = {
                 <p class="text-[#52aecd] text-xs font-medium uppercase tracking-widest opacity-80 mt-1 font-body">Hosteva Intelligence</p>
             </div>
             <nav class="flex flex-col gap-1">
-                <a class="flex items-center gap-3 py-3 px-4 text-slate-600 opacity-90 hover:bg-[#52aecd]/20 hover:opacity-100 transition-all font-medium rounded-lg {% if active_page == 'home' %}bg-[#52aecd] text-white{% endif %}" href="/">
-                    <span class="material-symbols-outlined">home</span>
-                    <span>Home</span>
+                <a id="sidebar-dashboard-link" class="flex items-center gap-3 py-3 px-4 text-slate-600 opacity-90 hover:bg-[#52aecd]/20 hover:opacity-100 transition-all font-medium rounded-lg bg-[#52aecd] text-white" href="/dashboard" onclick="fetchProperties(); return false;">
+                    <span class="material-symbols-outlined">dashboard</span>
+                    <span>Dashboard</span>
                 </a>
-                <a class="flex items-center gap-3 py-3 px-4 text-slate-600 opacity-90 hover:bg-[#52aecd]/20 hover:opacity-100 transition-all font-medium rounded-lg {% if active_page == 'compliance' %}bg-[#52aecd] text-white{% endif %}" href="/wizard">
+                <a id="sidebar-compliance-link" class="flex items-center gap-3 py-3 px-4 text-slate-600 opacity-90 hover:bg-[#52aecd]/20 hover:opacity-100 transition-all font-medium rounded-lg" href="/dashboard?view=tasks" onclick="viewTasks(); return false;">
                     <span class="material-symbols-outlined">rule</span>
                     <span>Compliance Wizard</span>
                 </a>
-                <a class="flex items-center gap-3 py-3 px-4 text-slate-600 opacity-90 hover:bg-[#52aecd]/20 hover:opacity-100 transition-all font-medium rounded-lg {% if active_page == 'dashboard' %}bg-[#52aecd] text-white{% endif %}" href="/dashboard">
-                    <span class="material-symbols-outlined">dashboard</span>
-                    <span>Host Dashboard</span>
-                </a>
-
-                <a class="flex items-center gap-3 py-3 px-4 text-slate-600 opacity-90 hover:bg-[#52aecd]/20 hover:opacity-100 transition-all font-medium rounded-lg {% if active_page == 'integrations' %}bg-[#52aecd] text-white{% endif %}" href="/integrations">
+                <a class="flex items-center gap-3 py-3 px-4 text-slate-600 opacity-90 hover:bg-[#52aecd]/20 hover:opacity-100 transition-all font-medium rounded-lg" href="/integrations">
                     <span class="material-symbols-outlined">extension</span>
                     <span>Integrations</span>
                 </a>
@@ -215,9 +210,14 @@ tailwind.config = {
             </div>
         </div>
         <div class="flex items-center gap-6">
+            <button onclick="openAddPropertyModal()" class="bg-gradient-to-br from-primary to-primary-container text-white px-4 py-2 rounded-lg text-sm font-semibold hover:opacity-95 shadow-md active:scale-95 transition-all flex items-center gap-1.5" id="header-add-property-btn">
+                <span class="material-symbols-outlined text-lg">add</span>
+                <span>Add Property</span>
+            </button>
             <button class="relative text-gray-500 hover:text-primary transition-colors">
                 <span class="material-symbols-outlined">notifications</span>
                 <span class="absolute top-0 right-0 w-2 h-2 bg-gradient-to-br from-primary to-primary-container rounded-full animate-pulse"></span>
+            </button>
             <button class="text-gray-500 hover:text-primary transition-colors">
                 <span class="material-symbols-outlined">settings</span>
             </button>
@@ -1217,6 +1217,11 @@ Processing Time: ${data.estimated_processing_time}`);
         }
 
         async function fetchProperties(filterStatus = null) {
+            const dashLink = document.getElementById('sidebar-dashboard-link');
+            const compLink = document.getElementById('sidebar-compliance-link');
+            if (dashLink) dashLink.className = 'flex items-center gap-3 py-3 px-4 text-slate-600 opacity-90 hover:bg-[#52aecd]/20 hover:opacity-100 transition-all font-medium rounded-lg bg-[#52aecd] text-white';
+            if (compLink) compLink.className = 'flex items-center gap-3 py-3 px-4 text-slate-600 opacity-90 hover:bg-[#52aecd]/20 hover:opacity-100 transition-all font-medium rounded-lg';
+
             const dynamicContent = document.getElementById('dashboard-dynamic-content');
             dynamicContent.innerHTML = `
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -1540,9 +1545,14 @@ Processing Time: ${data.estimated_processing_time}`);
         }
 
         // Initialize dashboard state
-        document.addEventListener('DOMContentLoaded', () => {
-            fetchProperties();
+        document.addEventListener('DOMContentLoaded', async () => {
+            await fetchProperties();
             fetchUserProfile();
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('view') === 'tasks') {
+                viewTasks();
+            }
         });
 
         // Register Service Worker
@@ -1756,6 +1766,11 @@ Processing Time: ${data.estimated_processing_time}`);
         }
 
         function viewTasks() {
+            const dashLink = document.getElementById('sidebar-dashboard-link');
+            const compLink = document.getElementById('sidebar-compliance-link');
+            if (dashLink) dashLink.className = 'flex items-center gap-3 py-3 px-4 text-slate-600 opacity-90 hover:bg-[#52aecd]/20 hover:opacity-100 transition-all font-medium rounded-lg';
+            if (compLink) compLink.className = 'flex items-center gap-3 py-3 px-4 text-slate-600 opacity-90 hover:bg-[#52aecd]/20 hover:opacity-100 transition-all font-medium rounded-lg bg-[#52aecd] text-white';
+
             const dynamicContent = document.getElementById('dashboard-dynamic-content');
             if (!dynamicContent) return;
 
