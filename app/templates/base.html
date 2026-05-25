@@ -129,6 +129,10 @@ tailwind.config = {
                         <span class="material-symbols-outlined text-[18px]">dashboard</span>
                         <span>Dashboard</span>
                     </a>
+                    <button onclick="logout()" class="md:hidden flex items-center gap-1 text-sm font-bold text-red-600 bg-red-50 px-3 py-1.5 rounded-lg hover:bg-red-100 transition-colors" id="header-logout-btn">
+                        <span class="material-symbols-outlined text-[18px]">logout</span>
+                        <span>Logout</span>
+                    </button>
                     <div id="header-auth-buttons" class="hidden flex items-center gap-3">
                         <a href="/login" class="text-sm font-semibold text-slate-600 hover:text-primary transition-colors">Login</a>
                         <a href="/register" class="bg-primary text-on-primary px-4 py-2 rounded-lg text-sm font-semibold hover:bg-primary-container transition-all shadow-md">Sign Up</a>
@@ -165,7 +169,8 @@ tailwind.config = {
                 localStorage.removeItem("token");
                 localStorage.removeItem("access_token");
                 sessionStorage.removeItem("token");
-                window.location.href = "/login";
+                document.cookie = "access_token=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+                window.location.href = "/";
             };
 
             if (token) {

@@ -192,6 +192,9 @@ tailwind.config = {
                         </div>
                     </div>
                     <button onclick="upgradeToPro()" class="w-full mt-2 px-4 py-2 bg-gradient-to-br from-primary to-primary-container text-on-surface font-bold text-xs rounded-[8px] uppercase tracking-widest hover:opacity-90 transition-opacity">Upgrade to Pro</button>
+                    <button onclick="logout()" class="w-full text-center text-xs font-semibold text-red-500 hover:text-red-700 transition-colors mt-2" id="sidebar-logout-btn">
+                        Logout
+                    </button>
                 </div>
             </div>
         </aside>
@@ -215,9 +218,12 @@ tailwind.config = {
             <button class="relative text-gray-500 hover:text-primary transition-colors">
                 <span class="material-symbols-outlined">notifications</span>
                 <span class="absolute top-0 right-0 w-2 h-2 bg-gradient-to-br from-primary to-primary-container rounded-full animate-pulse"></span>
-            </button>
             <button class="text-gray-500 hover:text-primary transition-colors">
                 <span class="material-symbols-outlined">settings</span>
+            </button>
+            <button onclick="logout()" class="flex items-center gap-1.5 text-gray-500 hover:text-red-600 transition-colors" id="header-logout-btn" title="Log Out">
+                <span class="material-symbols-outlined">logout</span>
+                <span class="text-sm font-semibold hidden md:inline">Log Out</span>
             </button>
         </div>
     </header>
@@ -1502,6 +1508,15 @@ Processing Time: ${data.estimated_processing_time}`);
         function upgradeToPro() {
             window.location.href = '/api/stripe/checkout-session';
         }
+
+        function logout() {
+            localStorage.removeItem("token");
+            localStorage.removeItem("access_token");
+            sessionStorage.removeItem("token");
+            document.cookie = "access_token=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+            window.location.href = "/";
+        }
+        window.logout = logout;
 
         async function fetchUserProfile() {
             try {

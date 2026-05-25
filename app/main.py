@@ -1,9 +1,10 @@
-from fastapi import FastAPI, Request, Response, Depends
+from fastapi import FastAPI, Request, Response, Depends, Cookie
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, PlainTextResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 from fastapi.middleware.cors import CORSMiddleware
+from typing import Optional
 from sqlalchemy import text
 from app.database import engine, Base
 from app.routers import user, listings, ordinances, zoning, compliance, hosts, properties, notifications, dashboard_api, eligibility, florida_compliance, listing_optimizer, permit_generator, recommendations, subscriptions, documents, market_intelligence, pricing
@@ -120,19 +121,24 @@ app.include_router(ota_router)
 app.include_router(swarm.router)
 app.include_router(queue.router)
 
+def get_optional_user_cookie(access_token: Optional[str] = Cookie(None)) -> Optional[dict]:
+    if not access_token:
+        return None
+    try:
+        from app.core.security import SECRET_KEY, ALGORITHM
+        from jose import jwt
+        payload = jwt.decode(access_token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        if username is not None:
+            return {"username": username, "role": payload.get("role", "host")}
+    except Exception:
+        pass
+    return None
+
 @app.get("/", include_in_schema=False)
-def read_root(request: Request):
-    token = request.cookies.get("access_token")
-    if token:
-        try:
-            from app.core.security import SECRET_KEY, ALGORITHM
-            from jose import jwt
-            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-            username: str = payload.get("sub")
-            if username is not None:
-                return RedirectResponse(url="/dashboard", status_code=303)
-        except Exception:
-            pass
+def read_root(request: Request, user: Optional[dict] = Depends(get_optional_user_cookie)):
+    if user:
+        return RedirectResponse(url="/dashboard", status_code=303)
     return templates.TemplateResponse(
         request=request,
         name="landing.html", 
