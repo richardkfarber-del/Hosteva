@@ -1268,7 +1268,8 @@ Processing Time: ${data.estimated_processing_time}`);
                     const img = clone.querySelector('.single-prop-image');
                     console.log("DEBUG: Single property image_url:", p.image_url);
                     if (p.image_url) {
-                        img.src = p.image_url;
+                        const separator = p.image_url.includes('?') ? '&' : '?';
+                        img.src = `${p.image_url}${separator}t=${Date.now()}`;
                     } else {
                         const imgIndex = p.id.charCodeAt(0) % 5 + 1;
                         img.src = `/static/img/property_${imgIndex}.jpg`;
@@ -1304,7 +1305,7 @@ Processing Time: ${data.estimated_processing_time}`);
                     } else { // Violation
                         badge.className = 'bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1';
                         badge.innerHTML = `<span class="material-symbols-outlined text-sm">warning</span> VIOLATION`;
-                        complianceScore = 0;
+                        complianceScore = 50;
                         compDesc.innerText = 'Immediate action required';
                     }
                     
@@ -1421,7 +1422,8 @@ Processing Time: ${data.estimated_processing_time}`);
                         const img = cardClone.querySelector('.property-card-img');
                         console.log("DEBUG: Multi property image_url:", p.image_url);
                         if (p.image_url) {
-                            img.src = p.image_url;
+                            const separator = p.image_url.includes('?') ? '&' : '?';
+                            img.src = `${p.image_url}${separator}t=${Date.now()}`;
                         } else {
                             const imgIndex = p.id.charCodeAt(0) % 5 + 1;
                             img.src = `/static/img/property_${imgIndex}.jpg`;

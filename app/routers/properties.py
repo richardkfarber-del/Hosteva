@@ -66,8 +66,8 @@ def fetch_real_property_image(address: str) -> str:
                     file_path = f"app/static/property_images/{img_uuid}.jpg"
                     with open(file_path, "wb") as f:
                         f.write(img_resp.content)
-                    print(f"DEBUG: Downloaded Street View image to local static file: {file_path}", flush=True)
-                    logger.info(f"DEBUG: Downloaded Street View image to local static file: {file_path}")
+                    print(f"DEBUG: Real image successfully saved to {file_path}", flush=True)
+                    logger.info(f"DEBUG: Real image successfully saved to {file_path}")
                     return f"/static/property_images/{img_uuid}.jpg"
     except Exception as e:
         print(f"DEBUG: Error checking Street View metadata: {e}", flush=True)
@@ -108,8 +108,8 @@ def fetch_real_property_image(address: str) -> str:
                         file_path = f"app/static/property_images/{img_uuid}.jpg"
                         with open(file_path, "wb") as f:
                             f.write(img_resp.content)
-                        print(f"DEBUG: Downloaded Places photo to local static file: {file_path}", flush=True)
-                        logger.info(f"DEBUG: Downloaded Places photo to local static file: {file_path}")
+                        print(f"DEBUG: Real image successfully saved to {file_path}", flush=True)
+                        logger.info(f"DEBUG: Real image successfully saved to {file_path}")
                         return f"/static/property_images/{img_uuid}.jpg"
     except Exception as e:
         print(f"DEBUG: Error checking Places API photo: {e}", flush=True)
