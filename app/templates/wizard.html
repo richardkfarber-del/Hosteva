@@ -79,7 +79,7 @@
                 <p id="addressError" class="text-red-500 text-xs mt-2 hidden font-medium">Please enter a valid property address.</p>
             </div>
             
-            <button id="auditBtn" class="w-full primary-gradient text-on-primary font-bold rounded-xl px-4 py-3.5 shadow-ambient-light hover:shadow-ambient transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2">
+            <button id="auditBtn" type="submit" class="w-full primary-gradient text-on-primary font-bold rounded-xl px-4 py-3.5 shadow-ambient-light hover:shadow-ambient transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2">
                 <span>Run Compliance Audit</span>
                 <span class="material-symbols-outlined text-sm">arrow_forward</span>
             </button>
@@ -97,10 +97,48 @@
             <p class="text-on-surface-variant font-medium">Awaiting address input...</p>
         </div>
 
-        <!-- Loading State -->
-        <div id="loadingState" class="hidden flex-col items-center text-center">
-            <div class="w-12 h-12 border-4 border-surface-container-high border-t-primary rounded-full animate-spin mb-6 shadow-sm"></div>
-            <p class="text-primary font-bold tracking-tight animate-pulse font-headline">Querying municipal databases...</p>
+        <!-- Loading State (Skeleton Screens) -->
+        <div id="loadingState" class="hidden flex-col gap-6">
+            <div class="flex items-center justify-between animate-pulse">
+                <div class="h-6 bg-slate-200 rounded w-1/3"></div>
+                <div class="h-6 bg-slate-200 rounded-full w-20"></div>
+            </div>
+            <div class="bg-white/60 border border-white rounded-xl p-5 animate-pulse h-28 flex flex-col justify-between">
+                <div class="h-4 bg-slate-200 rounded w-5/6"></div>
+                <div class="h-4 bg-slate-200 rounded w-4/5"></div>
+                <div class="h-4 bg-slate-200 rounded w-2/3"></div>
+            </div>
+            <div class="h-3 bg-slate-200 rounded w-1/4 mb-2"></div>
+            <div class="space-y-4 animate-pulse">
+                <div class="flex items-center gap-3">
+                    <div class="w-5 h-5 rounded-full bg-slate-200"></div>
+                    <div class="h-4 bg-slate-200 rounded w-5/6"></div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="w-5 h-5 rounded-full bg-slate-200"></div>
+                    <div class="h-4 bg-slate-200 rounded w-4/5"></div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="w-5 h-5 rounded-full bg-slate-200"></div>
+                    <div class="h-4 bg-slate-200 rounded w-2/3"></div>
+                </div>
+            </div>
+            <div class="flex justify-center items-center mt-6 gap-2">
+                <div class="w-6 h-6 border-2 border-slate-200 border-t-primary rounded-full animate-spin"></div>
+                <p class="text-xs text-primary font-bold tracking-tight animate-pulse font-headline">Querying municipal databases...</p>
+            </div>
+        </div>
+
+        <!-- Error State -->
+        <div id="errorState" class="hidden flex-col items-center text-center p-6 bg-red-50/80 border border-red-200/50 rounded-2xl relative shadow-sm">
+            <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-4 text-red-600 border border-red-200">
+                <span class="material-symbols-outlined">warning</span>
+            </div>
+            <h4 class="font-headline font-bold text-red-800 mb-2 text-lg">Audit Failed</h4>
+            <p id="errorMessage" class="text-sm text-red-600 leading-relaxed mb-6">We encountered an issue checking your property's compliance. Please check your network connection and try again.</p>
+            <button type="button" id="retryBtn" class="px-5 py-2.5 bg-white border border-red-300 text-red-800 rounded-xl text-xs font-bold hover:bg-red-50 transition-all active:scale-[0.98] shadow-sm">
+                Try Again
+            </button>
         </div>
 
         <!-- Result State -->
@@ -119,7 +157,7 @@
                 <!-- Populated via JS -->
             </ul>
 
-            <button class="mt-auto w-full bg-white border border-outline-variant/30 text-primary font-bold rounded-xl px-4 py-3.5 hover:bg-surface transition-all shadow-sm flex items-center justify-center gap-2 group">
+            <button id="generatePermitBtn" class="mt-auto w-full bg-white border border-outline-variant/30 text-primary font-bold rounded-xl px-4 py-3.5 hover:bg-surface transition-all shadow-sm flex items-center justify-center gap-2 group">
                 <span>Generate Permit Application</span>
                 <span class="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">description</span>
             </button>
@@ -190,8 +228,16 @@
     });
 
     // Existing Audit Logic
-    document.getElementById('auditForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
+    // Helper to hide all states in results panel
+    function hideAllResultsStates() {
+        document.getElementById('defaultState').classList.add('hidden');
+        document.getElementById('loadingState').classList.add('hidden');
+        document.getElementById('dataState').classList.add('hidden');
+        document.getElementById('errorState').classList.add('hidden');
+    }
+
+    // Submit handler logic
+    async function runAudit() {
         const address = addressInput.value.trim();
         const addressError = document.getElementById('addressError');
         
@@ -207,34 +253,33 @@
         }
 
         // UI Transitions
-        document.getElementById('defaultState').classList.add('hidden');
-        document.getElementById('dataState').classList.add('hidden');
+        hideAllResultsStates();
         document.getElementById('loadingState').classList.remove('hidden');
-        document.getElementById('loadingState').classList.add('flex');
         document.getElementById('auditBtn').disabled = true;
 
         try {
-            const response = await fetch('/api/eligibility/check', {
+            // Call the local municipal compliance engine API
+            const response = await fetch('/api/compliance/eligibility-check', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ address })
             });
             
             if (!response.ok) {
-                throw new Error('Network response was not ok (status ' + response.status + ')');
+                throw new Error('Compliance service returned error status ' + response.status);
             }
             
             const data = await response.json();
             
             // Populate Data
-            document.getElementById('resultMessage').innerText = data.conditions || data.plain_english_conditions || data.reason || 'No details available.';
+            document.getElementById('resultMessage').innerText = data.plain_english_conditions || 'No details available.';
             
             const badge = document.getElementById('resultBadge');
-            const statusUpper = (data.status || data.eligibility_status || '').toUpperCase();
-            if(statusUpper === 'GREEN') {
+            const statusUpper = (data.eligibility_status || '').toUpperCase();
+            if (statusUpper === 'GREEN') {
                 badge.innerText = 'Eligible';
                 badge.className = 'px-3 py-1 text-xs font-bold uppercase rounded-full shadow-sm tracking-wider bg-tertiary-fixed text-on-surface border border-[#52aecd]/20';
-            } else if(statusUpper === 'YELLOW') {
+            } else if (statusUpper === 'YELLOW') {
                 badge.innerText = 'Review Required';
                 badge.className = 'px-3 py-1 text-xs font-bold uppercase rounded-full shadow-sm tracking-wider bg-yellow-100 text-yellow-700 border border-yellow-200';
             } else {
@@ -245,29 +290,70 @@
             const detailsList = document.getElementById('resultDetails');
             detailsList.innerHTML = '';
             
-            const items = data.components || [];
-            if (data.jurisdiction) items.unshift('Jurisdiction: ' + data.jurisdiction);
+            // Construct Checklist items dynamically from response fields
+            const checklistItems = [
+                `Jurisdiction: ${data.jurisdiction || 'Unknown'}`,
+                `Zoning Code: ${data.zoning_code || 'N/A'}`,
+                `STR Allowed: ${data.is_str_allowed ? 'Yes' : 'No'}`,
+                `Requires Permit: ${data.requires_permit ? 'Yes' : 'No'}`,
+                `Minimum Stay: ${data.min_stay_days || 1} day(s)`,
+                `Primary Residence Required: ${data.primary_residence_required ? 'Yes' : 'No'}`
+            ];
             
-            items.forEach(detail => {
+            checklistItems.forEach(detail => {
                 const li = document.createElement('li');
                 li.className = 'flex items-start text-sm text-on-surface-variant font-medium';
                 li.innerHTML = DOMPurify.sanitize(`<span class="material-symbols-outlined text-primary mr-3 shrink-0" style="font-size: 20px;">check_circle</span> ${detail}`);
                 detailsList.appendChild(li);
             });
 
+            // Wire Permit Button
+            const permitBtn = document.getElementById('generatePermitBtn');
+            if (permitBtn) {
+                if (data.permit_application_url) {
+                    permitBtn.classList.remove('hidden');
+                    permitBtn.disabled = false;
+                    permitBtn.onclick = () => {
+                        window.open(data.permit_application_url, '_blank');
+                    };
+                } else {
+                    permitBtn.classList.add('hidden');
+                }
+            }
+
             // Show Results
-            document.getElementById('loadingState').classList.add('hidden');
-            document.getElementById('loadingState').classList.remove('flex');
+            hideAllResultsStates();
             document.getElementById('dataState').classList.remove('hidden');
-            document.getElementById('dataState').classList.add('flex');
 
         } catch (err) {
-            alert('Audit failed to run: ' + err.message);
-            document.getElementById('loadingState').classList.add('hidden');
-            document.getElementById('loadingState').classList.remove('flex');
-            document.getElementById('defaultState').classList.remove('hidden');
+            console.error('Audit execution error:', err);
+            hideAllResultsStates();
+            document.getElementById('errorMessage').innerText = 'Audit failed: ' + err.message;
+            document.getElementById('errorState').classList.remove('hidden');
         } finally {
             document.getElementById('auditBtn').disabled = false;
+        }
+    }
+
+    // Bind form submit
+    document.getElementById('auditForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await runAudit();
+    });
+
+    // Bind retry button
+    document.getElementById('retryBtn').addEventListener('click', () => {
+        hideAllResultsStates();
+        document.getElementById('defaultState').classList.remove('hidden');
+    });
+
+    // Check URL parameters on mount/load
+    document.addEventListener("DOMContentLoaded", () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const addressParam = urlParams.get('address');
+        if (addressParam) {
+            addressInput.value = decodeURIComponent(addressParam);
+            runAudit();
         }
     });
 </script>
