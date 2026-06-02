@@ -109,12 +109,30 @@ def test_eligibility_check_success():
     """
     Objective 2: Test compliance audit eligibility route behavior.
     """
-    payload = {"address": "123 Ocean Drive, Miami, FL"}
-    response = client.post("/api/compliance/eligibility-check", json=payload)
-    
-    assert response.status_code == 200
-    data = response.json()
-    assert "eligibility_status" in data
-    assert "is_str_allowed" in data
-    assert "plain_english_conditions" in data
-    assert "jurisdiction" in data
+    mock_audit = {
+        "legal_subdivision_name": "Lone Star Townhomes",
+        "hoa_detected": True,
+        "hoa_rules_available": True,
+        "eligibility_status": "Compliant",
+        "required_permits": ["Pasco County Business Tax Receipt (BTR)"],
+        "local_restrictions": {
+            "Noise": "Quiet hours observed daily from 10 PM to 7 AM.",
+            "Parking": "Maximum 2 vehicles permitted on-site.",
+            "Trash": "Trash must be stored in approved bins.",
+            "HOA Rules": "Leases must be for a minimum duration of three (3) consecutive months."
+        }
+    }
+    with patch("app.services.compliance.run_gemini_audit", return_value=mock_audit):
+        payload = {"address": "123 Ocean Drive, Miami, FL"}
+        response = client.post("/api/compliance/eligibility-check", json=payload)
+        
+        assert response.status_code == 200
+        data = response.json()
+        assert "eligibility_status" in data
+        assert "is_str_allowed" in data
+        assert "plain_english_conditions" in data
+        assert "jurisdiction" in data
+        assert data["eligibility_status"] == "GREEN"
+        assert data["is_str_allowed"] is True
+        assert data["min_stay_days"] == 90
+

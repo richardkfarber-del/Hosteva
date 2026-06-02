@@ -176,11 +176,28 @@ def get_properties(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    import logging
+    logger = logging.getLogger("app.routers.properties")
+    
     host = db.query(Host).filter(Host.username == current_user.get("username")).first()
     if not host:
         raise HTTPException(status_code=404, detail="Host profile not found")
         
-    properties = db.query(Property).filter(Property.user_id == host.id).all()
+    query = db.query(Property).filter(Property.user_id == host.id)
+    properties = query.all()
+    
+    if not properties:
+        sql_query = "Unknown"
+        try:
+            sql_query = str(query.statement.compile(dialect=db.bind.dialect, compile_kwargs={"literal_binds": True}))
+        except Exception:
+            try:
+                sql_query = str(query.statement.compile(compile_kwargs={"literal_binds": True}))
+            except Exception:
+                sql_query = str(query)
+        logger.info(f"DEBUG: Empty dashboard. Executed SQL query: {sql_query}")
+        print(f"DEBUG: Empty dashboard. Executed SQL query: {sql_query}", flush=True)
+        
     result = [
         {
             "id": p.id,

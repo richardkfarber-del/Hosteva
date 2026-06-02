@@ -18,13 +18,15 @@ def sync_property_to_otas(property_id: str):
 
 @router.post("/generate/{property_id}")
 def generate_listing(property_id: str, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    from app.models.host import Host
     # Verify property exists
     prop = db.query(Property).filter(Property.id == property_id).first()
     if not prop:
         raise HTTPException(status_code=404, detail="Property not found")
         
-    # Verify ownership to prevent IDOR
-    if prop.user_id != current_user.get("username"):
+    # Verify ownership to prevent IDOR using host UUID
+    host = db.query(Host).filter(Host.username == current_user.get("username")).first()
+    if not host or prop.user_id != host.id:
         raise HTTPException(status_code=403, detail="Not authorized to access this property")
         
     # Trigger background task for OTA sync via FastAPI BackgroundTasks
@@ -34,12 +36,14 @@ def generate_listing(property_id: str, background_tasks: BackgroundTasks, db: Se
 
 @router.get("/{property_id}/status")
 def get_listing_status(property_id: str, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    from app.models.host import Host
     # Verify ownership to prevent IDOR
     prop = db.query(Property).filter(Property.id == property_id).first()
     if not prop:
         raise HTTPException(status_code=404, detail="Property not found")
         
-    if prop.user_id != current_user.get("username"):
+    host = db.query(Host).filter(Host.username == current_user.get("username")).first()
+    if not host or prop.user_id != host.id:
         raise HTTPException(status_code=403, detail="Not authorized to access this property")
 
     listings = db.query(PropertyListing).filter(PropertyListing.property_id == property_id).all()

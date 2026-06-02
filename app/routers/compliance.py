@@ -18,79 +18,103 @@ router = APIRouter(prefix="/api/compliance", tags=["Compliance"])
 
 @router.post("/eligibility-check", response_model=EligibilityCheckResponse)
 def check_eligibility(request: EligibilityCheckRequest, db: Session = Depends(get_db)):
-    locality = None
-    admin_area = None
+    from app.routers.properties import geocode_address
+    from app.services.compliance import run_gemini_audit
+
+    logger.info(f"Compliance Router: Starting eligibility check for address: {request.address}")
     
-    api_key = os.getenv("GOOGLE_MAPS_API_KEY")
+    # 1. Geocode the address using Google Maps Geocoding API to resolve locality components
+    geocoded = geocode_address(request.address)
+    city_name = geocoded.get("city")
+    county_name = geocoded.get("county")
+    state_name = geocoded.get("state")
+    address_components = geocoded.get("address_components")
+
+    # Simple local fallback parsing if geocoding returns empty values (e.g., when API key is missing or invalid)
+    if not city_name or not state_name:
+        parts = [p.strip() for p in request.address.split(",")]
+        if len(parts) >= 3:
+            city_name = city_name or parts[-2]
+            state_zip = parts[-1].split()
+            if state_zip:
+                state_name = state_name or state_zip[0]
+        else:
+            city_name = city_name or "Miami"
+            state_name = state_name or "FL"
+    if not county_name:
+        county_name = f"{city_name} County"
+
+    # 2. Execute the real Gemini Compliance Audit
+    audit_results = run_gemini_audit(
+        city=city_name,
+        county=county_name,
+        state=state_name,
+        address=request.address,
+        address_components=address_components
+    )
+
+    # 3. Map Gemini results to EligibilityCheckResponse structure
+    status_raw = audit_results.get("eligibility_status", "Pending")
+    status_upper = status_raw.upper()
+
+    if status_upper == "COMPLIANT":
+        eligibility_status = "GREEN"
+        status = "eligible"
+        is_str_allowed = True
+    elif status_upper == "VIOLATION":
+        eligibility_status = "RED"
+        status = "ineligible"
+        is_str_allowed = False
+    elif status_upper in ("PENDING", "ACTION REQUIRED"):
+        eligibility_status = "YELLOW"
+        status = "eligible"
+        is_str_allowed = True
+    else:
+        eligibility_status = "YELLOW"
+        status = "eligible"
+        is_str_allowed = True
+
+    # 4. Intelligent day and flag parsing from local restrictions
+    min_stay_days = 1
+    primary_residence_required = False
+    local_rest = audit_results.get("local_restrictions", {}) or {}
     
-    if api_key:
-        try:
-            validate_url = "https://addressvalidation.googleapis.com/v1:validateAddress"
-            payload = {
-                "address": {"addressLines": [request.address]}
-            }
-            params = {"key": api_key}
-            response = requests.post(validate_url, json=payload, params=params, timeout=3600)
-            
-            if response.status_code == 200:
-                data = response.json()
-                if "result" in data and "address" in data["result"]:
-                    addr = data["result"]["address"]
-                    locality = addr.get("locality")
-                    admin_area = addr.get("administrativeArea")
-                    
-                    if "formattedAddress" in addr:
-                        request.address = addr["formattedAddress"]
-        except requests.exceptions.RequestException as e:
-            logger.warning(f"Address validation failed for {request.address}", exc_info=True)
+    text_to_search = ""
+    for k, v in local_rest.items():
+        if v:
+            text_to_search += f" {k} {v}".lower()
+
+    if "three (3) consecutive months" in text_to_search or "3 months" in text_to_search or "90 days" in text_to_search or "three-month" in text_to_search:
+        min_stay_days = 90
+    elif "30 days" in text_to_search or "monthly" in text_to_search or "one month" in text_to_search:
+        min_stay_days = 30
+    elif "7 days" in text_to_search or "weekly" in text_to_search:
+        min_stay_days = 7
+
+    if "primary residence" in text_to_search:
+        primary_residence_required = True
+
+    requires_permit = len(audit_results.get("required_permits", [])) > 0
+
+    conditions_list = []
+    for k, v in local_rest.items():
+        if v:
+            conditions_list.append(f"{k}: {v}")
     
-    if not locality or not admin_area:
-        if "fl" in request.address.lower() or "florida" in request.address.lower():
-            locality = "Miami"
-            admin_area = "FL"
-    
-    if locality and admin_area:
-        region = db.query(Region).filter(
-            Region.locality.ilike(locality),
-            Region.admin_area == admin_area
-        ).first()
-        
-        if region:
-            zoning_codes = db.query(ZoningCode).filter(ZoningCode.region_id == region.id).all()
-            
-            if zoning_codes:
-                rule = db.query(ComplianceRule).filter(
-                    ComplianceRule.zoning_id == zoning_codes[0].id
-                ).first()
-                
-                if rule:
-                    return EligibilityCheckResponse(
-                        address=request.address,
-                        status="eligible" if rule.is_str_allowed else "ineligible",
-                        eligibility_status=rule.eligibility_status,
-                        is_str_allowed=rule.is_str_allowed,
-                        requires_permit=rule.requires_permit,
-                        min_stay_days=rule.min_stay_days,
-                        primary_residence_required=rule.primary_residence_required,
-                        plain_english_conditions=rule.plain_english_conditions,
-                        permit_application_url=rule.permit_application_url,
-                        ordinance_reference_url=rule.ordinance_reference_url,
-                        jurisdiction=f"{region.locality}, {region.admin_area}",
-                        zoning_code=zoning_codes[0].code_name
-                    )
-    
+    plain_english_conditions = " | ".join(conditions_list) if conditions_list else "Standard state licensing applies."
+
     return EligibilityCheckResponse(
         address=request.address,
-        status="eligible",
-        eligibility_status="GREEN",
-        is_str_allowed=True,
-        requires_permit=False,
-        min_stay_days=1,
-        primary_residence_required=False,
-        plain_english_conditions="Standard state licensing applies. (API key not configured or jurisdiction not found)",
-        permit_application_url=None,
+        status=status,
+        eligibility_status=eligibility_status,
+        is_str_allowed=is_str_allowed,
+        requires_permit=requires_permit,
+        min_stay_days=min_stay_days,
+        primary_residence_required=primary_residence_required,
+        plain_english_conditions=plain_english_conditions,
+        permit_application_url="https://www.myfloridalicense.com/dbpr/",
         ordinance_reference_url=None,
-        jurisdiction=f"{locality}, {admin_area}" if locality and admin_area else "Unknown",
+        jurisdiction=f"{city_name}, {state_name}",
         zoning_code=None
     )
 
