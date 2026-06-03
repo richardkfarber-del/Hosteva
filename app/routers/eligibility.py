@@ -18,7 +18,7 @@ class EligibilityRequest(BaseModel):
 
 @router.get("/autocomplete")
 def autocomplete_address(input: str, sessiontoken: str = None):
-    api_key = os.getenv("GOOGLE_MAPS_API_KEY")
+    api_key = os.getenv("GOOGLE_MAPS_API_KEY") or os.getenv("Maps_API_KEY")
     
     if not api_key:
         return {"predictions": [], "error": "API key not configured"}
@@ -76,7 +76,7 @@ def _determine_status(address: str, city: str, jurisdiction: str):
 
 @router.post("/check")
 def check_eligibility(request: EligibilityRequest):
-    api_key = os.getenv("GOOGLE_MAPS_API_KEY")
+    api_key = os.getenv("GOOGLE_MAPS_API_KEY") or os.getenv("Maps_API_KEY")
     
     if not api_key:
         return {

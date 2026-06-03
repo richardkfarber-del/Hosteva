@@ -200,7 +200,7 @@ def read_dashboard(request: Request):
     return templates.TemplateResponse(
         request=request,
         name="dashboard.html", 
-        context={"request": request, "google_maps_api_key": os.getenv("GOOGLE_MAPS_API_KEY", ""), "active_page": "dashboard"}
+        context={"request": request, "google_maps_api_key": os.getenv("GOOGLE_MAPS_API_KEY") or os.getenv("Maps_API_KEY") or "", "active_page": "dashboard"}
     )
 
 @app.get("/manage/{property_id}", name="manage_property")
@@ -235,7 +235,7 @@ def read_manage_property(property_id: str, request: Request, db: Session = Depen
             "request": request, 
             "property_id": property_id, 
             "property_address": property_item.address,
-            "google_maps_api_key": os.getenv("GOOGLE_MAPS_API_KEY", ""), 
+            "google_maps_api_key": os.getenv("GOOGLE_MAPS_API_KEY") or os.getenv("Maps_API_KEY") or "", 
             "active_page": "dashboard"
         }
     )

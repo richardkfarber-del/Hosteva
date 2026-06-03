@@ -25,11 +25,11 @@ def fetch_real_property_image(address: str) -> str:
     logger.info(f"DEBUG: fetch_real_property_image starting for address: {address}")
     print(f"DEBUG: fetch_real_property_image starting for address: {address}", flush=True)
     
-    api_key = os.getenv("GOOGLE_MAPS_API_KEY")
+    api_key = os.getenv("GOOGLE_MAPS_API_KEY") or os.getenv("Maps_API_KEY")
     fallback_url = "/static/img/fallback_house.jpg"
     if not api_key:
-        print("DEBUG: Google Street View Onboarding: GOOGLE_MAPS_API_KEY is not configured.", flush=True)
-        logger.warning("DEBUG: Google Street View Onboarding: GOOGLE_MAPS_API_KEY is not configured.")
+        print("DEBUG: Google Street View Onboarding: GOOGLE_MAPS_API_KEY or Maps_API_KEY is not configured.", flush=True)
+        logger.warning("DEBUG: Google Street View Onboarding: GOOGLE_MAPS_API_KEY or Maps_API_KEY is not configured.")
         return fallback_url
     
     print(f"DEBUG: Google Street View Onboarding: Fetching image for address: {address}", flush=True)
@@ -129,9 +129,9 @@ def geocode_address(address: str) -> dict:
     Geocodes an address to identify locality (City), administrative_area_level_2 (County),
     and administrative_area_level_1 (State), and raw address components.
     """
-    api_key = os.getenv("GOOGLE_MAPS_API_KEY")
+    api_key = os.getenv("GOOGLE_MAPS_API_KEY") or os.getenv("Maps_API_KEY")
     if not api_key:
-        print("Geocoding address WARNING: GOOGLE_MAPS_API_KEY is not configured.")
+        print("Geocoding address WARNING: GOOGLE_MAPS_API_KEY or Maps_API_KEY is not configured.")
         return {"city": "", "county": "", "state": "", "address_components": []}
     try:
         url = "https://maps.googleapis.com/maps/api/geocode/json"
