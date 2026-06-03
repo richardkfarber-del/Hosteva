@@ -135,4 +135,34 @@ def test_eligibility_check_success():
         assert data["eligibility_status"] == "GREEN"
         assert data["is_str_allowed"] is True
         assert data["min_stay_days"] == 90
+        assert data["is_logged_in"] is False
+        assert data["tax_status"] == "[LOCKED]"
+        assert data["safety_status"] == "[LOCKED]"
+        assert data["zoning_status"] is not None
+        assert data["hoa_status"] is not None
+
+def test_eligibility_check_authenticated():
+    """
+    Verify that an authenticated user receives unmasked premium criteria details.
+    """
+    mock_audit = {
+        "legal_subdivision_name": "Lone Star Townhomes",
+        "hoa_detected": False,
+        "hoa_rules_available": False,
+        "eligibility_status": "Compliant",
+        "required_permits": [],
+        "local_restrictions": {}
+    }
+    token = create_access_token(data={"sub": "testuser", "role": "host"})
+    cookies = {"access_token": token}
+    
+    with patch("app.services.compliance.run_gemini_audit", return_value=mock_audit):
+        payload = {"address": "123 Ocean Drive, Miami, FL"}
+        response = client.post("/api/compliance/eligibility-check", json=payload, cookies=cookies)
+        
+        assert response.status_code == 200
+        data = response.json()
+        assert data["is_logged_in"] is True
+        assert data["tax_status"] != "[LOCKED]"
+        assert data["safety_status"] != "[LOCKED]"
 

@@ -69,3 +69,8 @@ class EligibilityCheckResponse(BaseModel):
     ordinance_reference_url: Optional[str]
     jurisdiction: Optional[str] = None
     zoning_code: Optional[str] = None
+    zoning_status: Optional[str] = None
+    hoa_status: Optional[str] = None
+    tax_status: Optional[str] = None
+    safety_status: Optional[str] = None
+    is_logged_in: bool = True

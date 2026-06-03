@@ -46,6 +46,25 @@
     .autocomplete-dropdown div:hover {
         background: rgba(0, 101, 118, 0.06);
     }
+    
+    .premium-shadow {
+        box-shadow: 0 20px 40px -15px rgba(0, 28, 55, 0.08);
+    }
+    .ambient-shadow-primary {
+        box-shadow: 0 10px 30px -10px rgba(0, 101, 118, 0.3);
+    }
+    .locked-item {
+        position: relative;
+        overflow: hidden;
+    }
+    .locked-item::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.7) 60%, rgba(255,255,255,0.95) 100%);
+        z-index: 10;
+        pointer-events: none;
+    }
 </style>
 {% endblock %}
 
@@ -142,22 +161,31 @@
         </div>
 
         <!-- Result State -->
-        <div id="dataState" class="hidden flex-col h-full insight-prism pl-6">
-            <div class="flex items-center justify-between mb-6">
-                <h3 class="font-headline text-xl font-extrabold text-on-surface">Audit Results</h3>
-                <span id="resultBadge" class="px-3 py-1 text-xs font-bold uppercase rounded-full shadow-sm tracking-wider"></span>
+        <div id="dataState" class="hidden flex-col h-full pl-6">
+            <!-- Dynamic Verdict Banner -->
+            <div id="verdictBannerContainer"></div>
+
+            <!-- Category Cards Stack -->
+            <div id="categoryCardsStack" class="space-y-4 mb-8"></div>
+
+            <!-- Conversion CTA Panel (locked view) -->
+            <div id="conversionCtaContainer" class="hidden">
+                <div class="bg-surface-container-high/60 backdrop-blur rounded-2xl p-8 text-center space-y-6 relative overflow-hidden border border-outline-variant/15 shadow-sm mb-6">
+                    <div class="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-primary opacity-10 rounded-full blur-[100px] pointer-events-none"></div>
+                    <div class="relative z-10 max-w-md mx-auto space-y-4 flex flex-col items-center">
+                        <span class="material-symbols-outlined text-4xl text-primary icon-filled bg-white p-3 rounded-2xl shadow-sm border border-outline-variant/10">key</span>
+                        <h3 class="font-headline text-2xl font-extrabold text-on-surface tracking-tight">Unlock Your Compliance Roadmap</h3>
+                        <p class="text-on-surface-variant text-sm leading-relaxed">Don't let hidden violations risk your rental income. Upgrade to reveal the full audit, access locked compliance details, and get a step-by-step resolution roadmap.</p>
+                        <button onclick="window.location.href='/register';" class="mt-4 w-full bg-primary hover:bg-primary-container text-on-primary font-bold py-3.5 px-6 rounded-xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2">
+                            <span>Unlock Full Report</span>
+                            <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                        </button>
+                    </div>
+                </div>
             </div>
 
-            <div class="bg-white/80 rounded-xl p-5 mb-8 border border-white shadow-sm">
-                <p id="resultMessage" class="text-on-surface-variant leading-relaxed font-medium"></p>
-            </div>
-
-            <h4 class="text-xs font-bold text-outline uppercase tracking-widest mb-4">Regulatory Checklist</h4>
-            <ul id="resultDetails" class="space-y-4">
-                <!-- Populated via JS -->
-            </ul>
-
-            <button id="generatePermitBtn" class="mt-auto w-full bg-white border border-outline-variant/30 text-primary font-bold rounded-xl px-4 py-3.5 hover:bg-surface transition-all shadow-sm flex items-center justify-center gap-2 group">
+            <!-- Generate Permit Button (unlocked view) -->
+            <button id="generatePermitBtn" class="mt-auto w-full bg-white border border-outline-variant/30 text-primary font-bold rounded-xl px-4 py-3.5 hover:bg-surface transition-all shadow-sm flex items-center justify-center gap-2 group hidden">
                 <span>Generate Permit Application</span>
                 <span class="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">description</span>
             </button>
@@ -271,45 +299,157 @@
             
             const data = await response.json();
             
-            // Populate Data
-            document.getElementById('resultMessage').innerText = data.plain_english_conditions || 'No details available.';
-            
-            const badge = document.getElementById('resultBadge');
+            // Populate Verdict Banner
+            const verdictContainer = document.getElementById('verdictBannerContainer');
             const statusUpper = (data.eligibility_status || '').toUpperCase();
-            if (statusUpper === 'GREEN') {
-                badge.innerText = 'Eligible';
-                badge.className = 'px-3 py-1 text-xs font-bold uppercase rounded-full shadow-sm tracking-wider bg-tertiary-fixed text-on-surface border border-[#52aecd]/20';
+            
+            let bannerHtml = '';
+            if (statusUpper === 'RED') {
+                bannerHtml = `
+                <div class="bg-error-container/30 rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative overflow-hidden border border-error/20 mb-6 shadow-sm">
+                    <div class="absolute -right-20 -top-20 w-64 h-64 bg-error opacity-10 rounded-full blur-[80px] pointer-events-none"></div>
+                    <div class="space-y-1 z-10 text-left">
+                        <div class="flex items-center gap-2 text-error">
+                            <span class="material-symbols-outlined icon-filled">warning</span>
+                            <h3 class="font-display font-bold text-lg">Violation Detected</h3>
+                        </div>
+                        <p class="text-on-surface-variant text-sm font-medium">Critical compliance issues found based on local regulations. Immediate action recommended to avoid penalties.</p>
+                    </div>
+                    <div class="z-10 shrink-0">
+                        <span class="inline-flex items-center justify-center px-3 py-1 rounded-full bg-error-container text-on-error-container font-bold text-xs tracking-wide border border-error/20">
+                            Risk Level: High
+                        </span>
+                    </div>
+                </div>`;
             } else if (statusUpper === 'YELLOW') {
-                badge.innerText = 'Review Required';
-                badge.className = 'px-3 py-1 text-xs font-bold uppercase rounded-full shadow-sm tracking-wider bg-yellow-100 text-yellow-700 border border-yellow-200';
-            } else {
-                badge.innerText = 'Action Required';
-                badge.className = 'px-3 py-1 text-xs font-bold uppercase rounded-full shadow-sm tracking-wider bg-red-100 text-red-700 border border-red-200 animate-pulse';
+                bannerHtml = `
+                <div class="bg-yellow-500/10 rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative overflow-hidden border border-yellow-500/20 mb-6 shadow-sm">
+                    <div class="absolute -right-20 -top-20 w-64 h-64 bg-yellow-500 opacity-10 rounded-full blur-[80px] pointer-events-none"></div>
+                    <div class="space-y-1 z-10 text-left">
+                        <div class="flex items-center gap-2 text-yellow-700">
+                            <span class="material-symbols-outlined icon-filled">info</span>
+                            <h3 class="font-display font-bold text-lg">Review Required</h3>
+                        </div>
+                        <p class="text-on-surface-variant text-sm font-medium">Action or review required. Additional zoning rules may apply.</p>
+                    </div>
+                    <div class="z-10 shrink-0">
+                        <span class="inline-flex items-center justify-center px-3 py-1 rounded-full bg-yellow-100 text-yellow-700 font-bold text-xs tracking-wide border border-yellow-200">
+                            Risk Level: Medium
+                        </span>
+                    </div>
+                </div>`;
+            } else { // GREEN / eligible
+                bannerHtml = `
+                <div class="bg-tertiary-container/10 rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative overflow-hidden border border-tertiary/20 mb-6 shadow-sm">
+                    <div class="absolute -right-20 -top-20 w-64 h-64 bg-tertiary opacity-10 rounded-full blur-[80px] pointer-events-none"></div>
+                    <div class="space-y-1 z-10 text-left">
+                        <div class="flex items-center gap-2 text-tertiary">
+                            <span class="material-symbols-outlined icon-filled">check_circle</span>
+                            <h3 class="font-display font-bold text-lg">Compliant</h3>
+                        </div>
+                        <p class="text-on-surface-variant text-sm font-medium">Property is compliant with active local zoning regulations.</p>
+                    </div>
+                    <div class="z-10 shrink-0">
+                        <span class="inline-flex items-center justify-center px-3 py-1 rounded-full bg-tertiary-container text-on-tertiary-fixed font-bold text-xs tracking-wide border border-tertiary/20">
+                            Risk Level: Low
+                        </span>
+                    </div>
+                </div>`;
             }
+            verdictContainer.innerHTML = bannerHtml;
 
-            const detailsList = document.getElementById('resultDetails');
-            detailsList.innerHTML = '';
-            
-            // Construct Checklist items dynamically from response fields
-            const checklistItems = [
-                `Jurisdiction: ${data.jurisdiction || 'Unknown'}`,
-                `Zoning Code: ${data.zoning_code || 'N/A'}`,
-                `STR Allowed: ${data.is_str_allowed ? 'Yes' : 'No'}`,
-                `Requires Permit: ${data.requires_permit ? 'Yes' : 'No'}`,
-                `Minimum Stay: ${data.min_stay_days || 1} day(s)`,
-                `Primary Residence Required: ${data.primary_residence_required ? 'Yes' : 'No'}`
-            ];
-            
-            checklistItems.forEach(detail => {
-                const li = document.createElement('li');
-                li.className = 'flex items-start text-sm text-on-surface-variant font-medium';
-                li.innerHTML = DOMPurify.sanitize(`<span class="material-symbols-outlined text-primary mr-3 shrink-0" style="font-size: 20px;">check_circle</span> ${detail}`);
-                detailsList.appendChild(li);
-            });
+            // Populate Cards Stack
+            const cardsStack = document.getElementById('categoryCardsStack');
+            cardsStack.innerHTML = '';
 
-            // Wire Permit Button
+            // Card 1: Zoning Category
+            const zoningOk = data.is_str_allowed;
+            const zoningCard = document.createElement('div');
+            zoningCard.className = 'bg-white rounded-2xl p-5 border border-outline-variant/15 hover:bg-surface-container-low/30 transition-all shadow-sm flex items-start gap-4 text-left';
+            zoningCard.innerHTML = `
+                <span class="material-symbols-outlined ${zoningOk ? 'text-tertiary' : 'text-error'} icon-filled shrink-0" style="font-size: 24px;">
+                    ${zoningOk ? 'check_circle' : 'cancel'}
+                </span>
+                <div class="space-y-1">
+                    <h4 class="font-headline font-bold text-base text-on-surface">Zoning Category</h4>
+                    <p class="text-on-surface-variant text-xs leading-relaxed">${data.zoning_status || 'Checking zoning category...'}</p>
+                </div>
+            `;
+            cardsStack.appendChild(zoningCard);
+
+            // Card 2: HOA Restrictions
+            const hoaDetected = data.hoa_status && (data.hoa_status.includes("prohibit") || data.hoa_status.includes("restrict") || data.hoa_status.includes("Violation") || data.hoa_status.includes("rules restrict"));
+            const hoaCard = document.createElement('div');
+            hoaCard.className = 'bg-white rounded-2xl p-5 border border-outline-variant/15 hover:bg-surface-container-low/30 transition-all shadow-sm flex items-start gap-4 text-left';
+            hoaCard.innerHTML = `
+                <span class="material-symbols-outlined ${hoaDetected ? 'text-error' : 'text-tertiary'} icon-filled shrink-0" style="font-size: 24px;">
+                    ${hoaDetected ? 'cancel' : 'check_circle'}
+                </span>
+                <div class="space-y-1">
+                    <h4 class="font-headline font-bold text-base text-on-surface">HOA Restrictions</h4>
+                    <p class="text-on-surface-variant text-xs leading-relaxed">${data.hoa_status || 'Checking HOA covenants...'}</p>
+                </div>
+            `;
+            cardsStack.appendChild(hoaCard);
+
+            // Card 3: Tax Registration Status
+            const taxCard = document.createElement('div');
+            if (data.is_logged_in) {
+                taxCard.className = 'bg-white rounded-2xl p-5 border border-outline-variant/15 hover:bg-surface-container-low/30 transition-all shadow-sm flex items-start gap-4 text-left';
+                taxCard.innerHTML = `
+                    <span class="material-symbols-outlined text-tertiary icon-filled shrink-0" style="font-size: 24px;">check_circle</span>
+                    <div class="space-y-1">
+                        <h4 class="font-headline font-bold text-base text-on-surface">Tax Registration Status</h4>
+                        <p class="text-on-surface-variant text-xs leading-relaxed">${data.tax_status}</p>
+                    </div>
+                `;
+            } else {
+                taxCard.className = 'bg-white rounded-2xl p-5 border border-outline-variant/15 locked-item relative shadow-sm flex items-start gap-4 text-left';
+                taxCard.innerHTML = `
+                    <span class="material-symbols-outlined text-outline icon-filled shrink-0" style="font-size: 24px;">help</span>
+                    <div class="space-y-1 pr-8">
+                        <h4 class="font-headline font-bold text-base text-on-surface">Tax Registration Status</h4>
+                        <p class="text-on-surface-variant text-xs leading-relaxed blur-[4px] select-none">You are missing 2 crucial tax registration forms required by the municipality for the current fiscal year.</p>
+                    </div>
+                    <div class="absolute inset-y-0 right-5 flex items-center z-20">
+                        <span class="material-symbols-outlined text-xl text-primary icon-filled">lock</span>
+                    </div>
+                `;
+            }
+            cardsStack.appendChild(taxCard);
+
+            // Card 4: Safety Permit Valid
+            const safetyCard = document.createElement('div');
+            if (data.is_logged_in) {
+                safetyCard.className = 'bg-white rounded-2xl p-5 border border-outline-variant/15 hover:bg-surface-container-low/30 transition-all shadow-sm flex items-start gap-4 text-left';
+                safetyCard.innerHTML = `
+                    <span class="material-symbols-outlined text-tertiary icon-filled shrink-0" style="font-size: 24px;">check_circle</span>
+                    <div class="space-y-1">
+                        <h4 class="font-headline font-bold text-base text-on-surface">Safety Permit Valid</h4>
+                        <p class="text-on-surface-variant text-xs leading-relaxed">${data.safety_status}</p>
+                    </div>
+                `;
+            } else {
+                safetyCard.className = 'bg-white rounded-2xl p-5 border border-outline-variant/15 locked-item relative shadow-sm flex items-start gap-4 text-left';
+                safetyCard.innerHTML = `
+                    <span class="material-symbols-outlined text-outline icon-filled shrink-0" style="font-size: 24px;">help</span>
+                    <div class="space-y-1 pr-8">
+                        <h4 class="font-headline font-bold text-base text-on-surface">Safety Permit Valid</h4>
+                        <p class="text-on-surface-variant text-xs leading-relaxed blur-[4px] select-none">Fire safety inspection certificate expired 45 days ago. Renewal process takes approximately 3 weeks.</p>
+                    </div>
+                    <div class="absolute inset-y-0 right-5 flex items-center z-20">
+                        <span class="material-symbols-outlined text-xl text-primary icon-filled">lock</span>
+                    </div>
+                `;
+            }
+            cardsStack.appendChild(safetyCard);
+
+            // Handle CTA container and Permit Button Visibility
+            const conversionContainer = document.getElementById('conversionCtaContainer');
             const permitBtn = document.getElementById('generatePermitBtn');
-            if (permitBtn) {
+            
+            if (data.is_logged_in) {
+                conversionContainer.classList.add('hidden');
                 if (data.permit_application_url) {
                     permitBtn.classList.remove('hidden');
                     permitBtn.disabled = false;
@@ -319,6 +459,9 @@
                 } else {
                     permitBtn.classList.add('hidden');
                 }
+            } else {
+                conversionContainer.classList.remove('hidden');
+                permitBtn.classList.add('hidden');
             }
 
             // Show Results
