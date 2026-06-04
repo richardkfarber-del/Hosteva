@@ -182,7 +182,7 @@ def read_integrations(request: Request):
     )
 
 @app.get("/dashboard", name="dashboard")
-def read_dashboard(request: Request):
+def read_dashboard(request: Request, address: Optional[str] = None):
     # Verify cookie-based JWT access token to protect dashboard from 500 errors
     token = request.cookies.get("access_token")
     if not token:
