@@ -56,6 +56,31 @@ def main():
         except Exception as col_err:
             print(f"Warning: Could not check/add columns: {col_err}")
 
+        # Check and add columns for property_compliance table
+        try:
+            columns = [c["name"] for c in inspector.get_columns("property_compliance")]
+            for col_name, col_type in [
+                ("status", "VARCHAR(50)"),
+                ("rejection_notes", "VARCHAR(500)"),
+                ("violation_notes", "VARCHAR(500)"),
+                ("uploaded_file_url", "VARCHAR(500)"),
+                ("ocr_metadata_json", "TEXT"),
+                ("verification_notes", "TEXT"),
+                ("task_name", "VARCHAR(255)")
+            ]:
+                if col_name not in columns:
+                    with engine.connect() as conn:
+                        if "sqlite" in str(engine.url):
+                            conn.execute(text(f"ALTER TABLE property_compliance ADD COLUMN {col_name} {col_type};"))
+                        else:
+                            conn.execute(text(f"ALTER TABLE property_compliance ADD COLUMN IF NOT EXISTS {col_name} {col_type};"))
+                        conn.commit()
+                    print(f"Added {col_name} column to property_compliance table.")
+                else:
+                    print(f"{col_name} column already exists in property_compliance table.")
+        except Exception as col_err:
+            print(f"Warning: Could not check/add columns to property_compliance: {col_err}")
+
         # Data Cleanup: Delete all existing property records as requested by user
         try:
             with engine.connect() as conn:
