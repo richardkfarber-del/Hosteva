@@ -286,11 +286,17 @@
         document.getElementById('auditBtn').disabled = true;
 
         try {
-            // Call the local municipal compliance engine API
-            const response = await fetch('/api/compliance/eligibility-check', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ address })
+            // Check auth token for user authorization header
+            const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+            const headers = {};
+            if (token) {
+                headers["Authorization"] = `Bearer ${token}`;
+            }
+
+            // Call the local municipal compliance engine API (GET)
+            const response = await fetch(`/api/v1/compliance?address=${encodeURIComponent(address)}`, {
+                method: 'GET',
+                headers: headers
             });
             
             if (!response.ok) {
@@ -301,10 +307,9 @@
             
             // Populate Verdict Banner
             const verdictContainer = document.getElementById('verdictBannerContainer');
-            const statusUpper = (data.eligibility_status || '').toUpperCase();
             
             let bannerHtml = '';
-            if (statusUpper === 'RED') {
+            if (!data.is_compliant) {
                 bannerHtml = `
                 <div class="bg-error-container/30 rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative overflow-hidden border border-error/20 mb-6 shadow-sm">
                     <div class="absolute -right-20 -top-20 w-64 h-64 bg-error opacity-10 rounded-full blur-[80px] pointer-events-none"></div>
@@ -313,7 +318,7 @@
                             <span class="material-symbols-outlined icon-filled">warning</span>
                             <h3 class="font-display font-bold text-lg">Violation Detected</h3>
                         </div>
-                        <p class="text-on-surface-variant text-sm font-medium">Critical compliance issues found based on local regulations. Immediate action recommended to avoid penalties.</p>
+                        <p class="text-on-surface-variant text-sm font-medium">Critical compliance issues found based on local regulations or HOA rules. Immediate action recommended to avoid penalties.</p>
                     </div>
                     <div class="z-10 shrink-0">
                         <span class="inline-flex items-center justify-center px-3 py-1 rounded-full bg-error-container text-on-error-container font-bold text-xs tracking-wide border border-error/20">
@@ -321,24 +326,7 @@
                         </span>
                     </div>
                 </div>`;
-            } else if (statusUpper === 'YELLOW') {
-                bannerHtml = `
-                <div class="bg-yellow-500/10 rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative overflow-hidden border border-yellow-500/20 mb-6 shadow-sm">
-                    <div class="absolute -right-20 -top-20 w-64 h-64 bg-yellow-500 opacity-10 rounded-full blur-[80px] pointer-events-none"></div>
-                    <div class="space-y-1 z-10 text-left">
-                        <div class="flex items-center gap-2 text-yellow-700">
-                            <span class="material-symbols-outlined icon-filled">info</span>
-                            <h3 class="font-display font-bold text-lg">Review Required</h3>
-                        </div>
-                        <p class="text-on-surface-variant text-sm font-medium">Action or review required. Additional zoning rules may apply.</p>
-                    </div>
-                    <div class="z-10 shrink-0">
-                        <span class="inline-flex items-center justify-center px-3 py-1 rounded-full bg-yellow-100 text-yellow-700 font-bold text-xs tracking-wide border border-yellow-200">
-                            Risk Level: Medium
-                        </span>
-                    </div>
-                </div>`;
-            } else { // GREEN / eligible
+            } else { // Compliant / eligible
                 bannerHtml = `
                 <div class="bg-tertiary-container/10 rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative overflow-hidden border border-tertiary/20 mb-6 shadow-sm">
                     <div class="absolute -right-20 -top-20 w-64 h-64 bg-tertiary opacity-10 rounded-full blur-[80px] pointer-events-none"></div>
@@ -347,7 +335,7 @@
                             <span class="material-symbols-outlined icon-filled">check_circle</span>
                             <h3 class="font-display font-bold text-lg">Compliant</h3>
                         </div>
-                        <p class="text-on-surface-variant text-sm font-medium">Property is compliant with active local zoning regulations.</p>
+                        <p class="text-on-surface-variant text-sm font-medium">Property is compliant with active local zoning regulations and HOA rules.</p>
                     </div>
                     <div class="z-10 shrink-0">
                         <span class="inline-flex items-center justify-center px-3 py-1 rounded-full bg-tertiary-container text-on-tertiary-fixed font-bold text-xs tracking-wide border border-tertiary/20">
@@ -362,99 +350,204 @@
             const cardsStack = document.getElementById('categoryCardsStack');
             cardsStack.innerHTML = '';
 
-            // Card 1: Zoning Category
-            const zoningOk = data.is_str_allowed;
-            const zoningCard = document.createElement('div');
-            zoningCard.className = 'bg-white rounded-2xl p-5 border border-outline-variant/15 hover:bg-surface-container-low/30 transition-all shadow-sm flex items-start gap-4 text-left';
-            zoningCard.innerHTML = `
-                <span class="material-symbols-outlined ${zoningOk ? 'text-tertiary' : 'text-error'} icon-filled shrink-0" style="font-size: 24px;">
-                    ${zoningOk ? 'check_circle' : 'cancel'}
-                </span>
-                <div class="space-y-1">
-                    <h4 class="font-headline font-bold text-base text-on-surface">Zoning Category</h4>
-                    <p class="text-on-surface-variant text-xs leading-relaxed">${data.zoning_status || 'Checking zoning category...'}</p>
-                </div>
-            `;
-            cardsStack.appendChild(zoningCard);
+            // Card 1: Municipal Regulations
+            if (data.municipal_code) {
+                const mc = data.municipal_code;
+                const isAllowed = mc.is_allowed;
+                const requiresPermit = mc.requires_permit;
+                const permitName = mc.permit_name || "STR Permit";
+                const stayLimit = mc.stay_restriction_days;
+                const taxRate = mc.tax_rate;
+                const occupancy = mc.occupancy_limits;
+                const sourceUrl = mc.source_url;
+
+                let allowedText = isAllowed ? 'STR permitted under local ordinances.' : 'STR prohibited under local ordinances.';
+                let allowedClass = isAllowed ? 'text-tertiary' : 'text-error';
+                let allowedIcon = isAllowed ? 'check_circle' : 'cancel';
+
+                let permitText = requiresPermit ? `Requires registration: <strong>${permitName}</strong>.` : 'No special permit required.';
+                let stayText = stayLimit ? `Stay limit restriction: <strong>Min ${stayLimit} days</strong>.` : 'No minimum stay restriction.';
+                let taxText = taxRate !== null ? `Tourist tax rate: <strong>${taxRate}% TDT</strong>.` : 'No local tourist tax registered.';
+                let occupancyText = occupancy ? `Occupancy limit: <strong>${occupancy}</strong>.` : 'No occupancy restrictions registered.';
+
+                let sourceLinkHtml = sourceUrl ? `
+                    <a href="${sourceUrl}" target="_blank" class="text-primary hover:underline font-bold mt-2 inline-flex items-center gap-1">
+                        View Ordinance Reference <span class="material-symbols-outlined text-xs">open_in_new</span>
+                    </a>` : '';
+
+                const municipalCard = document.createElement('div');
+                municipalCard.className = 'bg-white rounded-2xl p-5 border border-outline-variant/15 hover:bg-surface-container-low/30 transition-all shadow-sm flex items-start gap-4 text-left';
+                municipalCard.innerHTML = `
+                    <span class="material-symbols-outlined ${allowedClass} icon-filled shrink-0" style="font-size: 24px;">
+                        ${allowedIcon}
+                    </span>
+                    <div class="space-y-2 flex-grow">
+                        <h4 class="font-headline font-bold text-base text-on-surface">Municipal Code: ${mc.municipality_name} (${mc.jurisdiction_type})</h4>
+                        <div class="text-on-surface-variant text-xs space-y-1 leading-relaxed">
+                            <p class="${allowedClass} font-semibold">${allowedText}</p>
+                            <p>${permitText}</p>
+                            <p>${stayText}</p>
+                            <p>${occupancyText}</p>
+                            <p>${taxText}</p>
+                        </div>
+                        ${sourceLinkHtml}
+                    </div>
+                `;
+                cardsStack.appendChild(municipalCard);
+            } else {
+                const municipalCard = document.createElement('div');
+                municipalCard.className = 'bg-white rounded-2xl p-5 border border-outline-variant/15 hover:bg-surface-container-low/30 transition-all shadow-sm flex items-start gap-4 text-left';
+                municipalCard.innerHTML = `
+                    <span class="material-symbols-outlined text-outline icon-filled shrink-0" style="font-size: 24px;">
+                        info
+                    </span>
+                    <div class="space-y-1">
+                        <h4 class="font-headline font-bold text-base text-on-surface">Municipal Regulations</h4>
+                        <p class="text-on-surface-variant text-xs leading-relaxed">No specific municipal zoning rules found for this locality.</p>
+                    </div>
+                `;
+                cardsStack.appendChild(municipalCard);
+            }
 
             // Card 2: HOA Restrictions
-            const hoaDetected = data.hoa_status && (data.hoa_status.includes("prohibit") || data.hoa_status.includes("restrict") || data.hoa_status.includes("Violation") || data.hoa_status.includes("rules restrict"));
-            const hoaCard = document.createElement('div');
-            hoaCard.className = 'bg-white rounded-2xl p-5 border border-outline-variant/15 hover:bg-surface-container-low/30 transition-all shadow-sm flex items-start gap-4 text-left';
-            hoaCard.innerHTML = `
-                <span class="material-symbols-outlined ${hoaDetected ? 'text-error' : 'text-tertiary'} icon-filled shrink-0" style="font-size: 24px;">
-                    ${hoaDetected ? 'cancel' : 'check_circle'}
-                </span>
-                <div class="space-y-1">
-                    <h4 class="font-headline font-bold text-base text-on-surface">HOA Restrictions</h4>
-                    <p class="text-on-surface-variant text-xs leading-relaxed">${data.hoa_status || 'Checking HOA covenants...'}</p>
-                </div>
-            `;
-            cardsStack.appendChild(hoaCard);
+            if (data.hoa_rule) {
+                const hoa = data.hoa_rule;
+                const strPermitted = hoa.str_permitted.trim().toLowerCase() === 'yes';
+                const website = hoa.official_website;
+                const stayLimit = hoa.minimum_lease_stay;
+                const notes = hoa.key_rules_notes;
 
-            // Card 3: Tax Registration Status
-            const taxCard = document.createElement('div');
-            if (data.is_logged_in) {
-                taxCard.className = 'bg-white rounded-2xl p-5 border border-outline-variant/15 hover:bg-surface-container-low/30 transition-all shadow-sm flex items-start gap-4 text-left';
-                taxCard.innerHTML = `
-                    <span class="material-symbols-outlined text-tertiary icon-filled shrink-0" style="font-size: 24px;">check_circle</span>
+                let allowedText = strPermitted ? 'Short-term rentals permitted by HOA covenants.' : 'Short-term rentals restricted or prohibited by HOA.';
+                let allowedClass = strPermitted ? 'text-tertiary' : 'text-error';
+                let allowedIcon = strPermitted ? 'check_circle' : 'cancel';
+
+                let stayText = stayLimit ? `Minimum lease duration: <strong>${stayLimit}</strong>.` : 'No explicit HOA lease limits.';
+                let notesText = notes ? `Rules notes: ${notes}` : 'No detailed rules notes provided.';
+
+                let siteLinkHtml = website ? `
+                    <a href="${website}" target="_blank" class="text-primary hover:underline font-bold mt-2 inline-flex items-center gap-1">
+                        HOA Portal Website <span class="material-symbols-outlined text-xs">open_in_new</span>
+                    </a>` : '';
+
+                const hoaCard = document.createElement('div');
+                hoaCard.className = 'bg-white rounded-2xl p-5 border border-outline-variant/15 hover:bg-surface-container-low/30 transition-all shadow-sm flex items-start gap-4 text-left';
+                hoaCard.innerHTML = `
+                    <span class="material-symbols-outlined ${allowedClass} icon-filled shrink-0" style="font-size: 24px;">
+                        ${allowedIcon}
+                    </span>
+                    <div class="space-y-2 flex-grow">
+                        <h4 class="font-headline font-bold text-base text-on-surface">HOA Rules: ${hoa.hoa_name}</h4>
+                        <div class="text-on-surface-variant text-xs space-y-1 leading-relaxed">
+                            <p class="${allowedClass} font-semibold">${allowedText}</p>
+                            <p>${stayText}</p>
+                            <p>${notesText}</p>
+                        </div>
+                        ${siteLinkHtml}
+                    </div>
+                `;
+                cardsStack.appendChild(hoaCard);
+            } else {
+                const hoaCard = document.createElement('div');
+                hoaCard.className = 'bg-white rounded-2xl p-5 border border-outline-variant/15 hover:bg-surface-container-low/30 transition-all shadow-sm flex items-start gap-4 text-left';
+                hoaCard.innerHTML = `
+                    <span class="material-symbols-outlined text-outline icon-filled shrink-0" style="font-size: 24px;">
+                        info
+                    </span>
                     <div class="space-y-1">
-                        <h4 class="font-headline font-bold text-base text-on-surface">Tax Registration Status</h4>
-                        <p class="text-on-surface-variant text-xs leading-relaxed">${data.tax_status}</p>
+                        <h4 class="font-headline font-bold text-base text-on-surface">HOA Rules</h4>
+                        <p class="text-on-surface-variant text-xs leading-relaxed">No HOA or subdivision restrictions found in our records for this address.</p>
+                    </div>
+                `;
+                cardsStack.appendChild(hoaCard);
+            }
+
+            // Card 3: Checklist Card
+            const isUserLoggedIn = !!token;
+            const checklistCard = document.createElement('div');
+            
+            if (isUserLoggedIn) {
+                checklistCard.className = 'bg-white rounded-2xl p-5 border border-outline-variant/15 hover:bg-surface-container-low/30 transition-all shadow-sm flex flex-col gap-4 text-left';
+                
+                let checklistItemsHtml = '';
+                if (data.checklist && data.checklist.length > 0) {
+                    checklistItemsHtml = data.checklist.map(item => `
+                        <div class="flex items-start gap-3">
+                            <span class="material-symbols-outlined ${item.is_compliant ? 'text-tertiary' : 'text-outline'} shrink-0" style="font-size: 20px;">
+                                ${item.is_compliant ? 'check_box' : 'check_box_outline_blank'}
+                            </span>
+                            <div class="space-y-0.5">
+                                <p class="text-on-surface text-sm font-medium">${item.task_name}</p>
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${item.is_compliant ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                                    ${item.status}
+                                </span>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    checklistItemsHtml = `
+                        <div class="flex items-start gap-3">
+                            <span class="material-symbols-outlined text-tertiary shrink-0" style="font-size: 20px;">
+                                check_circle
+                            </span>
+                            <div>
+                                <p class="text-on-surface text-sm font-medium">No actions required</p>
+                                <p class="text-on-surface-variant text-xs">This property has no compliance tasks scheduled.</p>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                checklistCard.innerHTML = `
+                    <div class="flex items-center gap-2 border-b border-outline-variant/10 pb-2">
+                        <span class="material-symbols-outlined text-primary">playlist_add_check</span>
+                        <h4 class="font-headline font-bold text-base text-on-surface">Required Actions Checklist</h4>
+                    </div>
+                    <div class="space-y-3">
+                        ${checklistItemsHtml}
                     </div>
                 `;
             } else {
-                taxCard.className = 'bg-white rounded-2xl p-5 border border-outline-variant/15 locked-item relative shadow-sm flex items-start gap-4 text-left';
-                taxCard.innerHTML = `
-                    <span class="material-symbols-outlined text-outline icon-filled shrink-0" style="font-size: 24px;">help</span>
-                    <div class="space-y-1 pr-8">
-                        <h4 class="font-headline font-bold text-base text-on-surface">Tax Registration Status</h4>
-                        <p class="text-on-surface-variant text-xs leading-relaxed blur-[4px] select-none">You are missing 2 crucial tax registration forms required by the municipality for the current fiscal year.</p>
+                checklistCard.className = 'bg-white rounded-2xl p-5 border border-outline-variant/15 locked-item relative shadow-sm flex flex-col gap-4 text-left';
+                checklistCard.innerHTML = `
+                    <div class="flex items-center gap-2 border-b border-outline-variant/10 pb-2">
+                        <span class="material-symbols-outlined text-outline">playlist_add_check</span>
+                        <h4 class="font-headline font-bold text-base text-on-surface">Required Actions Checklist</h4>
+                    </div>
+                    <div class="space-y-3 pr-8 blur-[4px] select-none">
+                        <div class="flex items-start gap-3">
+                            <span class="material-symbols-outlined text-outline shrink-0" style="font-size: 20px;">check_box_outline_blank</span>
+                            <div class="space-y-0.5">
+                                <p class="text-on-surface text-sm font-medium">STR Permit Application</p>
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-yellow-100 text-yellow-800">PENDING</span>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <span class="material-symbols-outlined text-outline shrink-0" style="font-size: 20px;">check_box_outline_blank</span>
+                            <div class="space-y-0.5">
+                                <p class="text-on-surface text-sm font-medium">Tax Registration (TDT)</p>
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-yellow-100 text-yellow-800">PENDING</span>
+                            </div>
+                        </div>
                     </div>
                     <div class="absolute inset-y-0 right-5 flex items-center z-20">
                         <span class="material-symbols-outlined text-xl text-primary icon-filled">lock</span>
                     </div>
                 `;
             }
-            cardsStack.appendChild(taxCard);
-
-            // Card 4: Safety Permit Valid
-            const safetyCard = document.createElement('div');
-            if (data.is_logged_in) {
-                safetyCard.className = 'bg-white rounded-2xl p-5 border border-outline-variant/15 hover:bg-surface-container-low/30 transition-all shadow-sm flex items-start gap-4 text-left';
-                safetyCard.innerHTML = `
-                    <span class="material-symbols-outlined text-tertiary icon-filled shrink-0" style="font-size: 24px;">check_circle</span>
-                    <div class="space-y-1">
-                        <h4 class="font-headline font-bold text-base text-on-surface">Safety Permit Valid</h4>
-                        <p class="text-on-surface-variant text-xs leading-relaxed">${data.safety_status}</p>
-                    </div>
-                `;
-            } else {
-                safetyCard.className = 'bg-white rounded-2xl p-5 border border-outline-variant/15 locked-item relative shadow-sm flex items-start gap-4 text-left';
-                safetyCard.innerHTML = `
-                    <span class="material-symbols-outlined text-outline icon-filled shrink-0" style="font-size: 24px;">help</span>
-                    <div class="space-y-1 pr-8">
-                        <h4 class="font-headline font-bold text-base text-on-surface">Safety Permit Valid</h4>
-                        <p class="text-on-surface-variant text-xs leading-relaxed blur-[4px] select-none">Fire safety inspection certificate expired 45 days ago. Renewal process takes approximately 3 weeks.</p>
-                    </div>
-                    <div class="absolute inset-y-0 right-5 flex items-center z-20">
-                        <span class="material-symbols-outlined text-xl text-primary icon-filled">lock</span>
-                    </div>
-                `;
-            }
-            cardsStack.appendChild(safetyCard);
+            cardsStack.appendChild(checklistCard);
 
             // Handle CTA container and Permit Button Visibility
             const conversionContainer = document.getElementById('conversionCtaContainer');
             const permitBtn = document.getElementById('generatePermitBtn');
             
-            if (data.is_logged_in) {
+            if (isUserLoggedIn) {
                 conversionContainer.classList.add('hidden');
-                if (data.permit_application_url) {
+                if (data.municipal_code && data.municipal_code.requires_permit) {
                     permitBtn.classList.remove('hidden');
                     permitBtn.disabled = false;
                     permitBtn.onclick = () => {
-                        window.open(data.permit_application_url, '_blank');
+                        const url = data.municipal_code.source_url || "https://www.myfloridalicense.com/dbpr/";
+                        window.open(url, '_blank');
                     };
                 } else {
                     permitBtn.classList.add('hidden');

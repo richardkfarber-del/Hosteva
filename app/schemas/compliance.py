@@ -74,3 +74,48 @@ class EligibilityCheckResponse(BaseModel):
     tax_status: Optional[str] = None
     safety_status: Optional[str] = None
     is_logged_in: bool = True
+
+from datetime import date
+from typing import List
+
+class MunicipalRuleResponse(BaseModel):
+    municipality_name: str
+    jurisdiction_type: str
+    str_permitted_raw: Optional[str] = None
+    is_allowed: bool
+    requires_permit: bool
+    permit_name: Optional[str] = None
+    minimum_stay_requirement: Optional[str] = None
+    stay_restriction_days: Optional[int] = None
+    occupancy_limits: Optional[str] = None
+    tax_rate: Optional[float] = None
+    source_url: Optional[str] = None
+    last_verified_date: Optional[date] = None
+
+    class Config:
+        from_attributes = True
+
+class HOARuleResponse(BaseModel):
+    hoa_name: str
+    location: str
+    str_permitted: str
+    minimum_lease_stay: Optional[str] = None
+    rules_available: bool
+    official_website: Optional[str] = None
+    last_confirmed_date: Optional[date] = None
+    key_rules_notes: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+class AddressComplianceChecklist(BaseModel):
+    task_name: str
+    status: str
+    is_compliant: bool
+
+class AddressComplianceResponse(BaseModel):
+    address: str
+    is_compliant: bool
+    municipal_code: Optional[MunicipalRuleResponse] = None
+    hoa_rule: Optional[HOARuleResponse] = None
+    checklist: List[AddressComplianceChecklist] = []

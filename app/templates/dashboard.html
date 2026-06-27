@@ -250,6 +250,20 @@ tailwind.config = {
                         <input type="text" name="property_type" placeholder="e.g., Single Family" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-[8px] focus:ring-2 focus:ring-teal-600 focus:bg-white focus:border-transparent text-gray-800">
                     </div>
                 </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Zoning Code</label>
+                        <input type="text" name="zoning_code" placeholder="e.g. RS-1" required class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-[8px] focus:ring-2 focus:ring-teal-600 focus:bg-white focus:border-transparent text-gray-800">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Intended Stay Duration</label>
+                        <select name="intended_stay_duration" required class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-[8px] focus:ring-2 focus:ring-teal-600 focus:bg-white focus:border-transparent text-gray-800">
+                            <option value="nightly">Nightly (fewer than 7 nights)</option>
+                            <option value="weekly">Weekly (7+ nights)</option>
+                            <option value="monthly">Monthly (30+ nights)</option>
+                        </select>
+                    </div>
+                </div>
                 <!-- Manual HOA toggle removed. Detection is automatically and forensically processed by the compliance engine. -->
                 <div class="flex justify-end gap-3 pt-4">
                     <button type="button" onclick="closeAddPropertyModal()" class="px-6 py-2 bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 font-headline tracking-tight font-bold rounded-[8px] transition-colors">Cancel</button>
@@ -496,11 +510,11 @@ tailwind.config = {
                             <div class="flex-1 grid grid-cols-2 gap-4 w-full">
                                 <div class="p-4 bg-surface-container-lowest rounded-xl">
                                     <span class="text-xs text-on-surface-variant font-medium block mb-1">OCCUPANCY</span>
-                                    <span class="text-xl font-bold text-primary">88%</span>
+                                    <span class="text-xl font-bold text-primary single-occupancy-text">0%</span>
                                 </div>
                                 <div class="p-4 bg-surface-container-lowest rounded-xl">
                                     <span class="text-xs text-on-surface-variant font-medium block mb-1">AVG. RATING</span>
-                                    <span class="text-xl font-bold text-primary">4.96</span>
+                                    <span class="text-xl font-bold text-primary single-rating-text">N/A</span>
                                 </div>
                             </div>
                         </div>
@@ -777,6 +791,8 @@ tailwind.config = {
     </main>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js?v=20260522"></script>
+    <script src="/static/js/wizard.js"></script>
+    <script src="/static/js/compliance.js"></script>
     <script>
         const token = localStorage.getItem("token") || sessionStorage.getItem("token");
         if (!token) {
@@ -946,19 +962,26 @@ tailwind.config = {
             e.preventDefault();
             const form = e.target;
             const formData = new FormData(form);
-            const data = {
-                address: formData.get('address'),
-                city: formData.get('city'),
-                state: formData.get('state'),
-                zip_code: formData.get('zip_code'),
-                property_type: formData.get('property_type'),
-                hoa_status: false
+            const payload = {
+                address: {
+                    address: formData.get('address'),
+                    city: formData.get('city'),
+                    state: formData.get('state'),
+                    zip_code: formData.get('zip_code') || ''
+                },
+                property_type: formData.get('property_type') || '',
+                compliance_data: {
+                    zoning_status: "Pending",
+                    hoa_status: false,
+                    required_permits: [],
+                    local_restrictions: {}
+                }
             };
             try {
-                const response = await fetch('/api/properties/', {
+                const response = await fetch('/api/v1/properties/', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', ...headers },
-                    body: JSON.stringify(data)
+                    body: JSON.stringify(payload)
                 });
                 if (response.ok) {
                     closeAddPropertyModal();
@@ -1262,12 +1285,21 @@ Processing Time: ${data.estimated_processing_time}`);
                     dynamicContent.appendChild(clone);
                     return;
                 }
+
+                // Fetch checklist items for all properties in parallel to compute dynamic compliance scores
+                const checklistPromises = properties.map(p => 
+                    fetch(`/api/v1/compliance/checklist-items/${p.id}`, { headers })
+                        .then(res => res.ok ? res.json() : [])
+                        .catch(() => [])
+                );
+                const propertiesChecklists = await Promise.all(checklistPromises);
                 
                 if (properties.length === 1) {
                     const template = document.getElementById('layout-single');
                     const clone = template.content.cloneNode(true);
                     
                     const p = properties[0];
+                    const checklistItems = propertiesChecklists[0] || [];
                     
                     // Welcome greeting name
                     const userNameSpan = clone.querySelector('.single-user-name');
@@ -1301,52 +1333,61 @@ Processing Time: ${data.estimated_processing_time}`);
                     const compDesc = clone.querySelector('.single-compliance-desc');
                     
                     let complianceScore = 100;
-                    if (p.zoning_status === 'Compliant') {
-                        badge.className = 'bg-tertiary-fixed text-on-tertiary-fixed px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1';
-                        badge.innerHTML = `<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">check_circle</span> COMPLIANT`;
-                        complianceScore = 100;
-                        compDesc.innerText = 'Elite Host Status maintained';
-                    } else if (p.zoning_status === 'Pending') {
+                    let isAwaitingAudit = false;
+                    
+                    if (checklistItems.length > 0) {
+                        const compliantTasks = checklistItems.filter(item => item.is_compliant).length;
+                        complianceScore = Math.round((compliantTasks / checklistItems.length) * 100);
+                    } else {
+                        if (p.zoning_status === 'Compliant') {
+                            complianceScore = 100;
+                        } else if (p.zoning_status === 'Pending') {
+                            complianceScore = 0;
+                            isAwaitingAudit = true;
+                        } else {
+                            complianceScore = 0;
+                        }
+                    }
+
+                    if (isAwaitingAudit) {
                         badge.className = 'bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1';
-                        badge.innerHTML = `<span class="material-symbols-outlined text-sm">schedule</span> PENDING`;
-                        complianceScore = 50;
+                        badge.innerHTML = `<span class="material-symbols-outlined text-sm">schedule</span> AWAITING AUDIT`;
                         compDesc.innerText = 'Zoning verification in progress';
-                    } else if (p.zoning_status === 'Action Required') {
-                        badge.className = 'bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1';
-                        badge.innerHTML = `<span class="material-symbols-outlined text-sm">warning</span> ACTION REQUIRED`;
-                        complianceScore = 30;
-                        compDesc.innerText = 'HOA scanned rules required';
-                    } else { // Violation
-                        badge.className = 'bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1';
-                        badge.innerHTML = `<span class="material-symbols-outlined text-sm">warning</span> NEEDS ATTENTION`;
-                        complianceScore = 50;
-                        compDesc.innerText = 'Immediate action required';
+                        if (compText) compText.innerText = 'Awaiting Audit';
+                    } else {
+                        if (complianceScore === 100) {
+                            badge.className = 'bg-tertiary-fixed text-on-tertiary-fixed px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1';
+                            badge.innerHTML = `<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">check_circle</span> COMPLIANT`;
+                            compDesc.innerText = 'Elite Host Status maintained';
+                        } else {
+                            badge.className = 'bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1';
+                            badge.innerHTML = `<span class="material-symbols-outlined text-sm">warning</span> NEEDS ATTENTION`;
+                            compDesc.innerText = 'Immediate action required';
+                        }
+                        if (compText) compText.innerText = `${complianceScore}%`;
                     }
                     
                     if (progress) {
-                        progress.setAttribute('stroke-dasharray', `${complianceScore}, 100`);
-                        if (complianceScore === 100) {
-                            progress.style.color = '';
-                        } else if (complianceScore === 50) {
+                        progress.setAttribute('stroke-dasharray', `${isAwaitingAudit ? 0 : complianceScore}, 100`);
+                        if (isAwaitingAudit) {
                             progress.style.color = '#ca8a04'; // Yellow-600
-                        } else if (complianceScore === 30) {
-                            progress.style.color = '#ea580c'; // Orange-600
+                        } else if (complianceScore === 100) {
+                            progress.style.color = '';
+                        } else if (complianceScore >= 50) {
+                            progress.style.color = '#ca8a04'; // Yellow-600
                         } else {
                             progress.style.color = '#dc2626'; // Red-600
                         }
                     }
-                    if (compText) {
-                        compText.innerText = `${complianceScore}%`;
-                    }
+
+                    // Reset mock metrics
+                    clone.querySelector('.single-occupancy-text').innerText = '0%';
+                    clone.querySelector('.single-rating-text').innerText = 'N/A';
                     
-                    // Calculations for Revenue Summary
-                    const bookingsRevVal = Math.round(p.price * 0.88 * 30);
-                    const addonsRevVal = Math.round(bookingsRevVal * 0.15);
-                    const totalRevVal = bookingsRevVal + addonsRevVal;
-                    
-                    clone.querySelector('.single-total-rev').innerText = `$${totalRevVal.toLocaleString()}`;
-                    clone.querySelector('.single-bookings-rev').innerText = `$${bookingsRevVal.toLocaleString()}`;
-                    clone.querySelector('.single-addons-rev').innerText = `$${addonsRevVal.toLocaleString()}`;
+                    // Calculations for Revenue Summary (Neutral defaults)
+                    clone.querySelector('.single-total-rev').innerText = '$0.00';
+                    clone.querySelector('.single-bookings-rev').innerText = '$0.00';
+                    clone.querySelector('.single-addons-rev').innerText = '$0.00';
                     
                     // Compliance Alerts
                     const alertsList = clone.querySelector('.single-alerts-list');
@@ -1354,9 +1395,11 @@ Processing Time: ${data.estimated_processing_time}`);
                     
                     if (p.required_permits && p.required_permits.length > 0) {
                         p.required_permits.forEach(permit => {
-                            const iconColor = p.zoning_status === 'Violation' ? 'text-red-600' : p.zoning_status === 'Pending' ? 'text-yellow-600' : 'text-primary';
-                            const bgColor = p.zoning_status === 'Violation' ? 'bg-red-100' : p.zoning_status === 'Pending' ? 'bg-yellow-100' : 'bg-primary/10';
-                            const icon = p.zoning_status === 'Violation' ? 'warning' : 'assignment';
+                            const isTaskCompliant = checklistItems.find(item => item.violation_notes === permit)?.is_compliant;
+                            const iconColor = isTaskCompliant ? 'text-green-600' : p.zoning_status === 'Violation' ? 'text-red-600' : 'text-yellow-600';
+                            const bgColor = isTaskCompliant ? 'bg-green-100' : p.zoning_status === 'Violation' ? 'bg-red-100' : 'bg-yellow-100';
+                            const icon = isTaskCompliant ? 'check_circle' : p.zoning_status === 'Violation' ? 'warning' : 'assignment';
+                            const taskStatus = isTaskCompliant ? 'Approved' : 'Pending';
                             
                             alertsList.innerHTML += `
                                 <li class="flex gap-4 items-start group">
@@ -1365,7 +1408,7 @@ Processing Time: ${data.estimated_processing_time}`);
                                     </div>
                                     <div>
                                         <p class="text-sm font-semibold text-on-surface">${permit}</p>
-                                        <p class="text-xs text-on-surface-variant">Required permit for local STR compliance.</p>
+                                        <p class="text-xs text-on-surface-variant">Required permit status: <strong>${taskStatus}</strong>.</p>
                                     </div>
                                 </li>
                             `;
@@ -1423,24 +1466,21 @@ Processing Time: ${data.estimated_processing_time}`);
                     const template = document.getElementById('layout-multi');
                     const clone = template.content.cloneNode(true);
                     
-                    let totalRevenue = 0;
-                    let compliantCount = 0;
+                    let complianceScoresSum = 0;
                     
                     const grid = clone.querySelector('.multi-property-grid');
                     const cardTemplate = document.getElementById('multi-property-card-template');
                     
-                    properties.forEach(p => {
+                    properties.forEach((p, idx) => {
                         const cardClone = cardTemplate.content.cloneNode(true);
+                        const checklistItems = propertiesChecklists[idx] || [];
                         
                         cardClone.querySelector('.property-card-title').innerText = p.address;
                         cardClone.querySelector('.property-card-location-text').innerText = p.location;
                         
-                        const bookingsRevVal = Math.round(p.price * 0.88 * 30);
-                        const addonsRevVal = Math.round(bookingsRevVal * 0.15);
-                        const totalRevVal = bookingsRevVal + addonsRevVal;
-                        totalRevenue += totalRevVal;
-                        
-                        cardClone.querySelector('.property-card-rev').innerText = `$${totalRevVal.toLocaleString()}`;
+                        // Set neutral default values
+                        cardClone.querySelector('.property-card-rev').innerText = '$0.00';
+                        cardClone.querySelector('.property-card-occupancy').innerText = '0%';
                         
                         const img = cardClone.querySelector('.property-card-img');
                         console.log("DEBUG: Multi property image_url:", p.image_url);
@@ -1457,20 +1497,37 @@ Processing Time: ${data.estimated_processing_time}`);
                             img.src = '/static/img/fallback_house.jpg';
                         };
                         
-                        const badge = cardClone.querySelector('.property-card-badge');
-                        if (p.zoning_status === 'Compliant') {
-                            badge.className = 'absolute top-4 right-4 bg-tertiary-fixed text-on-tertiary-fixed px-3 py-1 rounded-full text-xs font-black flex items-center gap-1 shadow-sm';
-                            badge.innerHTML = `<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">check_circle</span> COMPLIANT`;
-                            compliantCount++;
-                        } else if (p.zoning_status === 'Pending') {
-                            badge.className = 'absolute top-4 right-4 bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-black flex items-center gap-1 shadow-sm';
-                            badge.innerHTML = `<span class="material-symbols-outlined text-sm">schedule</span> PENDING`;
-                        } else if (p.zoning_status === 'Action Required') {
-                            badge.className = 'absolute top-4 right-4 bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-xs font-black flex items-center gap-1 shadow-sm';
-                            badge.innerHTML = `<span class="material-symbols-outlined text-sm">warning</span> ACTION REQUIRED`;
+                        // Compute dynamic compliance score
+                        let complianceScore = 100;
+                        let isAwaitingAudit = false;
+                        
+                        if (checklistItems.length > 0) {
+                            const compliantTasks = checklistItems.filter(item => item.is_compliant).length;
+                            complianceScore = Math.round((compliantTasks / checklistItems.length) * 100);
                         } else {
+                            if (p.zoning_status === 'Compliant') {
+                                complianceScore = 100;
+                            } else if (p.zoning_status === 'Pending') {
+                                complianceScore = 0;
+                                isAwaitingAudit = true;
+                            } else {
+                                complianceScore = 0;
+                            }
+                        }
+                        complianceScoresSum += complianceScore;
+
+                        const badge = cardClone.querySelector('.property-card-badge');
+                        if (isAwaitingAudit) {
                             badge.className = 'absolute top-4 right-4 bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-black flex items-center gap-1 shadow-sm';
-                            badge.innerHTML = `<span class="material-symbols-outlined text-sm">warning</span> NEEDS ATTENTION`;
+                            badge.innerHTML = `<span class="material-symbols-outlined text-sm">schedule</span> AWAITING AUDIT`;
+                        } else {
+                            if (complianceScore === 100) {
+                                badge.className = 'absolute top-4 right-4 bg-tertiary-fixed text-on-tertiary-fixed px-3 py-1 rounded-full text-xs font-black flex items-center gap-1 shadow-sm';
+                                badge.innerHTML = `<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">check_circle</span> COMPLIANT`;
+                            } else {
+                                badge.className = 'absolute top-4 right-4 bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-xs font-black flex items-center gap-1 shadow-sm';
+                                badge.innerHTML = `<span class="material-symbols-outlined text-sm">warning</span> ${complianceScore}% COMPLIANT`;
+                            }
                         }
                         
                         // Bind buttons inside the card
@@ -1487,20 +1544,17 @@ Processing Time: ${data.estimated_processing_time}`);
                         grid.appendChild(cardClone);
                     });
                     
-                    // Update stats
-                    clone.querySelector('.multi-portfolio-revenue').innerText = `$${totalRevenue.toLocaleString()}`;
+                    // Update stats (Neutral defaults)
+                    clone.querySelector('.multi-portfolio-revenue').innerText = '$0.00';
                     
-                    const avgComp = Math.round((compliantCount / properties.length) * 100);
+                    const avgComp = Math.round(complianceScoresSum / properties.length);
                     clone.querySelector('.multi-avg-compliance').innerText = `${avgComp}%`;
                     clone.querySelector('.multi-active-assets').innerText = `${properties.length} Properties`;
                     clone.querySelector('.multi-portfolio-sub').innerText = `Managing ${properties.length} locations`;
                     
-                    // Concierge AI card description
-                    if (properties.length > 0) {
-                        const randomProp = properties[0];
-                        clone.querySelector('.multi-insight-title').innerText = 'Revenue Opportunity Detected';
-                        clone.querySelector('.multi-insight-desc').innerText = `Your ${randomProp.address} is seeing a 20% surge in local demand. Consider adjusting rates.`;
-                    }
+                    // Concierge AI card description (Neutral message for listing integration)
+                    clone.querySelector('.multi-insight-title').innerText = 'Listing Optimization';
+                    clone.querySelector('.multi-insight-desc').innerText = 'Connect your Airbnb/VRBO accounts to unlock rate recommendations and occupancy forecasting.';
                     
                     dynamicContent.appendChild(clone);
                 }

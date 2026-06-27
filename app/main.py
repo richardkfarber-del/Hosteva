@@ -11,6 +11,14 @@ from app.database import engine, Base, get_db
 from app.routers import user, listings, ordinances, zoning, compliance, hosts, properties, notifications, dashboard_api, eligibility, florida_compliance, listing_optimizer, permit_generator, recommendations, subscriptions, documents, market_intelligence, pricing
 from app.integrations.ota_routes import router as ota_router
 from app.api.routes import swarm, queue, properties as v1_properties
+from app.api.v1.onboarding.validate import router as validate_router
+from app.api.v1.compliance import router as compliance_v1_router
+from app.api.v1.billing import router as billing_v1_router
+from app.api.v1.operations import router as operations_v1_router
+from app.api.v1.inbox import router as inbox_v1_router
+
+
+
 from app.schemas.dashboard import HostDashboardResponse
 import os
 import traceback
@@ -121,6 +129,15 @@ app.include_router(market_intelligence.router)
 app.include_router(ota_router)
 app.include_router(swarm.router)
 app.include_router(queue.router)
+app.include_router(validate_router)
+app.include_router(compliance_v1_router)
+app.include_router(billing_v1_router)
+app.include_router(operations_v1_router)
+app.include_router(inbox_v1_router)
+
+
+
+
 
 def get_optional_user_cookie(access_token: Optional[str] = Cookie(None)) -> Optional[dict]:
     if not access_token:

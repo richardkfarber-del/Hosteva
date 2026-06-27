@@ -20,3 +20,7 @@ class Property(Base):
     required_permits = Column(String, nullable=True)
     local_restrictions = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    airbnb_ical_import_url = Column(String, nullable=True)
+    vrbo_ical_import_url = Column(String, nullable=True)
+    hosteva_ical_export_token = Column(String, unique=True, nullable=True)
+
