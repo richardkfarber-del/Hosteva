@@ -105,7 +105,7 @@
     <div class="fixed top-0 right-0 w-[800px] h-[600px] bg-gradient-to-br from-surface-container-high/40 to-transparent rounded-bl-full -z-10 blur-3xl pointer-events-none opacity-60"></div>
     
     <!-- Main Content Canvas -->
-    <main class="max-w-4xl mx-auto px-6 py-10 md:py-16 flex flex-col gap-10 md:gap-14 relative z-10">
+    <main class="max-w-6xl mx-auto px-6 py-10 md:py-16 flex flex-col gap-10 md:gap-14 relative z-10">
         <!-- Section: Contextual Header -->
         <header class="flex flex-col gap-6 items-start">
             <!-- Back Navigation -->
@@ -135,139 +135,148 @@
         <!-- Dynamic Verdict Banner -->
         <div id="verdict-banner-container"></div>
 
-        <!-- Section: AI Intelligence Prism -->
-        <section class="bg-surface-container-lowest rounded-2xl ambient-shadow relative overflow-hidden flex flex-col transform transition-transform hover:-translate-y-0.5 duration-300">
-            <!-- Signature Left Accent Bar -->
-            <div class="w-1.5 bg-tertiary-fixed shrink-0 h-full absolute left-0 top-0"></div>
-            
-            <div class="p-6 md:p-8 flex gap-5 items-start">
-                <div class="bg-tertiary-container/10 p-3 rounded-full text-tertiary shrink-0 mt-1">
-                    <span class="material-symbols-outlined icon-fill">auto_awesome</span>
-                </div>
-                <div class="flex-1 flex flex-col gap-2">
-                    <h3 class="font-headline font-bold text-on-surface text-lg tracking-tight">Hosteva Assistant</h3>
-                    <p id="task-instructions" class="font-body text-on-surface-variant text-base leading-relaxed animate-pulse bg-slate-200 h-5 w-full rounded-md mb-1"></p>
-                    <p id="task-instructions-2" class="font-body text-on-surface-variant text-base leading-relaxed animate-pulse bg-slate-200 h-5 w-5/6 rounded-md"></p>
+        <!-- Grid Container for Desktop Real Estate Optimization -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-12 items-start">
+            <!-- Left Column: Hosteva Assistant (Guidance & Chat) -->
+            <div class="lg:col-span-7 flex flex-col gap-6 w-full">
+                <!-- Section: AI Intelligence Prism -->
+                <section class="bg-surface-container-lowest rounded-2xl ambient-shadow relative overflow-hidden flex flex-col transform transition-transform hover:-translate-y-0.5 duration-300">
+                    <!-- Signature Left Accent Bar -->
+                    <div class="w-1.5 bg-tertiary-fixed shrink-0 h-full absolute left-0 top-0"></div>
                     
-                    <!-- Interactive Action Buttons -->
-                    <div class="flex flex-wrap gap-3 mt-4">
-                        <button onclick="toggleGuidancePanel()" class="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary hover:opacity-90 rounded-lg text-sm font-semibold transition-all">
-                            <span class="material-symbols-outlined text-sm">help</span>
-                            How do I get this?
-                        </button>
-                        <button onclick="toggleChatPanel()" class="flex items-center gap-2 px-4 py-2 bg-surface-container-high text-primary hover:bg-surface-container-highest rounded-lg text-sm font-semibold transition-all">
-                            <span class="material-symbols-outlined text-sm">chat</span>
-                            Ask Assistant a Question
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Guidance Panel (Expandable) -->
-            <div id="guidance-panel" class="hidden border-t border-outline-variant/15 p-6 md:p-8 bg-surface-container-low/50 flex flex-col gap-6">
-                <div class="flex flex-col gap-2">
-                    <h4 class="font-headline font-bold text-on-surface text-base">Permit Application Guide</h4>
-                    <p id="guidance-text" class="text-sm text-on-surface-variant leading-relaxed">Loading guide...</p>
-                </div>
-                <div class="flex flex-col gap-3">
-                    <span class="text-xs uppercase text-outline font-bold">Official Portals & Resources</span>
-                    <div id="guidance-links" class="flex flex-col gap-2"></div>
-                </div>
-                <!-- Prefill Concierge Card -->
-                <div class="bg-white/85 p-5 rounded-xl border border-primary/10 shadow-sm flex flex-col gap-4">
-                    <div class="flex items-center gap-2 text-primary">
-                        <span class="material-symbols-outlined text-lg">description</span>
-                        <span class="font-headline font-bold text-sm">Autofill Details</span>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                        <div><span class="font-bold text-outline">Applicant:</span> <span id="prefill-owner">N/A</span></div>
-                        <div><span class="font-bold text-outline">Property Address:</span> <span id="prefill-address">N/A</span></div>
-                        <div><span class="font-bold text-outline">County/Municipality:</span> <span id="prefill-jurisdiction">N/A</span></div>
-                        <div><span class="font-bold text-outline">Estimated Parcel ID:</span> <span id="prefill-parcel">N/A</span></div>
-                    </div>
-                    <div class="flex justify-start mt-2">
-                        <button id="autofill-btn" onclick="autofillApplication()" class="bg-[#00855c] text-white px-4 py-2 rounded-lg text-xs font-bold hover:opacity-90 transition-opacity">
-                            Apply via Hosteva Concierge (Auto-Fill)
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Chat Panel (Expandable) -->
-            <div id="chat-panel" class="hidden border-t border-outline-variant/15 p-6 bg-surface-container-low/50 flex flex-col gap-4">
-                <div class="flex flex-col gap-2">
-                    <h4 class="font-headline font-bold text-on-surface text-sm">Ask Hosteva Assistant</h4>
-                    <p class="text-xs text-on-surface-variant leading-relaxed">Ask any questions about this compliance requirement, local fees, or inspection rules.</p>
-                </div>
-                <!-- Chat Window -->
-                <div class="bg-white rounded-xl border border-outline-variant/15 flex flex-col h-64 shadow-inner overflow-hidden">
-                    <div id="chat-history" class="flex-1 p-4 overflow-y-auto flex flex-col gap-3 text-sm">
-                        <!-- Greeting -->
-                        <div id="assistant-greeting" class="bg-surface-container-low text-on-surface p-3 rounded-lg max-w-[85%] self-start leading-relaxed shadow-sm">
-                            Hi! I am your compliance assistant. Ask me anything about this task.
+                    <div class="p-6 md:p-8 flex gap-5 items-start">
+                        <div class="bg-tertiary-container/10 p-3 rounded-full text-tertiary shrink-0 mt-1">
+                            <span class="material-symbols-outlined icon-fill">auto_awesome</span>
+                        </div>
+                        <div class="flex-1 flex flex-col gap-2">
+                            <h3 class="font-headline font-bold text-on-surface text-lg tracking-tight">Hosteva Assistant</h3>
+                            <p id="task-instructions" class="font-body text-on-surface-variant text-base leading-relaxed animate-pulse bg-slate-200 h-5 w-full rounded-md mb-1"></p>
+                            <p id="task-instructions-2" class="font-body text-on-surface-variant text-base leading-relaxed animate-pulse bg-slate-200 h-5 w-5/6 rounded-md"></p>
+                            
+                            <!-- Interactive Action Buttons -->
+                            <div class="flex flex-wrap gap-3 mt-4">
+                                <button onclick="toggleGuidancePanel()" class="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary hover:opacity-90 rounded-lg text-sm font-semibold transition-all">
+                                    <span class="material-symbols-outlined text-sm">help</span>
+                                    How do I get this?
+                                </button>
+                                <button onclick="toggleChatPanel()" class="flex items-center gap-2 px-4 py-2 bg-surface-container-high text-primary hover:bg-surface-container-highest rounded-lg text-sm font-semibold transition-all">
+                                    <span class="material-symbols-outlined text-sm">chat</span>
+                                    Ask Assistant a Question
+                                </button>
+                            </div>
                         </div>
                     </div>
-                    <!-- Chat Input -->
-                    <div class="border-t border-outline-variant/15 p-2 bg-surface-container-lowest flex gap-2">
-                        <input type="text" id="chat-query-input" placeholder="Type a question (e.g. 'How much does this cost?')..." class="flex-1 text-sm bg-transparent border-none focus:ring-0 text-on-surface placeholder:text-outline" onkeydown="handleChatKeyPress(event)">
-                        <button onclick="sendChatMessage()" class="bg-primary text-on-primary px-4 py-1.5 rounded-lg text-xs font-bold hover:opacity-90 transition-all shrink-0">
-                            Send
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </section>
 
-        <!-- Section: Requirements Checklist -->
-        <section class="flex flex-col gap-5">
-            <h2 class="font-headline font-bold text-xl text-on-surface tracking-tight">Verification Requirements</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <!-- Requirement 1 -->
-                <div class="bg-surface-container-low rounded-xl p-5 flex flex-col gap-3 group hover:bg-surface-container transition-colors duration-200">
-                    <div class="bg-surface rounded-full w-10 h-10 flex items-center justify-center text-primary mb-2 shadow-sm group-hover:scale-105 transition-transform">
-                        <span class="material-symbols-outlined">home_pin</span>
+                    <!-- Guidance Panel (Expandable) -->
+                    <div id="guidance-panel" class="hidden border-t border-outline-variant/15 p-6 md:p-8 bg-surface-container-low/50 flex flex-col gap-6">
+                        <div class="flex flex-col gap-2">
+                            <h4 class="font-headline font-bold text-on-surface text-base">Permit Application Guide</h4>
+                            <p id="guidance-text" class="text-sm text-on-surface-variant leading-relaxed">Loading guide...</p>
+                        </div>
+                        <div class="flex flex-col gap-3">
+                            <span class="text-xs uppercase text-outline font-bold">Official Portals & Resources</span>
+                            <div id="guidance-links" class="flex flex-col gap-2"></div>
+                        </div>
+                        <!-- Prefill Concierge Card -->
+                        <div class="bg-white/85 p-5 rounded-xl border border-primary/10 shadow-sm flex flex-col gap-4">
+                            <div class="flex items-center gap-2 text-primary">
+                                <span class="material-symbols-outlined text-lg">description</span>
+                                <span class="font-headline font-bold text-sm">Autofill Details</span>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                                <div><span class="font-bold text-outline">Applicant:</span> <span id="prefill-owner">N/A</span></div>
+                                <div><span class="font-bold text-outline">Property Address:</span> <span id="prefill-address">N/A</span></div>
+                                <div><span class="font-bold text-outline">County/Municipality:</span> <span id="prefill-jurisdiction">N/A</span></div>
+                                <div><span class="font-bold text-outline">Estimated Parcel ID:</span> <span id="prefill-parcel">N/A</span></div>
+                            </div>
+                            <div class="flex justify-start mt-2">
+                                <button id="autofill-btn" onclick="autofillApplication()" class="bg-[#00855c] text-white px-4 py-2 rounded-lg text-xs font-bold hover:opacity-90 transition-opacity">
+                                    Apply via Hosteva Concierge (Auto-Fill)
+                                </button>
+                            </div>
+                        </div>
                     </div>
-                    <span class="font-body text-sm font-semibold text-on-surface leading-snug">Matches property address</span>
-                </div>
-                <!-- Requirement 2 -->
-                <div class="bg-surface-container-low rounded-xl p-5 flex flex-col gap-3 group hover:bg-surface-container transition-colors duration-200">
-                    <div class="bg-surface rounded-full w-10 h-10 flex items-center justify-center text-primary mb-2 shadow-sm group-hover:scale-105 transition-transform">
-                        <span class="material-symbols-outlined">event_available</span>
-                    </div>
-                    <span class="font-body text-sm font-semibold text-on-surface leading-snug">Expiration date is future-dated</span>
-                </div>
-                <!-- Requirement 3 -->
-                <div class="bg-surface-container-low rounded-xl p-5 flex flex-col gap-3 group hover:bg-surface-container transition-colors duration-200">
-                    <div class="bg-surface rounded-full w-10 h-10 flex items-center justify-center text-primary mb-2 shadow-sm group-hover:scale-105 transition-transform">
-                        <span class="material-symbols-outlined">person_check</span>
-                    </div>
-                    <span class="font-body text-sm font-semibold text-on-surface leading-snug">Applicant name matches Host name</span>
-                </div>
-            </div>
-        </section>
 
-        <!-- Section: Upload Dropzone & Results -->
-        <section class="mt-4" id="upload-section">
-            <input type="file" id="permit-file-input" class="hidden" accept=".pdf,.png,.jpg,.jpeg">
-            <div id="dropzone" class="relative border-2 border-dashed border-outline-variant/30 rounded-3xl p-10 md:p-16 flex flex-col items-center justify-center text-center gap-6 bg-surface-container-lowest/40 backdrop-blur-sm hover:bg-surface-container-lowest/80 hover:border-primary/40 transition-all duration-300 cursor-pointer group overflow-hidden">
-                <!-- Decorative background blob for dropzone -->
-                <div class="absolute inset-0 bg-gradient-to-b from-surface-container-high/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                <div class="bg-surface-container-high rounded-full p-5 relative z-10 group-hover:scale-110 group-hover:bg-primary-container group-hover:text-on-primary-container transition-all duration-300 shadow-sm text-primary">
-                    <span class="material-symbols-outlined text-4xl">upload_file</span>
-                </div>
-                <div class="relative z-10 flex flex-col gap-2">
-                    <h3 id="dropzone-title" class="font-headline font-bold text-on-surface text-xl md:text-2xl">Drag &amp; drop your permit document here</h3>
-                    <p id="dropzone-subtitle" class="font-body text-on-surface-variant text-base">
-                        or <span class="text-primary font-semibold underline underline-offset-4 decoration-primary/30 hover:decoration-primary transition-colors">browse files</span>
-                    </p>
-                </div>
-                <div class="relative z-10 flex items-center gap-2 mt-2">
-                    <span class="bg-surface text-on-surface-variant font-label text-xs uppercase tracking-wider font-semibold px-3 py-1 rounded-md shadow-sm border border-outline-variant/15">PDF</span>
-                    <span class="bg-surface text-on-surface-variant font-label text-xs uppercase tracking-wider font-semibold px-3 py-1 rounded-md shadow-sm border border-outline-variant/15">PNG</span>
-                    <span class="bg-surface text-on-surface-variant font-label text-xs uppercase tracking-wider font-semibold px-3 py-1 rounded-md shadow-sm border border-outline-variant/15">JPG</span>
-                </div>
+                    <!-- Chat Panel (Expandable) -->
+                    <div id="chat-panel" class="hidden border-t border-outline-variant/15 p-6 bg-surface-container-low/50 flex flex-col gap-4">
+                        <div class="flex flex-col gap-2">
+                            <h4 class="font-headline font-bold text-on-surface text-sm">Ask Hosteva Assistant</h4>
+                            <p class="text-xs text-on-surface-variant leading-relaxed">Ask any questions about this compliance requirement, local fees, or inspection rules.</p>
+                        </div>
+                        <!-- Chat Window (Expanded height to h-[450px] for legibility) -->
+                        <div class="bg-white rounded-xl border border-outline-variant/15 flex flex-col h-[450px] shadow-inner overflow-hidden">
+                            <div id="chat-history" class="flex-1 p-4 overflow-y-auto flex flex-col gap-3 text-sm">
+                                <!-- Greeting -->
+                                <div id="assistant-greeting" class="bg-surface-container-low text-on-surface p-3 rounded-lg max-w-[85%] self-start leading-relaxed shadow-sm">
+                                    Hi! I am your compliance assistant. Ask me anything about this task.
+                                </div>
+                            </div>
+                            <!-- Chat Input -->
+                            <div class="border-t border-outline-variant/15 p-2 bg-surface-container-lowest flex gap-2">
+                                <input type="text" id="chat-query-input" placeholder="Type a question (e.g. 'How much does this cost?')..." class="flex-1 text-sm bg-transparent border-none focus:ring-0 text-on-surface placeholder:text-outline" onkeydown="handleChatKeyPress(event)">
+                                <button onclick="sendChatMessage()" class="bg-primary text-on-primary px-4 py-1.5 rounded-lg text-xs font-bold hover:opacity-90 transition-all shrink-0">
+                                    Send
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
             </div>
-        </section>
+
+            <!-- Right Column: Requirements & Document Dropzone -->
+            <div class="lg:col-span-5 flex flex-col gap-8 w-full">
+                <!-- Section: Requirements Checklist -->
+                <section class="flex flex-col gap-5">
+                    <h2 class="font-headline font-bold text-xl text-on-surface tracking-tight">Verification Requirements</h2>
+                    <div class="flex flex-col gap-4">
+                        <!-- Requirement 1 -->
+                        <div class="bg-surface-container-low rounded-xl p-5 flex items-center gap-4 group hover:bg-surface-container transition-colors duration-200">
+                            <div class="bg-surface rounded-full w-10 h-10 flex items-center justify-center text-primary shadow-sm group-hover:scale-105 transition-transform shrink-0">
+                                <span class="material-symbols-outlined">home_pin</span>
+                            </div>
+                            <span class="font-body text-sm font-semibold text-on-surface leading-snug">Matches property address</span>
+                        </div>
+                        <!-- Requirement 2 -->
+                        <div class="bg-surface-container-low rounded-xl p-5 flex items-center gap-4 group hover:bg-surface-container transition-colors duration-200">
+                            <div class="bg-surface rounded-full w-10 h-10 flex items-center justify-center text-primary shadow-sm group-hover:scale-105 transition-transform shrink-0">
+                                <span class="material-symbols-outlined">event_available</span>
+                            </div>
+                            <span class="font-body text-sm font-semibold text-on-surface leading-snug">Expiration date is future-dated</span>
+                        </div>
+                        <!-- Requirement 3 -->
+                        <div class="bg-surface-container-low rounded-xl p-5 flex items-center gap-4 group hover:bg-surface-container transition-colors duration-200">
+                            <div class="bg-surface rounded-full w-10 h-10 flex items-center justify-center text-primary shadow-sm group-hover:scale-105 transition-transform shrink-0">
+                                <span class="material-symbols-outlined">person_check</span>
+                            </div>
+                            <span class="font-body text-sm font-semibold text-on-surface leading-snug">Applicant name matches Host name</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section: Upload Dropzone & Results -->
+                <section class="flex flex-col gap-4" id="upload-section">
+                    <input type="file" id="permit-file-input" class="hidden" accept=".pdf,.png,.jpg,.jpeg">
+                    <div id="dropzone" class="relative border-2 border-dashed border-outline-variant/30 rounded-3xl p-8 md:p-12 flex flex-col items-center justify-center text-center gap-6 bg-surface-container-lowest/40 backdrop-blur-sm hover:bg-surface-container-lowest/80 hover:border-primary/40 transition-all duration-300 cursor-pointer group overflow-hidden">
+                        <!-- Decorative background blob for dropzone -->
+                        <div class="absolute inset-0 bg-gradient-to-b from-surface-container-high/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                        <div class="bg-surface-container-high rounded-full p-4 relative z-10 group-hover:scale-110 group-hover:bg-primary-container group-hover:text-on-primary-container transition-all duration-300 shadow-sm text-primary">
+                            <span class="material-symbols-outlined text-3xl">upload_file</span>
+                        </div>
+                        <div class="relative z-10 flex flex-col gap-2">
+                            <h3 id="dropzone-title" class="font-headline font-bold text-on-surface text-lg">Drag &amp; drop document</h3>
+                            <p id="dropzone-subtitle" class="font-body text-on-surface-variant text-sm">
+                                or <span class="text-primary font-semibold underline underline-offset-4 decoration-primary/30 hover:decoration-primary transition-colors">browse files</span>
+                            </p>
+                        </div>
+                        <div class="relative z-10 flex items-center gap-2 mt-2">
+                            <span class="bg-surface text-on-surface-variant font-label text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-md shadow-sm border border-outline-variant/15">PDF</span>
+                            <span class="bg-surface text-on-surface-variant font-label text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-md shadow-sm border border-outline-variant/15">PNG</span>
+                            <span class="bg-surface text-on-surface-variant font-label text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-md shadow-sm border border-outline-variant/15">JPG</span>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
 
         <!-- Footer Actions -->
         <footer class="flex justify-end gap-4 mt-4 pt-6">

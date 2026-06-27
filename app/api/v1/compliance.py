@@ -520,8 +520,8 @@ def compliance_task_chat(
             "Once submitted, your application is reviewed by the Planning Commission. Hosteva can pre-fill this application for you!"
         )
         links = [
-            {"label": "Pasco County Planning & Development Portal", "url": "https://www.pascocountyfl.net/373/Planning-Development"},
-            {"label": "Official Pasco CUP Application Guidelines PDF", "url": "https://www.pascocountyfl.net/DocumentCenter/View/6112"}
+            {"label": "Pasco County Planning & Development Portal", "url": "https://www.pascocountyfl.gov/373/Planning-Development"},
+            {"label": "Official Pasco CUP Application Guidelines (Accela Citizen Portal)", "url": "https://aca.accela.com/PASC/"}
         ]
     elif "annual growth" in task_name.lower():
         response_text = (
@@ -534,8 +534,8 @@ def compliance_task_chat(
             "You can complete this registration completely online through the Pasco County Customer Service portal."
         )
         links = [
-            {"label": "Pasco County Growth Management Department", "url": "https://www.pascocountyfl.net/263/Growth-Management"},
-            {"label": "Online Registration Form", "url": "https://www.pascocountyfl.net/STR-Registration"}
+            {"label": "Pasco County Growth Management Department", "url": "https://www.pascocountyfl.gov/263/Growth-Management"},
+            {"label": "Online Registration Form (Accela Citizen Portal)", "url": "https://aca.accela.com/PASC/"}
         ]
     elif "hillsborough" in task_name.lower():
         response_text = (
