@@ -804,6 +804,10 @@ tailwind.config = {
             'Authorization': `Bearer ${token}` 
         };
 
+        if (typeof DOMPurify !== 'undefined' && DOMPurify.setConfig) {
+            DOMPurify.setConfig({ ADD_ATTR: ['onclick'] });
+        }
+
         let sessionToken = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : Math.random().toString(36).substring(2);
         let debounceTimer;
 

@@ -3,6 +3,10 @@
 (function() {
     console.log("Compliance JS Loaded");
 
+    if (typeof DOMPurify !== 'undefined' && DOMPurify.setConfig) {
+        DOMPurify.setConfig({ ADD_ATTR: ['onclick'] });
+    }
+
     // Hidden input files element creation helper
     function getOrCreateFileInput() {
         let fileInput = document.getElementById('compliance-file-upload-input');
