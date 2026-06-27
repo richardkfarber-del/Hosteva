@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // Step 3: If validation passes, create property in database via POST /api/v1/properties
-            const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+            const token = localStorage.getItem("access_token") || sessionStorage.getItem("access_token") || localStorage.getItem("token") || sessionStorage.getItem("token") || getCookie("access_token");
             const headers = { 'Content-Type': 'application/json' };
             if (token) {
                 headers["Authorization"] = `Bearer ${token}`;
@@ -228,4 +228,10 @@ function injectAnimationStyles() {
     styleEl.id = 'wizard-toast-styles';
     styleEl.innerHTML = styles;
     document.head.appendChild(styleEl);
+}
+
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
 }
