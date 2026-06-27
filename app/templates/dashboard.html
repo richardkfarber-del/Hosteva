@@ -1357,9 +1357,13 @@ Processing Time: ${data.estimated_processing_time}`);
                 }
 
                 // Fetch checklist items for all properties in parallel to compute dynamic compliance scores
-                const checklistPromises = properties.map(p => 
+                const checklistPromises = properties.map((p, idx) => 
                     fetch(`/api/v1/compliance/checklist-items/${p.id}`, { headers })
                         .then(res => res.ok ? res.json() : [])
+                        .then(data => {
+                            p.checklist = data;
+                            return data;
+                        })
                         .catch(() => [])
                 );
                 const propertiesChecklists = await Promise.all(checklistPromises);
@@ -1641,8 +1645,27 @@ Processing Time: ${data.estimated_processing_time}`);
             alert('Generating portfolio-level compliance audit report...');
         }
 
-        function upgradeToPro() {
-            window.location.href = '/api/stripe/checkout-session';
+        async function upgradeToPro() {
+            try {
+                const response = await fetch('/api/v1/billing/checkout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', ...headers },
+                    body: JSON.stringify({ tier: 'GROWTH' })
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.checkout_url) {
+                        window.location.href = data.checkout_url;
+                    } else {
+                        alert('Stripe session URL not found.');
+                    }
+                } else {
+                    alert('Failed to initiate checkout session.');
+                }
+            } catch (err) {
+                console.error('Error upgrading to Pro:', err);
+                alert('An error occurred during checkout initialization.');
+            }
         }
 
         function logout() {
@@ -1763,18 +1786,20 @@ Processing Time: ${data.estimated_processing_time}`);
                     });
                 }
 
-                // 2. Add required permits
-                permits.forEach(permit => {
-                    // Skip the HOA task message since we added it as a special HOA type above
-                    if (permit.includes("HOA Detected: Public rules unavailable")) {
+                // 2. Add required permits from the loaded database checklist
+                const checklist = p.checklist || [];
+                checklist.forEach(item => {
+                    // Only show pending compliance tasks (i.e. not approved)
+                    if (item.status === 'APPROVED') {
                         return;
                     }
                     allTasks.push({
                         type: 'compliance',
                         urgent: true,
-                        title: 'Obtain ' + permit,
+                        title: 'Obtain ' + (item.task_name || item.violation_notes || 'Permit'),
                         propertyAddress: p.address,
                         propertyId: p.id,
+                        complianceId: item.id,
                         priority: 'Required Permit',
                         badgeClass: 'bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider rounded-full',
                         actionText: 'Complete Now',
@@ -1858,7 +1883,7 @@ Processing Time: ${data.estimated_processing_time}`);
                                     <span class="text-[10px] uppercase text-outline font-bold">Priority</span>
                                     <span class="text-sm font-semibold ${isHOA ? 'text-red-600' : 'text-primary'}">${isHOA ? 'Critical' : 'High Priority'}</span>
                                 </div>
-                                <button onclick="handleTaskAction('${t.actionType}', '${t.propertyId}', ${idx})" class="bg-primary hover:opacity-90 text-on-primary px-5 py-2 rounded font-semibold text-sm transition-opacity">${t.actionText}</button>
+                                <button onclick="handleTaskAction('${t.actionType}', '${t.propertyId}', ${idx}, '${t.complianceId || ''}')" class="bg-primary hover:opacity-90 text-on-primary px-5 py-2 rounded font-semibold text-sm transition-opacity">${t.actionText}</button>
                             </div>
                         </div>
                     `;
@@ -1925,7 +1950,7 @@ Processing Time: ${data.estimated_processing_time}`);
             renderTasksList();
         }
 
-        function handleTaskAction(actionType, propertyId, index) {
+        function handleTaskAction(actionType, propertyId, index, complianceId) {
             if (actionType === 'upload_hoa') {
                 window.uploadTargetPropertyId = propertyId;
                 const fileInput = document.getElementById('hoa-file-upload-input');
@@ -1933,7 +1958,11 @@ Processing Time: ${data.estimated_processing_time}`);
                     fileInput.click();
                 }
             } else if (actionType === 'complete_permit') {
-                alert('Initiating automated permit generation and registration workflow...');
+                if (complianceId) {
+                    window.location.href = '/dashboard/tasks/' + complianceId;
+                } else {
+                    alert('Compliance Task ID not found.');
+                }
             } else if (actionType === 'acknowledge_rule') {
                 alert('Restriction Ordinance acknowledged. Compliance checklist updated!');
             } else if (actionType === 'flagged_violation') {

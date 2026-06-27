@@ -257,6 +257,27 @@ def read_manage_property(property_id: str, request: Request, db: Session = Depen
         }
     )
 
+@app.get("/dashboard/tasks/{task_id}", name="task_detail")
+def read_task_detail(task_id: str, request: Request, db: Session = Depends(get_db)):
+    token = request.cookies.get("access_token")
+    if not token:
+        return RedirectResponse(url="/login", status_code=303)
+    try:
+        from app.core.security import SECRET_KEY, ALGORITHM
+        from jose import jwt
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            return RedirectResponse(url="/login", status_code=303)
+    except Exception:
+        return RedirectResponse(url="/login", status_code=303)
+
+    return templates.TemplateResponse(
+        request=request,
+        name="task_detail.html",
+        context={"request": request, "task_id": task_id, "active_page": "compliance"}
+    )
+
 from app.core.security import get_current_user
 from app.models.host import Host
 

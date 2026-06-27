@@ -217,6 +217,34 @@ def validate_property(request: ValidatePropertyRequest, db: Session = Depends(ge
             matched_rules.append(rule)
 
     for rule in matched_rules:
+        # Check zoning restrictions
+        if rule.zoning_code and rule.zoning_code.strip().upper() == zoning_normalized:
+            if rule.is_allowed == False:
+                return ValidatePropertyResponse(
+                    allowed=False,
+                    status="REJECTED",
+                    rejection_reason=rule.rejection_reason or f"Zoning {rule.zoning_code} is not permitted for short term rentals",
+                    source_url=rule.source_url
+                )
+        # Check property type restrictions
+        if rule.property_type and rule.property_type.strip().lower() == prop_type_normalized:
+            if rule.is_allowed == False:
+                return ValidatePropertyResponse(
+                    allowed=False,
+                    status="REJECTED",
+                    rejection_reason=rule.rejection_reason or f"{rule.property_type} homes cannot be rented short term",
+                    source_url=rule.source_url
+                )
+        # Check stay duration restrictions
+        if rule.stay_restriction_days is not None and request.requested_stay_duration_days is not None:
+            if request.requested_stay_duration_days < rule.stay_restriction_days:
+                return ValidatePropertyResponse(
+                    allowed=False,
+                    status="REJECTED",
+                    rejection_reason=f"Requested stay duration is less than the minimum required stay of {rule.stay_restriction_days} days",
+                    source_url=rule.source_url
+                )
+
         level = "Municipal"
         if "state" in rule.municipality_name.lower():
             level = "State"

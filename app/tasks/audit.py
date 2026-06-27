@@ -14,7 +14,7 @@ from app.models.host import Host
 from app.db_models import User
 from app.api.v1.compliance import is_name_match, is_address_match
 
-def call_gemini_ocr(file_bytes: bytes, mime_type: str) -> dict:
+def call_gemini_ocr(file_bytes: bytes, mime_type: str, task_name: str = None) -> dict:
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
         # Fallback to local parsing mock/regex
@@ -26,10 +26,32 @@ def call_gemini_ocr(file_bytes: bytes, mime_type: str) -> dict:
         exp_date = res.get("extracted_expiration_date")
         exp_date_str = str(exp_date) if exp_date else None
         
+        # Parse custom mock fields if present in input string
+        extracted_name = res.get("extracted_name")
+        extracted_address = res.get("extracted_address")
+        extracted_permit = res.get("extracted_permit_number")
+        
+        text_content = ""
+        try:
+            text_content = file_bytes.decode("utf-8")
+        except:
+            pass
+            
+        if text_content:
+            for line in text_content.split("\n"):
+                if "owner:" in line:
+                    extracted_name = line.split("owner:")[1].strip()
+                elif "address:" in line:
+                    extracted_address = line.split("address:")[1].strip()
+                elif "permit:" in line:
+                    extracted_permit = line.split("permit:")[1].strip()
+                elif "expires:" in line:
+                    exp_date_str = line.split("expires:")[1].strip()
+                    
         return {
-            "owner_name": res.get("extracted_name"),
-            "site_address": res.get("extracted_address"),
-            "license_number": res.get("extracted_permit_number"),
+            "owner_name": extracted_name,
+            "site_address": extracted_address,
+            "license_number": extracted_permit,
             "expiration_date": exp_date_str,
             "is_valid": True,
             "verification_notes": "Parsed using local regex engine fallback."
@@ -40,6 +62,26 @@ def call_gemini_ocr(file_bytes: bytes, mime_type: str) -> dict:
         url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key={api_key}"
         headers = {"Content-Type": "application/json"}
         
+        task_instructions = ""
+        if task_name:
+            if "Pasco Conditional Use Permit" in task_name:
+                task_instructions = (
+                    "For the Pasco Conditional Use Permit, you MUST extract the specific CUP permit number, "
+                    "the expiration date, the registrant name, and the property parcel address."
+                )
+            elif "Pasco 4%" in task_name:
+                task_instructions = (
+                    "For the Pasco 4% TDT registration, you MUST extract the 6-digit TDT account number "
+                    "and check if Pasco County is explicitly named as the authority."
+                )
+            elif "State Sales Tax" in task_name:
+                task_instructions = (
+                    "For the State Sales Tax registration, you MUST extract the Florida DOR Certificate number "
+                    "and check for the combined 6.0% sales tax registration markers."
+                )
+            else:
+                task_instructions = f"Extract the permit number, expiration date, registrant name, and address for: {task_name}."
+
         prompt = (
             "You are a professional compliance auditor. Analyze the attached compliance document "
             "and extract the following fields in a valid JSON format. "
@@ -52,6 +94,7 @@ def call_gemini_ocr(file_bytes: bytes, mime_type: str) -> dict:
             "  \"is_valid\": true/false,\n"
             "  \"verification_notes\": \"Detailed description of document details.\"\n"
             "}\n"
+            f"{task_instructions}\n"
             "Note: Perform fuzzy checks on the name and address to tolerate minor abbreviations (e.g. 'St' vs 'Street') and middle initials."
         )
         
@@ -87,7 +130,7 @@ def call_gemini_ocr(file_bytes: bytes, mime_type: str) -> dict:
         "is_valid": False,
         "verification_notes": f"Gemini connection failure: {e}"
     }
-
+ 
 @celery_app.task(name="app.tasks.process_document_ocr")
 def process_document_ocr(checklist_item_id: str, file_url: str):
     logging.info(f"Starting process_document_ocr for checklist_item_id={checklist_item_id}, url={file_url}")
@@ -104,7 +147,7 @@ def process_document_ocr(checklist_item_id: str, file_url: str):
         if not item:
             logging.error(f"Checklist item {checklist_item_id} not found in database.")
             return False
-
+ 
             
         # 2. Fetch property and owner
         prop = db.query(Property).filter(Property.id == item.property_id).first()
@@ -136,24 +179,39 @@ def process_document_ocr(checklist_item_id: str, file_url: str):
                 return False
         else:
             # Local/mock fallback path
-            if os.path.exists(file_url):
+            resolved_path = file_url
+            if file_url.startswith("/"):
+                resolved_path = os.path.join("app", file_url.lstrip("/"))
+            elif file_url.startswith("static/"):
+                resolved_path = os.path.join("app", file_url)
+                
+            if os.path.exists(resolved_path):
                 try:
-                    with open(file_url, "rb") as f:
+                    with open(resolved_path, "rb") as f:
                         file_bytes = f.read()
-                    if file_url.endswith(".png"):
+                    if resolved_path.endswith(".png"):
                         mime_type = "image/png"
-                    elif file_url.endswith(".jpg") or file_url.endswith(".jpeg"):
+                    elif resolved_path.endswith(".jpg") or resolved_path.endswith(".jpeg"):
                         mime_type = "image/jpeg"
                 except Exception as e:
-                    logging.error(f"Failed to read local file {file_url}: {e}")
+                    logging.error(f"Failed to read local file {resolved_path}: {e}")
             
             # If no file bytes loaded, default to mock text content
             if not file_bytes:
-                file_bytes = f"owner: {owner_name}\naddress: {prop.address}\nexpires: 2028-12-31\npermit: 88888".encode("utf-8")
+                # Custom mock based on task_name
+                t_name = item.task_name or ""
+                if "Pasco Conditional Use Permit" in t_name:
+                    file_bytes = f"owner: {owner_name}\naddress: {prop.address}\nexpires: 2028-12-31\npermit: CUP-99999".encode("utf-8")
+                elif "Pasco 4%" in t_name:
+                    file_bytes = f"owner: {owner_name}\naddress: {prop.address}\nexpires: 2028-12-31\npermit: 123456\nauthority: Pasco County".encode("utf-8")
+                elif "State Sales Tax" in t_name:
+                    file_bytes = f"owner: {owner_name}\naddress: {prop.address}\nexpires: 2028-12-31\npermit: DOR-88888\ntax: 6.0%".encode("utf-8")
+                else:
+                    file_bytes = f"owner: {owner_name}\naddress: {prop.address}\nexpires: 2028-12-31\npermit: 88888".encode("utf-8")
                 mime_type = "text/plain"
-
+ 
         # 4. Invoke Gemini OCR
-        ocr_result = call_gemini_ocr(file_bytes, mime_type)
+        ocr_result = call_gemini_ocr(file_bytes, mime_type, item.task_name)
         
         extracted_name = ocr_result.get("owner_name")
         extracted_address = ocr_result.get("site_address")
