@@ -151,3 +151,6 @@ vine==5.1.0
     #   kombu
 wcwidth==0.7.0
     # via prompt-toolkit
+icalendar==7.2.0
+    # via hosteva (pyproject.toml)
+
