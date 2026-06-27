@@ -27,6 +27,8 @@ def mock_geocode():
         def side_effect(address):
             if address == "123 Main St":
                 return {"city": "Miami", "county": "Miami-Dade County", "state": "FL", "address_components": []}
+            if address == "Orlando Address":
+                return {"city": "Orlando", "county": "Orange County", "state": "FL", "address_components": []}
             return {"city": "", "county": "", "state": "", "address_components": []}
         mock.side_effect = side_effect
         yield mock
@@ -91,6 +93,18 @@ def setup_test_db():
 
 
         db.add(mc)
+        
+        # Seed state municipal code
+        mc_state = MunicipalCode(
+            id=uuid.UUID("22222222-3333-4444-5555-66666666666f"),
+            municipality_name="State of Florida",
+            ordinance_number="FL-STATE-LICENSE",
+            str_prohibited=False,
+            jurisdiction_type="State",
+            requires_permit=True,
+            permit_name="Florida DBPR License"
+        )
+        db.add(mc_state)
         
         # Seed checklist item (PropertyCompliance)
         checklist_item = PropertyCompliance(
@@ -195,4 +209,18 @@ def test_search_compliance_fallback_on_exception():
         data = response.json()
         assert len(data) >= 1
         assert data[0]["jurisdiction"] == "Orlando"
+
+def test_get_compliance_by_address_state_fallback():
+    """
+    Test that an address that does not match any seeded city/county
+    successfully falls back to returning the State of Florida compliance regulations.
+    """
+    response = client.get("/api/v1/compliance", params={"address": "Orlando Address"})
+    assert response.status_code == 200
+    data = response.json()
+    assert data["is_compliant"] is True
+    assert data["municipal_code"]["municipality_name"] == "State of Florida"
+    assert len(data["checklist"]) == 1
+    assert data["checklist"][0]["task_name"] == "Florida DBPR License"
+
 

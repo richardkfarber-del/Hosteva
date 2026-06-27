@@ -197,7 +197,7 @@
 {% block scripts %}
 <script>
     // Hosteva V2 Autocomplete implementation (Internal DB search over Google)
-    let sessionToken = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2);
+    let sessionToken = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : Math.random().toString(36).substring(2);
     let debounceTimer;
 
     const addressInput = document.getElementById('addressInput');
@@ -251,7 +251,7 @@
             addressInput.value = item.dataset.description;
             autocompleteDropdown.classList.add('hidden');
             // Reset session token after a selection is made
-            sessionToken = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2);
+            sessionToken = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : Math.random().toString(36).substring(2);
         }
     });
 

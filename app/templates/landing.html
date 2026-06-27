@@ -372,7 +372,7 @@
         const input = document.getElementById(inputId);
         const dropdown = document.getElementById(dropdownId);
         const button = document.getElementById(buttonId);
-        let sessionToken = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2);
+        let sessionToken = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : Math.random().toString(36).substring(2);
         let debounceTimer;
 
         input.addEventListener('input', (e) => {
@@ -411,7 +411,7 @@
                 input.value = description;
                 dropdown.classList.add('hidden');
                 // Refresh session token for future queries
-                sessionToken = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2);
+                sessionToken = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : Math.random().toString(36).substring(2);
                 window.location.href = `/wizard?address=${encodeURIComponent(description)}&place_id=${encodeURIComponent(placeId)}`;
             }
         });

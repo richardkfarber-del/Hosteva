@@ -248,6 +248,11 @@ def get_compliance_by_address(address: str, db: Session = Depends(get_db)):
             MunicipalCode.jurisdiction_type.ilike("County")
         ).first()
         
+    if not municipal_code and (state == "FL" or state == "Florida" or (state and state.upper() == "FL")):
+        municipal_code = db.query(MunicipalCode).filter(
+            MunicipalCode.municipality_name.ilike("State of Florida")
+        ).first()
+        
     # 3. Query hoa_rules
     hoa_rule = None
     if city or county:
@@ -296,7 +301,7 @@ def get_compliance_by_address(address: str, db: Session = Depends(get_db)):
             "is_compliant": False
         })
         
-    if not municipal_code:
+    if not city and not county and not state:
         raise HTTPException(status_code=404, detail="No compliance rules found for this address location.")
 
     return AddressComplianceResponse(

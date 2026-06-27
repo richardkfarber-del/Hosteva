@@ -803,7 +803,7 @@ tailwind.config = {
             'Authorization': `Bearer ${token}` 
         };
 
-        let sessionToken = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2);
+        let sessionToken = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : Math.random().toString(36).substring(2);
         let debounceTimer;
 
         const searchInput = document.getElementById('address-search');
@@ -849,7 +849,7 @@ tailwind.config = {
             if (searchInput) searchInput.value = description;
             if (dropdown) dropdown.classList.add('hidden');
             // Refresh session token after successful selection
-            sessionToken = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2);
+            sessionToken = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : Math.random().toString(36).substring(2);
             performSearch(placeId, description);
         }
 

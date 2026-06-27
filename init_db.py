@@ -42,7 +42,7 @@ def main():
         inspector = inspect(engine)
         try:
             columns = [c["name"] for c in inspector.get_columns("properties")]
-            for col_name in ["image_url", "required_permits", "local_restrictions"]:
+            for col_name in ["image_url", "required_permits", "local_restrictions", "airbnb_ical_import_url", "vrbo_ical_import_url", "hosteva_ical_export_token"]:
                 if col_name not in columns:
                     with engine.connect() as conn:
                         if "sqlite" in str(engine.url):
