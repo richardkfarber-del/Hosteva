@@ -186,6 +186,71 @@ def get_properties(
     query = db.query(Property).filter(Property.user_id == host.id)
     properties = query.all()
     
+    # Self-healing checklist seeding for properties
+    from app.models.compliance import PropertyCompliance, MunicipalCode
+    import uuid
+    
+    for p in properties:
+        if p.required_permits:
+            try:
+                tasks = json.loads(p.required_permits)
+            except:
+                tasks = []
+            if tasks:
+                existing_count = db.query(PropertyCompliance).filter(PropertyCompliance.property_id == p.id).count()
+                if existing_count < len(tasks):
+                    # Seed missing checklist rows
+                    state_code = db.query(MunicipalCode).filter(MunicipalCode.municipality_name.ilike("%State of Florida%")).first()
+                    if not state_code:
+                        state_code = db.query(MunicipalCode).filter(MunicipalCode.municipality_name.ilike("%Florida%")).first()
+                    if not state_code:
+                        state_code = db.query(MunicipalCode).first()
+                    
+                    fallback_mc_id = state_code.id if state_code else None
+                    if not fallback_mc_id:
+                        fallback_mc_id = uuid.uuid4()
+                        
+                    hillsborough_code = db.query(MunicipalCode).filter(MunicipalCode.municipality_name.ilike("%Hillsborough County%")).first()
+                    st_pete_code = db.query(MunicipalCode).filter(MunicipalCode.municipality_name.ilike("%St. Petersburg%")).first()
+                    pasco_code = db.query(MunicipalCode).filter(MunicipalCode.municipality_name.ilike("%Pasco County%")).first()
+                    
+                    state_id = state_code.id if state_code else fallback_mc_id
+                    hillsborough_id = hillsborough_code.id if hillsborough_code else (state_id or fallback_mc_id)
+                    st_pete_id = st_pete_code.id if st_pete_code else (state_id or fallback_mc_id)
+                    pasco_id = pasco_code.id if pasco_code else (state_id or fallback_mc_id)
+                    
+                    valid_period = '[2026-06-04 00:00:00, 2027-06-04 00:00:00]'
+                    
+                    for task_name in tasks:
+                        exists = db.query(PropertyCompliance).filter(
+                            PropertyCompliance.property_id == p.id,
+                            PropertyCompliance.violation_notes == task_name
+                        ).first()
+                        if not exists:
+                            if "Florida" in task_name or "State" in task_name:
+                                mc_id = state_id
+                            elif "Hillsborough" in task_name:
+                                mc_id = hillsborough_id
+                            elif "St. Petersburg" in task_name or "Pinellas" in task_name:
+                                mc_id = st_pete_id
+                            elif "Pasco" in task_name or "Annual Growth" in task_name:
+                                mc_id = pasco_id
+                            else:
+                                mc_id = state_id
+                                
+                            item = PropertyCompliance(
+                                property_id=p.id,
+                                municipal_code_id=mc_id,
+                                is_compliant=False,
+                                status="PENDING",
+                                verification_notes=None,
+                                task_name=task_name,
+                                violation_notes=task_name,
+                                valid_period=valid_period
+                            )
+                            db.add(item)
+                    db.commit()
+    
     if not properties:
         sql_query = "Unknown"
         try:
