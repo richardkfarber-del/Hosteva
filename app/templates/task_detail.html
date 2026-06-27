@@ -136,17 +136,84 @@
         <div id="verdict-banner-container"></div>
 
         <!-- Section: AI Intelligence Prism -->
-        <section class="bg-surface-container-lowest rounded-2xl ambient-shadow relative overflow-hidden flex transform transition-transform hover:-translate-y-1 duration-300">
+        <section class="bg-surface-container-lowest rounded-2xl ambient-shadow relative overflow-hidden flex flex-col transform transition-transform hover:-translate-y-0.5 duration-300">
             <!-- Signature Left Accent Bar -->
             <div class="w-1.5 bg-tertiary-fixed shrink-0 h-full absolute left-0 top-0"></div>
-            <div class="p-6 md:p-8 flex flex-col md:flex-row gap-5 items-start">
+            
+            <div class="p-6 md:p-8 flex gap-5 items-start">
                 <div class="bg-tertiary-container/10 p-3 rounded-full text-tertiary shrink-0 mt-1">
                     <span class="material-symbols-outlined icon-fill">auto_awesome</span>
                 </div>
-                <div class="flex flex-col gap-2">
+                <div class="flex-1 flex flex-col gap-2">
                     <h3 class="font-headline font-bold text-on-surface text-lg tracking-tight">Hosteva Assistant</h3>
                     <p id="task-instructions" class="font-body text-on-surface-variant text-base leading-relaxed animate-pulse bg-slate-200 h-5 w-full rounded-md mb-1"></p>
                     <p id="task-instructions-2" class="font-body text-on-surface-variant text-base leading-relaxed animate-pulse bg-slate-200 h-5 w-5/6 rounded-md"></p>
+                    
+                    <!-- Interactive Action Buttons -->
+                    <div class="flex flex-wrap gap-3 mt-4">
+                        <button onclick="toggleGuidancePanel()" class="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary hover:opacity-90 rounded-lg text-sm font-semibold transition-all">
+                            <span class="material-symbols-outlined text-sm">help</span>
+                            How do I get this?
+                        </button>
+                        <button onclick="toggleChatPanel()" class="flex items-center gap-2 px-4 py-2 bg-surface-container-high text-primary hover:bg-surface-container-highest rounded-lg text-sm font-semibold transition-all">
+                            <span class="material-symbols-outlined text-sm">chat</span>
+                            Ask Assistant a Question
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Guidance Panel (Expandable) -->
+            <div id="guidance-panel" class="hidden border-t border-outline-variant/15 p-6 md:p-8 bg-surface-container-low/50 flex flex-col gap-6">
+                <div class="flex flex-col gap-2">
+                    <h4 class="font-headline font-bold text-on-surface text-base">Permit Application Guide</h4>
+                    <p id="guidance-text" class="text-sm text-on-surface-variant leading-relaxed">Loading guide...</p>
+                </div>
+                <div class="flex flex-col gap-3">
+                    <span class="text-xs uppercase text-outline font-bold">Official Portals & Resources</span>
+                    <div id="guidance-links" class="flex flex-col gap-2"></div>
+                </div>
+                <!-- Prefill Concierge Card -->
+                <div class="bg-white/85 p-5 rounded-xl border border-primary/10 shadow-sm flex flex-col gap-4">
+                    <div class="flex items-center gap-2 text-primary">
+                        <span class="material-symbols-outlined text-lg">description</span>
+                        <span class="font-headline font-bold text-sm">Autofill Details</span>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                        <div><span class="font-bold text-outline">Applicant:</span> <span id="prefill-owner">N/A</span></div>
+                        <div><span class="font-bold text-outline">Property Address:</span> <span id="prefill-address">N/A</span></div>
+                        <div><span class="font-bold text-outline">County/Municipality:</span> <span id="prefill-jurisdiction">N/A</span></div>
+                        <div><span class="font-bold text-outline">Estimated Parcel ID:</span> <span id="prefill-parcel">N/A</span></div>
+                    </div>
+                    <div class="flex justify-start mt-2">
+                        <button id="autofill-btn" onclick="autofillApplication()" class="bg-[#00855c] text-white px-4 py-2 rounded-lg text-xs font-bold hover:opacity-90 transition-opacity">
+                            Apply via Hosteva Concierge (Auto-Fill)
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Panel (Expandable) -->
+            <div id="chat-panel" class="hidden border-t border-outline-variant/15 p-6 bg-surface-container-low/50 flex flex-col gap-4">
+                <div class="flex flex-col gap-2">
+                    <h4 class="font-headline font-bold text-on-surface text-sm">Ask Hosteva Assistant</h4>
+                    <p class="text-xs text-on-surface-variant leading-relaxed">Ask any questions about this compliance requirement, local fees, or inspection rules.</p>
+                </div>
+                <!-- Chat Window -->
+                <div class="bg-white rounded-xl border border-outline-variant/15 flex flex-col h-64 shadow-inner overflow-hidden">
+                    <div id="chat-history" class="flex-1 p-4 overflow-y-auto flex flex-col gap-3 text-sm">
+                        <!-- Greeting -->
+                        <div id="assistant-greeting" class="bg-surface-container-low text-on-surface p-3 rounded-lg max-w-[85%] self-start leading-relaxed shadow-sm">
+                            Hi! I am your compliance assistant. Ask me anything about this task.
+                        </div>
+                    </div>
+                    <!-- Chat Input -->
+                    <div class="border-t border-outline-variant/15 p-2 bg-surface-container-lowest flex gap-2">
+                        <input type="text" id="chat-query-input" placeholder="Type a question (e.g. 'How much does this cost?')..." class="flex-1 text-sm bg-transparent border-none focus:ring-0 text-on-surface placeholder:text-outline" onkeydown="handleChatKeyPress(event)">
+                        <button onclick="sendChatMessage()" class="bg-primary text-on-primary px-4 py-1.5 rounded-lg text-xs font-bold hover:opacity-90 transition-all shrink-0">
+                            Send
+                        </button>
+                    </div>
                 </div>
             </div>
         </section>
@@ -213,6 +280,10 @@
         </footer>
     </main>
 
+    <!-- Marked.js for Markdown parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- DOMPurify for XSS Sanitization -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
     <script>
         const taskId = "{{ task_id }}";
         const token = localStorage.getItem("access_token") || sessionStorage.getItem("access_token") || getCookie("access_token");
@@ -238,6 +309,11 @@
                 titleEl.innerText = data.task_name || data.description;
                 titleEl.classList.remove("animate-pulse", "bg-slate-200", "h-10", "w-2/3");
 
+                const greetingEl = document.getElementById("assistant-greeting");
+                if (greetingEl) {
+                    greetingEl.innerText = `Hi there! I am your compliance assistant. Let me know if you have questions about the "${data.task_name || data.description}" permit requirement or how to get it!`;
+                }
+
                 const addrEl = document.getElementById("task-address");
                 addrEl.innerText = data.property_address;
                 addrEl.classList.remove("animate-pulse", "bg-slate-200", "h-5", "w-1/3");
@@ -252,6 +328,9 @@
 
                 // Update UI based on initial task status
                 updateTaskUI(data.status, data.verification_notes, data.ocr_metadata_json);
+
+                // Fetch guidance data dynamically
+                fetchGuidanceData();
             } catch (err) {
                 console.error("Initialization error:", err);
                 alert("Failed to load compliance task detail.");
@@ -439,6 +518,192 @@
                     console.error("Status polling error:", err);
                 }
             }, 3000); // Poll every 3 seconds as planned
+        }
+
+        // Toggle Guidance and Chat Panels
+        function toggleGuidancePanel() {
+            const panel = document.getElementById("guidance-panel");
+            const isHidden = panel.classList.contains("hidden");
+            if (isHidden) {
+                panel.classList.remove("hidden");
+                panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            } else {
+                panel.classList.add("hidden");
+            }
+        }
+
+        function toggleChatPanel() {
+            const panel = document.getElementById("chat-panel");
+            const isHidden = panel.classList.contains("hidden");
+            if (isHidden) {
+                panel.classList.remove("hidden");
+                panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                document.getElementById("chat-query-input").focus();
+            } else {
+                panel.classList.add("hidden");
+            }
+        }
+
+        // Prefill Application Simulator
+        function autofillApplication() {
+            const btn = document.getElementById("autofill-btn");
+            btn.innerHTML = `
+                <span class="flex items-center gap-1">
+                    <span class="material-symbols-outlined text-xs animate-spin">progress_activity</span>
+                    Submitting Application Details...
+                </span>
+            `;
+            btn.disabled = true;
+
+            setTimeout(() => {
+                btn.innerHTML = `
+                    <span class="flex items-center gap-1 text-white">
+                        <span class="material-symbols-outlined text-xs">check_circle</span>
+                        Concierge Pre-fill Sent!
+                    </span>
+                `;
+                btn.className = "bg-tertiary text-white px-4 py-2 rounded-lg text-xs font-bold cursor-default";
+                
+                const history = document.getElementById("chat-history");
+                const botMsg = document.createElement("div");
+                botMsg.className = "bg-surface-container-low text-on-surface p-3 rounded-lg max-w-[85%] self-start leading-relaxed shadow-sm";
+                botMsg.innerHTML = `
+                    <strong>Hosteva Assistant</strong><br>
+                    🎉 I have initiated the concierge pre-fill application for you using your Hosteva profile details! We have sent the request to the official portal system. You will receive an email confirmation once the county processes the submission.
+                `;
+                history.appendChild(botMsg);
+                history.scrollTop = history.scrollHeight;
+                
+                document.getElementById("chat-panel").classList.remove("hidden");
+            }, 2000);
+        }
+
+        // Fetch Guidance Details
+        let assistantData = null;
+        async function fetchGuidanceData() {
+            try {
+                const response = await fetch(`/api/v1/compliance/tasks/${taskId}/chat`, {
+                    method: 'POST',
+                    headers: {
+                        ...headers,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ query: 'init_guidance' })
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    assistantData = data;
+                    
+                    // Populate guidance panel
+                    document.getElementById('guidance-text').innerHTML = DOMPurify.sanitize(marked.parse(data.response));
+                    
+                    const linksContainer = document.getElementById('guidance-links');
+                    linksContainer.innerHTML = '';
+                    if (data.links && data.links.length > 0) {
+                        data.links.forEach(l => {
+                            const a = document.createElement('a');
+                            a.href = l.url;
+                            a.target = '_blank';
+                            a.className = 'flex items-center gap-2 p-3 bg-white hover:bg-slate-50 border border-outline-variant/20 rounded-lg text-sm text-primary font-semibold transition-colors shadow-sm';
+                            a.innerHTML = `
+                                <span class="material-symbols-outlined text-base">link</span>
+                                <span>${l.label}</span>
+                                <span class="material-symbols-outlined text-xs ml-auto">open_in_new</span>
+                            `;
+                            linksContainer.appendChild(a);
+                        });
+                    } else {
+                        linksContainer.innerHTML = '<span class="text-xs text-on-surface-variant font-medium">No official links provided.</span>';
+                    }
+                    
+                    // Populate prefill details
+                    if (data.prefill_data) {
+                        document.getElementById('prefill-owner').innerText = data.prefill_data.owner_name || 'N/A';
+                        document.getElementById('prefill-address').innerText = data.prefill_data.property_address || 'N/A';
+                        document.getElementById('prefill-jurisdiction').innerText = `${data.prefill_data.city || ''}, ${data.prefill_data.state || ''}`.trim() || 'Florida';
+                        document.getElementById('prefill-parcel').innerText = data.prefill_data.parcel_id || 'N/A';
+                    }
+                }
+            } catch (err) {
+                console.error("Error fetching guidance:", err);
+            }
+        }
+
+        // Send Chat Messages
+        async function sendChatMessage() {
+            const input = document.getElementById("chat-query-input");
+            const query = input.value.trim();
+            if (!query) return;
+
+            input.value = "";
+
+            const history = document.getElementById("chat-history");
+            const userMsg = document.createElement("div");
+            userMsg.className = "bg-primary text-on-primary p-3 rounded-lg max-w-[85%] self-end leading-relaxed shadow-sm";
+            userMsg.innerText = query;
+            history.appendChild(userMsg);
+            history.scrollTop = history.scrollHeight;
+
+            const typingMsg = document.createElement("div");
+            typingMsg.className = "bg-surface-container-low text-on-surface p-3 rounded-lg max-w-[85%] self-start leading-relaxed shadow-sm flex items-center gap-2 italic text-xs";
+            typingMsg.innerHTML = `
+                <span class="material-symbols-outlined text-sm animate-spin">progress_activity</span>
+                Hosteva Assistant is responding...
+            `;
+            history.appendChild(typingMsg);
+            history.scrollTop = history.scrollHeight;
+
+            try {
+                const response = await fetch(`/api/v1/compliance/tasks/${taskId}/chat`, {
+                    method: 'POST',
+                    headers: {
+                        ...headers,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ query: query })
+                });
+                
+                if (typingMsg.parentNode) history.removeChild(typingMsg);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const botMsg = document.createElement("div");
+                    botMsg.className = "bg-surface-container-low text-on-surface p-3 rounded-lg max-w-[85%] self-start leading-relaxed shadow-sm";
+                    botMsg.innerHTML = `
+                        <strong>Hosteva Assistant</strong><br>
+                        ${DOMPurify.sanitize(marked.parse(data.response))}
+                    `;
+                    history.appendChild(botMsg);
+                    
+                    if (data.links && data.links.length > 0 && query.toLowerCase().includes("link")) {
+                        const linksDiv = document.createElement("div");
+                        linksDiv.className = "flex flex-col gap-1.5 mt-2";
+                        data.links.forEach(l => {
+                            linksDiv.innerHTML += `
+                                <a href="${l.url}" target="_blank" class="inline-flex items-center gap-1 text-xs text-primary font-bold hover:underline">
+                                    <span class="material-symbols-outlined text-xs">open_in_new</span> ${l.label}
+                                </a>
+                            `;
+                        });
+                        botMsg.appendChild(linksDiv);
+                    }
+                } else {
+                    const errorMsg = document.createElement("div");
+                    errorMsg.className = "bg-error/10 text-error p-3 rounded-lg max-w-[85%] self-start leading-relaxed shadow-sm text-xs";
+                    errorMsg.innerText = "Error matching assistant logic. Please try again.";
+                    history.appendChild(errorMsg);
+                }
+            } catch (err) {
+                if (typingMsg.parentNode) history.removeChild(typingMsg);
+                console.error("Chat error:", err);
+            }
+            history.scrollTop = history.scrollHeight;
+        }
+
+        function handleChatKeyPress(event) {
+            if (event.key === "Enter") {
+                sendChatMessage();
+            }
         }
 
         // On Load

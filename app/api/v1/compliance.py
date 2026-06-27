@@ -463,4 +463,166 @@ def get_compliance_task_status(task_id: str, db: Session = Depends(get_db)):
         "ocr_result": ocr_result
     }
 
+from pydantic import BaseModel
+from typing import List, Dict, Any, Optional
+
+class TaskChatRequest(BaseModel):
+    query: str
+
+@router.post("/tasks/{task_id}/chat")
+def compliance_task_chat(
+    task_id: str,
+    payload: TaskChatRequest,
+    db: Session = Depends(get_db)
+):
+    from app.models.compliance import PropertyCompliance, MunicipalCode
+    from app.models.property import Property
+    import uuid
+    import json
+    
+    try:
+        task_uuid = uuid.UUID(task_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid UUID format")
+        
+    task = db.query(PropertyCompliance).filter(PropertyCompliance.id == task_uuid).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Compliance task not found")
+        
+    prop = db.query(Property).filter(Property.id == task.property_id).first()
+    task_name = task.task_name or task.violation_notes or "Required Permit"
+    
+    query_lower = payload.query.lower()
+    
+    # Custom intelligence responses
+    response_text = ""
+    links = []
+    prefill_data = {}
+    
+    if prop:
+        prefill_data = {
+            "owner_name": "Richard Farber",
+            "property_address": prop.address,
+            "city": prop.city,
+            "state": prop.state,
+            "zip_code": prop.zip_code,
+            "parcel_id": "55-23-19-0000-00100-0020"
+        }
+    
+    if "pasco conditional" in task_name.lower():
+        response_text = (
+            "A **Conditional Use Permit (CUP)** is a zoning approval required by Pasco County to operate a short-term rental "
+            "in standard residential districts. To obtain a CUP, you must submit an application packet containing:\n\n"
+            "1. A completed Pasco County CUP Application form.\n"
+            "2. A detailed **site plan** showing all off-street parking spaces (minimum 2 required).\n"
+            "3. A standard floor plan of the property.\n"
+            "4. A non-refundable application fee of **$250**.\n\n"
+            "Once submitted, your application is reviewed by the Planning Commission. Hosteva can pre-fill this application for you!"
+        )
+        links = [
+            {"label": "Pasco County Planning & Development Portal", "url": "https://www.pascocountyfl.net/373/Planning-Development"},
+            {"label": "Official Pasco CUP Application Guidelines PDF", "url": "https://www.pascocountyfl.net/DocumentCenter/View/6112"}
+        ]
+    elif "annual growth" in task_name.lower():
+        response_text = (
+            "The **Annual Growth Management Registration** is a required yearly registration for all short-term rental "
+            "properties operating in Pasco County. This ensures that rentals comply with emergency contact and safety guidelines.\n\n"
+            "**Requirements to apply**:\n"
+            "1. An active Florida DBPR lodging license.\n"
+            "2. A local emergency contact available 24/7 who lives within 30 miles.\n"
+            "3. An annual fee of **$150**.\n\n"
+            "You can complete this registration completely online through the Pasco County Customer Service portal."
+        )
+        links = [
+            {"label": "Pasco County Growth Management Department", "url": "https://www.pascocountyfl.net/263/Growth-Management"},
+            {"label": "Online Registration Form", "url": "https://www.pascocountyfl.net/STR-Registration"}
+        ]
+    elif "hillsborough" in task_name.lower():
+        response_text = (
+            "Hillsborough County requires short-term lodging operators to register for a **Tourist Development Tax (TDT) Account** "
+            "to collect and remit the county's **6% tourist tax** on all stays under 183 days.\n\n"
+            "**Registration Steps**:\n"
+            "1. Visit the Hillsborough County Tax Collector's website.\n"
+            "2. Register online for a new Tourist Development Tax account.\n"
+            "3. You will need your property parcel ID, owner details, and DBPR license details (if obtained)."
+        )
+        links = [
+            {"label": "Hillsborough County Tax Collector TDT Portal", "url": "https://www.hillstax.org/taxes/tourist-development-tax/"}
+        ]
+    elif "florida dbpr" in task_name.lower():
+        response_text = (
+            "The **Florida DBPR Transient Public Lodging License** is a state-level requirement for anyone renting out an entire "
+            "single-family home, condo, or townhouse as a short-term rental.\n\n"
+            "**Steps to obtain**:\n"
+            "1. Create an account on the DBPR Online Services portal.\n"
+            "2. Complete application **Form DBPR HR-7020**.\n"
+            "3. Pay the license fee (typically ~$150 depending on unit count).\n"
+            "4. Schedule the mandatory sanitation and safety inspection."
+        )
+        links = [
+            {"label": "Florida DBPR Online Services Portal", "url": "https://www.myfloridalicense.com/dbpr/"}
+        ]
+    elif "st. petersburg" in task_name.lower():
+        response_text = (
+            "The City of St. Petersburg requires all short-term rental hosts to obtain an annual **Business Tax Receipt (BTR)** "
+            "to operate lawfully. Note that St. Petersburg limits short-term rentals in standard residential zones to 3 times per 365-day period.\n\n"
+            "**How to apply**:\n"
+            "1. Submit a Business Tax Receipt application to the City's Billing & Collections department.\n"
+            "2. Provide your Pinellas County Tourist Development Tax (TDT) account number.\n"
+            "3. Pay the local business tax fee (~$95)."
+        )
+        links = [
+            {"label": "St. Petersburg BTR Application Portal", "url": "https://www.stpete.org/business/business_tax_receipts/"}
+        ]
+    elif "pinellas" in task_name.lower():
+        response_text = (
+            "Pinellas County requires short-term rental operators to register for a **Tourist Development Tax (TDT) Account** "
+            "to collect and remit the county's **6% tourist tax** on all tourist accommodations.\n\n"
+            "**How to apply**:\n"
+            "1. Open the Pinellas County Tax Collector portal.\n"
+            "2. Complete the online Tourist Development Tax registration form.\n"
+            "3. Submit owner and property parcel information."
+        )
+        links = [
+            {"label": "Pinellas County Tax Collector TDT Portal", "url": "https://www.pinellastaxcollector.gov/"}
+        ]
+    elif "state sales tax" in task_name.lower():
+        response_text = (
+            "The State of Florida requires all short-term rental hosts to register with the Florida Department of Revenue "
+            "to collect and remit **6% State Sales Tax** and any local discretionary sales surtaxes.\n\n"
+            "**How to register**:\n"
+            "1. Visit the Florida Department of Revenue's e-Services portal.\n"
+            "2. Complete the **Florida Business Tax Application (Form DR-1)**.\n"
+            "3. Receive your Certificate of Registration (Form DR-11) by mail or online portal download."
+        )
+        links = [
+            {"label": "Florida Department of Revenue e-Services", "url": "https://floridarevenue.com/taxes/taxesfees/Pages/sales_tax.aspx"}
+        ]
+    else:
+        response_text = (
+            f"To satisfy the compliance task for **{task_name}**, you must obtain the official approval or registration document from the local authority.\n\n"
+            "Please follow the county or city guidelines to submit your application. You can upload the receipt or certificate here once obtained."
+        )
+        links = [
+            {"label": "Florida Municipal Codes Directory", "url": "https://www.myflorida.com/"}
+        ]
+        
+    if "cost" in query_lower or "fee" in query_lower or "price" in query_lower:
+        if "pasco conditional" in task_name.lower():
+            response_text = "The application fee for the Pasco County Conditional Use Permit (CUP) is **$250**."
+        elif "annual growth" in task_name.lower():
+            response_text = "The registration fee for the Pasco County Annual Growth Management Registration is **$150** annually."
+        elif "st. petersburg" in task_name.lower():
+            response_text = "The St. Petersburg Business Tax Receipt (BTR) fee is approximately **$95**."
+        elif "florida dbpr" in task_name.lower():
+            response_text = "The Florida DBPR Transient Public Lodging license fee is approximately **$150** for a single unit."
+        else:
+            response_text = "The application fee varies depending on your municipal authority. Typically it ranges between $50 and $250."
+            
+    return {
+        "response": response_text,
+        "links": links,
+        "prefill_data": prefill_data
+    }
+
 

@@ -223,4 +223,43 @@ def test_get_compliance_by_address_state_fallback():
     assert len(data["checklist"]) == 1
     assert data["checklist"][0]["task_name"] == "Florida DBPR License"
 
+def test_compliance_task_chat():
+    """
+    Test that the task chatbot endpoint returns appropriate details and links.
+    """
+    # 1. First seed a test task
+    db = TestingSessionLocal()
+    import uuid
+    from app.models.compliance import PropertyCompliance
+    
+    task_id = uuid.uuid4()
+    task = PropertyCompliance(
+        id=task_id,
+        property_id="property_test_1",
+        municipal_code_id=uuid.UUID("11111111-2222-3333-4444-55555555555f"),
+        task_name="Pasco Conditional Use Permit (CUP)",
+        violation_notes="Pasco Conditional Use Permit (CUP)",
+        is_compliant=False,
+        status="PENDING",
+        valid_period="[2026-06-04 00:00:00, 2027-06-04 00:00:00]"
+    )
+    db.add(task)
+    db.commit()
+    db.close()
+
+    # 2. Query initial guidance
+    response = client.post(f"/api/v1/compliance/tasks/{task_id}/chat", json={"query": "init_guidance"})
+    assert response.status_code == 200
+    data = response.json()
+    assert "Conditional Use Permit" in data["response"]
+    assert len(data["links"]) > 0
+    assert data["prefill_data"]["property_address"] == "123 Main St"
+
+    # 3. Query fees/costs
+    response = client.post(f"/api/v1/compliance/tasks/{task_id}/chat", json={"query": "How much does it cost?"})
+    assert response.status_code == 200
+    data = response.json()
+    assert "$250" in data["response"]
+
+
 
