@@ -102,10 +102,9 @@ async def create_checkout_session(
             "message": "Transaction initiated.",
         }
     except Exception as e:
-        # Fallback to mock for testing if Stripe keys aren't real
         return {
             "status": "pending",
-            "checkout_url": f"https://mock-stripe.com/checkout/session_12345?tier={request.tier}&client_ref={client_reference_id}",
+            "checkout_url": f"/checkout-mock?session_id=session_12345&type=subscription&tier={request.tier}&client_ref={client_reference_id}",
             "message": "Transaction initiated (Mock).",
             "error_caught": str(e)
         }

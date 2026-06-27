@@ -95,7 +95,7 @@ async def create_checkout_session(
             db.commit()
             return {
                 "status": "pending",
-                "checkout_url": f"https://mock-stripe.com/checkout/{mock_session_id}?type=permit_filing&property_id={checkout_data.property_id}",
+                "checkout_url": f"/checkout-mock?session_id={mock_session_id}&type=permit_filing&property_id={checkout_data.property_id}",
                 "session_id": mock_session_id,
                 "warning": f"Mock fallback triggered: {e}"
             }
@@ -140,7 +140,7 @@ async def create_checkout_session(
         mock_session_id = f"cs_test_sub_{client_reference_id[:8]}"
         return {
             "status": "pending",
-            "checkout_url": f"https://mock-stripe.com/checkout/{mock_session_id}?type=subscription&tier={tier_val}",
+            "checkout_url": f"/checkout-mock?session_id={mock_session_id}&type=subscription&tier={tier_val}",
             "session_id": mock_session_id,
             "warning": f"Mock fallback triggered: {e}"
         }

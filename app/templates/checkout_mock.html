@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Stripe Simulator - Hosteva</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f6f9fc;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl max-w-4xl w-full flex flex-col md:flex-row overflow-hidden border border-slate-200">
+        <!-- Left Panel: Summary -->
+        <div class="md:w-1/2 bg-slate-50 p-8 md:p-12 border-b md:border-b-0 md:border-r border-slate-200 flex flex-col justify-between">
+            <div>
+                <!-- Brand logo/name -->
+                <div class="flex items-center gap-2 mb-8">
+                    <span class="bg-blue-600 text-white p-2 rounded-lg font-bold text-lg font-display">H</span>
+                    <span class="font-extrabold text-xl tracking-tight text-slate-800">Hosteva</span>
+                    <span class="ml-auto text-xs uppercase bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded font-bold tracking-widest">Stripe Simulator</span>
+                </div>
+                
+                <!-- Product / Tier details -->
+                <div class="flex flex-col gap-1">
+                    <span class="text-xs uppercase text-slate-400 font-bold tracking-wider">Subscribe to</span>
+                    <h2 id="summary-title" class="text-3xl font-extrabold text-slate-800 font-display">Hosteva Growth Plan</h2>
+                    <p id="summary-description" class="text-slate-500 text-sm mt-2 leading-relaxed">Unlock advanced zoning auditor tools, priority document reviews, and 24/7 compliance alerts.</p>
+                </div>
+            </div>
+            
+            <div class="mt-8 md:mt-0 pt-8 border-t border-slate-200">
+                <div class="flex items-baseline gap-2">
+                    <span id="price-amount" class="text-4xl font-extrabold text-slate-800">$249.00</span>
+                    <span id="price-interval" class="text-slate-400 text-sm">/ month</span>
+                </div>
+                <p class="text-xs text-slate-400 mt-2">Plus applicable taxes. Cancel anytime.</p>
+            </div>
+        </div>
+        
+        <!-- Right Panel: Mock Payment Details -->
+        <div class="md:w-1/2 p-8 md:p-12 flex flex-col justify-between">
+            <div>
+                <h3 class="text-xl font-bold text-slate-800 mb-6">Payment details</h3>
+                
+                <!-- Form fields -->
+                <div class="flex flex-col gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Email address</label>
+                        <input type="email" id="email-field" value="richard.farber@example.com" class="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition-colors">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Card details</label>
+                        <div class="relative">
+                            <input type="text" value="4242 4242 4242 4242" class="w-full border border-slate-300 rounded-t-lg px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition-colors" placeholder="Card number">
+                            <div class="flex">
+                                <input type="text" value="12/28" class="w-1/2 border-l border-b border-r border-slate-300 rounded-bl-lg px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition-colors" placeholder="MM / YY">
+                                <input type="text" value="123" class="w-1/2 border-b border-r border-slate-300 rounded-br-lg px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition-colors" placeholder="CVC">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Name on card</label>
+                        <input type="text" id="name-field" value="Richard Farber" class="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition-colors">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-8">
+                <button id="pay-btn" onclick="submitMockPayment()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 px-6 rounded-lg transition shadow-lg shadow-blue-500/10 flex items-center justify-center gap-2">
+                    <span>Subscribe</span>
+                </button>
+                <p class="text-center text-xs text-slate-400 mt-4 leading-relaxed">This is a secure checkout simulation. Clicking submit will directly trigger local database update webhooks.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Parse Query Parameters
+        const params = new URLSearchParams(window.location.search);
+        const type = params.get('type') || 'subscription';
+        const tier = (params.get('tier') || 'GROWTH').toUpperCase();
+        const propertyId = params.get('property_id') || '';
+        const sessionId = params.get('session_id') || 'cs_mock_123';
+        const clientRef = params.get('client_ref') || '';
+
+        const token = localStorage.getItem("access_token") || sessionStorage.getItem("access_token");
+        const headers = token ? { "Authorization": `Bearer ${token}` } : {};
+
+        // Update Page based on type and tier
+        function setupUI() {
+            const titleEl = document.getElementById('summary-title');
+            const descEl = document.getElementById('summary-description');
+            const priceEl = document.getElementById('price-amount');
+            const intervalEl = document.getElementById('price-interval');
+            const payBtn = document.getElementById('pay-btn');
+
+            if (type === 'permit_filing') {
+                titleEl.innerText = "Permit Filing Service";
+                descEl.innerText = "One-time concierge permit application processing and filing service by Hosteva compliance team.";
+                priceEl.innerText = "$150.00";
+                intervalEl.innerText = "one-time";
+                payBtn.innerText = "Pay $150.00";
+            } else {
+                // Subscription
+                if (tier === 'STARTER') {
+                    titleEl.innerText = "Hosteva Starter Plan";
+                    descEl.innerText = "Standard short-term rental compliance monitoring and email notification alerts.";
+                    priceEl.innerText = "$49.00";
+                } else if (tier === 'ENTERPRISE') {
+                    titleEl.innerText = "Hosteva Enterprise Plan";
+                    descEl.innerText = "Full multi-property automated zoning updates, custom SLA audits, and dedicated concierge support.";
+                    priceEl.innerText = "$499.00";
+                } else {
+                    titleEl.innerText = "Hosteva Growth Plan";
+                    descEl.innerText = "Unlock advanced zoning auditor tools, priority document reviews, and 24/7 compliance alerts.";
+                    priceEl.innerText = "$249.00";
+                }
+                intervalEl.innerText = "/ month";
+                payBtn.innerText = `Subscribe to ${tier}`;
+            }
+        }
+
+        // Retrieve current user to pass to client_reference_id if not present
+        let currentUserId = clientRef || 'host_test';
+        async function fetchCurrentUser() {
+            if (headers.Authorization) {
+                try {
+                    const response = await fetch('/api/v1/users/me', { headers });
+                    if (response.ok) {
+                        const user = await response.json();
+                        currentUserId = user.id || user.username || currentUserId;
+                        if (user.email) {
+                            document.getElementById('email-field').value = user.email;
+                        }
+                    }
+                } catch(e) {
+                    console.error("Error fetching current user:", e);
+                }
+            }
+        }
+
+        // Simulate payment completion webhook
+        async function submitMockPayment() {
+            const payBtn = document.getElementById('pay-btn');
+            payBtn.disabled = true;
+            payBtn.innerHTML = `
+                <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Processing...
+            `;
+
+            // Prepare webhook event payload
+            const eventPayload = {
+                type: "checkout.session.completed",
+                data: {
+                    object: {
+                        id: sessionId,
+                        mode: type === 'permit_filing' ? 'payment' : 'subscription',
+                        client_reference_id: currentUserId,
+                        customer: "cus_mock_customer_id",
+                        subscription: "sub_mock_subscription_id",
+                        amount_total: type === 'permit_filing' ? 15000 : (tier === 'STARTER' ? 4900 : (tier === 'ENTERPRISE' ? 49900 : 24900)),
+                        metadata: {
+                            type: type,
+                            tier: tier,
+                            property_id: propertyId
+                        }
+                    }
+                }
+            };
+
+            try {
+                // Post directly to our local billing webhook
+                const response = await fetch('/api/v1/billing/webhooks', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(eventPayload)
+                });
+
+                if (response.ok) {
+                    // Redirect back to dashboard success
+                    window.location.href = `/dashboard?payment=success&session_id=${sessionId}`;
+                } else {
+                    alert('Mock payment processing failed at the webhook handler.');
+                    setupUI();
+                }
+            } catch (err) {
+                console.error("Mock checkout error:", err);
+                alert('A simulator error occurred during payment processing.');
+                setupUI();
+            }
+        }
+
+        // Initialize
+        setupUI();
+        fetchCurrentUser();
+    </script>
+</body>
+</html>

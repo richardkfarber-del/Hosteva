@@ -278,6 +278,14 @@ def read_task_detail(task_id: str, request: Request, db: Session = Depends(get_d
         context={"request": request, "task_id": task_id, "active_page": "compliance"}
     )
 
+@app.get("/checkout-mock", name="checkout_mock")
+def read_checkout_mock(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="checkout_mock.html",
+        context={"request": request}
+    )
+
 from app.core.security import get_current_user
 from app.models.host import Host
 
