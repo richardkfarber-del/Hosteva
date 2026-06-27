@@ -157,7 +157,7 @@
                             <div class="flex flex-wrap gap-3 mt-4">
                                 <button onclick="toggleGuidancePanel()" class="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary hover:opacity-90 rounded-lg text-sm font-semibold transition-all">
                                     <span class="material-symbols-outlined text-sm">help</span>
-                                    How do I get this?
+                                    I don't have this
                                 </button>
                                 <button onclick="toggleChatPanel()" class="flex items-center gap-2 px-4 py-2 bg-surface-container-high text-primary hover:bg-surface-container-highest rounded-lg text-sm font-semibold transition-all">
                                     <span class="material-symbols-outlined text-sm">chat</span>
@@ -536,6 +536,27 @@
             if (isHidden) {
                 panel.classList.remove("hidden");
                 panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                
+                // Navigate user towards getting it via the Chat Assistant
+                const chatPanel = document.getElementById("chat-panel");
+                if (chatPanel) {
+                    chatPanel.classList.remove("hidden");
+                    const history = document.getElementById("chat-history");
+                    const helpMsg = document.createElement("div");
+                    helpMsg.className = "bg-surface-container-low text-on-surface p-3 rounded-lg max-w-[85%] self-start leading-relaxed shadow-sm mt-2";
+                    
+                    const titleText = document.getElementById("task-title").innerText || "this permit";
+                    helpMsg.innerHTML = `
+                        <strong>Hosteva Assistant</strong><br>
+                        I see you don't have the **${titleText}** yet. I will guide you to get it:<br><br>
+                        1. Click the official link in the **Permit Application Guide** below.<br>
+                        2. Use the pre-filled applicant details on the right to complete the form.<br>
+                        3. Once the county issues your certificate, drag and drop it into the dropzone to audit.<br><br>
+                        Let me know if you need to know the fee or requirements!
+                    `;
+                    history.appendChild(helpMsg);
+                    history.scrollTop = history.scrollHeight;
+                }
             } else {
                 panel.classList.add("hidden");
             }
@@ -553,38 +574,31 @@
             }
         }
 
-        // Prefill Application Simulator
+        // Prefill Application Simulator - FAIL OBVIOUSLY as requested (no mock success)
         function autofillApplication() {
+            alert("Concierge Automated Submission Unimplemented:\n\nAutomated background submission is currently in development. Please use the official application links to apply manually.");
+            
             const btn = document.getElementById("autofill-btn");
             btn.innerHTML = `
                 <span class="flex items-center gap-1">
-                    <span class="material-symbols-outlined text-xs animate-spin">progress_activity</span>
-                    Submitting Application Details...
+                    <span class="material-symbols-outlined text-xs">error</span>
+                    Filing Unimplemented
                 </span>
             `;
+            btn.className = "bg-red-100 text-red-700 px-4 py-2 rounded-lg text-xs font-bold cursor-default border border-red-200";
             btn.disabled = true;
 
-            setTimeout(() => {
-                btn.innerHTML = `
-                    <span class="flex items-center gap-1 text-white">
-                        <span class="material-symbols-outlined text-xs">check_circle</span>
-                        Concierge Pre-fill Sent!
-                    </span>
-                `;
-                btn.className = "bg-tertiary text-white px-4 py-2 rounded-lg text-xs font-bold cursor-default";
-                
-                const history = document.getElementById("chat-history");
-                const botMsg = document.createElement("div");
-                botMsg.className = "bg-surface-container-low text-on-surface p-3 rounded-lg max-w-[85%] self-start leading-relaxed shadow-sm";
-                botMsg.innerHTML = `
-                    <strong>Hosteva Assistant</strong><br>
-                    🎉 I have initiated the concierge pre-fill application for you using your Hosteva profile details! We have sent the request to the official portal system. You will receive an email confirmation once the county processes the submission.
-                `;
-                history.appendChild(botMsg);
-                history.scrollTop = history.scrollHeight;
-                
-                document.getElementById("chat-panel").classList.remove("hidden");
-            }, 2000);
+            const history = document.getElementById("chat-history");
+            const botMsg = document.createElement("div");
+            botMsg.className = "bg-red-50 text-red-800 p-3 rounded-lg max-w-[85%] self-start leading-relaxed shadow-sm mt-2 border border-red-200";
+            botMsg.innerHTML = `
+                <strong>Hosteva Assistant (System Error)</strong><br>
+                ⚠️ Automated filing submission is not yet implemented. Please click the official application links in the guide below to submit your details manually.
+            `;
+            history.appendChild(botMsg);
+            history.scrollTop = history.scrollHeight;
+            
+            document.getElementById("chat-panel").classList.remove("hidden");
         }
 
         // Fetch Guidance Details
