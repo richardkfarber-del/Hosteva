@@ -265,6 +265,58 @@ def create_property(
     db.add(db_property)
     db.commit()
     db.refresh(db_property)
+
+    # Seed checklist items in property_compliance
+    import uuid
+    from app.models.compliance import PropertyCompliance, MunicipalCode
+    
+    # Determine tasks based on location
+    tasks = audit_results.get("required_permits", [])
+    if not tasks and db_property.required_permits:
+        try:
+            tasks = json.loads(db_property.required_permits)
+        except:
+            pass
+            
+    if tasks:
+        # Look up matched municipal code IDs
+        state_code = db.query(MunicipalCode).filter(MunicipalCode.municipality_name.ilike("%State of Florida%")).first()
+        hillsborough_code = db.query(MunicipalCode).filter(MunicipalCode.municipality_name.ilike("%Hillsborough County%")).first()
+        st_pete_code = db.query(MunicipalCode).filter(MunicipalCode.municipality_name.ilike("%St. Petersburg%")).first()
+        pasco_code = db.query(MunicipalCode).filter(MunicipalCode.municipality_name.ilike("%Pasco County%")).first()
+        
+        state_id = state_code.id if state_code else uuid.uuid4()
+        hillsborough_id = hillsborough_code.id if hillsborough_code else uuid.uuid4()
+        st_pete_id = st_pete_code.id if st_pete_code else uuid.uuid4()
+        pasco_id = pasco_code.id if pasco_code else uuid.uuid4()
+        
+        valid_period = '[2026-06-04 00:00:00, 2027-06-04 00:00:00]'
+        
+        for task_name in tasks:
+            if "Florida" in task_name or "State" in task_name:
+                mc_id = state_id
+            elif "Hillsborough" in task_name:
+                mc_id = hillsborough_id
+            elif "St. Petersburg" in task_name or "Pinellas" in task_name:
+                mc_id = st_pete_id
+            elif "Pasco" in task_name or "Annual Growth" in task_name:
+                mc_id = pasco_id
+            else:
+                mc_id = state_id
+                
+            item = PropertyCompliance(
+                property_id=db_property.id,
+                municipal_code_id=mc_id,
+                is_compliant=False,
+                status="PENDING",
+                verification_notes=None,
+                task_name=task_name,
+                violation_notes=task_name,
+                valid_period=valid_period
+            )
+            db.add(item)
+        db.commit()
+
     return {
         "id": db_property.id,
         "address": db_property.address,

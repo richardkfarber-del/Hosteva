@@ -1788,24 +1788,42 @@ Processing Time: ${data.estimated_processing_time}`);
 
                 // 2. Add required permits from the loaded database checklist
                 const checklist = p.checklist || [];
-                checklist.forEach(item => {
-                    // Only show pending compliance tasks (i.e. not approved)
-                    if (item.status === 'APPROVED') {
-                        return;
-                    }
-                    allTasks.push({
-                        type: 'compliance',
-                        urgent: true,
-                        title: 'Obtain ' + (item.task_name || item.violation_notes || 'Permit'),
-                        propertyAddress: p.address,
-                        propertyId: p.id,
-                        complianceId: item.id,
-                        priority: 'Required Permit',
-                        badgeClass: 'bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider rounded-full',
-                        actionText: 'Complete Now',
-                        actionType: 'complete_permit'
+                if (checklist.length > 0) {
+                    checklist.forEach(item => {
+                        // Only show pending compliance tasks (i.e. not approved)
+                        if (item.status === 'APPROVED') {
+                            return;
+                        }
+                        allTasks.push({
+                            type: 'compliance',
+                            urgent: true,
+                            title: 'Obtain ' + (item.task_name || item.violation_notes || 'Permit'),
+                            propertyAddress: p.address,
+                            propertyId: p.id,
+                            complianceId: item.id,
+                            priority: 'Required Permit',
+                            badgeClass: 'bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider rounded-full',
+                            actionText: 'Complete Now',
+                            actionType: 'complete_permit'
+                        });
                     });
-                });
+                } else {
+                    const permits = p.required_permits || [];
+                    permits.forEach(permit => {
+                        allTasks.push({
+                            type: 'compliance',
+                            urgent: true,
+                            title: 'Obtain ' + permit,
+                            propertyAddress: p.address,
+                            propertyId: p.id,
+                            complianceId: '',
+                            priority: 'Required Permit',
+                            badgeClass: 'bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider rounded-full',
+                            actionText: 'Complete Now',
+                            actionType: 'complete_permit'
+                        });
+                    });
+                }
 
                 // 3. Add local restrictions
                 for (const [key, val] of Object.entries(restrictions)) {
