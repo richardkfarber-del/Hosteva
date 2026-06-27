@@ -281,14 +281,23 @@ def create_property(
     if tasks:
         # Look up matched municipal code IDs
         state_code = db.query(MunicipalCode).filter(MunicipalCode.municipality_name.ilike("%State of Florida%")).first()
+        if not state_code:
+            state_code = db.query(MunicipalCode).filter(MunicipalCode.municipality_name.ilike("%Florida%")).first()
+        if not state_code:
+            state_code = db.query(MunicipalCode).first()
+        
+        fallback_mc_id = state_code.id if state_code else None
+        if not fallback_mc_id:
+            fallback_mc_id = uuid.uuid4()
+        
         hillsborough_code = db.query(MunicipalCode).filter(MunicipalCode.municipality_name.ilike("%Hillsborough County%")).first()
         st_pete_code = db.query(MunicipalCode).filter(MunicipalCode.municipality_name.ilike("%St. Petersburg%")).first()
         pasco_code = db.query(MunicipalCode).filter(MunicipalCode.municipality_name.ilike("%Pasco County%")).first()
         
-        state_id = state_code.id if state_code else uuid.uuid4()
-        hillsborough_id = hillsborough_code.id if hillsborough_code else uuid.uuid4()
-        st_pete_id = st_pete_code.id if st_pete_code else uuid.uuid4()
-        pasco_id = pasco_code.id if pasco_code else uuid.uuid4()
+        state_id = state_code.id if state_code else fallback_mc_id
+        hillsborough_id = hillsborough_code.id if hillsborough_code else (state_id or fallback_mc_id)
+        st_pete_id = st_pete_code.id if st_pete_code else (state_id or fallback_mc_id)
+        pasco_id = pasco_code.id if pasco_code else (state_id or fallback_mc_id)
         
         valid_period = '[2026-06-04 00:00:00, 2027-06-04 00:00:00]'
         
