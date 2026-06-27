@@ -151,6 +151,85 @@ def create_property(
     required_permits = comp.required_permits if comp else []
     local_restrictions = comp.local_restrictions if comp else {}
 
+    # Dynamically evaluate compliance if required_permits is empty
+    state_upper = (property_data.address.state or "").upper()
+    if not required_permits and (state_upper == "FL" or "FLORIDA" in state_upper):
+        from app.routers.properties import geocode_address
+        city_name = property_data.address.city
+        state_name = property_data.address.state
+        
+        full_addr = f"{property_data.address.address}, {city_name}, {state_name} {property_data.address.zip_code}".strip()
+        try:
+            geocoded = geocode_address(full_addr)
+            resolved_city = geocoded.get("city") or city_name
+            resolved_county = geocoded.get("county") or (f"{resolved_city} County" if resolved_city else "Unknown County")
+        except Exception:
+            resolved_city = city_name
+            resolved_county = f"{city_name} County" if city_name else "Unknown County"
+            
+        city_lower = resolved_city.lower() if resolved_city else ""
+        county_lower = resolved_county.lower() if resolved_county else ""
+        
+        is_hillsborough = "hillsborough" in county_lower or "hillsborough" in city_lower
+        is_st_pete = "st. petersburg" in city_lower or "st petersburg" in city_lower
+        is_pasco = "pasco" in county_lower or "pasco" in city_lower
+        
+        if is_hillsborough:
+            required_permits = [
+                "Florida DBPR License task",
+                "Hillsborough 6% Tourist Development Tax (TDT) registration",
+                "State Sales Tax registration"
+            ]
+            zoning_status = "Pending"
+        elif is_st_pete:
+            required_permits = [
+                "Florida DBPR License task",
+                "St. Petersburg Business Tax Receipt (BTR) task",
+                "Pinellas 6% TDT registration",
+                "State Sales Tax registration"
+            ]
+            zoning_status = "Pending"
+        elif is_pasco:
+            required_permits = [
+                "Pasco Conditional Use Permit task",
+                "Annual Growth Management Registration",
+                "Pasco 4% TDT registration",
+                "State Sales Tax registration"
+            ]
+            zoning_status = "Pending"
+        else:
+            required_permits = [
+                "Florida DBPR License task"
+            ]
+            
+            from app.models.compliance import MunicipalCode
+            municipal_code = None
+            if resolved_city:
+                municipal_code = db.query(MunicipalCode).filter(
+                    MunicipalCode.municipality_name.ilike(resolved_city),
+                    MunicipalCode.jurisdiction_type.ilike("City")
+                ).first()
+            if not municipal_code and resolved_county:
+                clean_county = resolved_county.replace(" County", "").strip()
+                municipal_code = db.query(MunicipalCode).filter(
+                    (MunicipalCode.municipality_name.ilike(resolved_county)) |
+                    (MunicipalCode.municipality_name.ilike(clean_county)),
+                    MunicipalCode.jurisdiction_type.ilike("County")
+                ).first()
+                
+            if not municipal_code:
+                municipal_code = db.query(MunicipalCode).filter(
+                    MunicipalCode.municipality_name.ilike("State of Florida")
+                ).first()
+                
+            if municipal_code:
+                if municipal_code.str_prohibited or not municipal_code.is_allowed:
+                    zoning_status = "Violation"
+                elif municipal_code.requires_permit:
+                    zoning_status = "Pending"
+                else:
+                    zoning_status = "Compliant"
+
     db_property = Property(
         id=str(uuid.uuid4()),
         user_id=host.id,
@@ -168,6 +247,44 @@ def create_property(
     db.add(db_property)
     db.commit()
     db.refresh(db_property)
+
+    # Populate PropertyCompliance checklist rows
+    from app.models.compliance import PropertyCompliance, MunicipalCode
+    state_code = db.query(MunicipalCode).filter(MunicipalCode.municipality_name.ilike("%Florida%")).first()
+    hillsborough_code = db.query(MunicipalCode).filter(MunicipalCode.municipality_name.ilike("%Hillsborough County%")).first()
+    st_pete_code = db.query(MunicipalCode).filter(MunicipalCode.municipality_name.ilike("%St. Petersburg%")).first()
+    pasco_code = db.query(MunicipalCode).filter(MunicipalCode.municipality_name.ilike("%Pasco County%")).first()
+    
+    state_id = state_code.id if state_code else uuid.uuid4()
+    hillsborough_id = hillsborough_code.id if hillsborough_code else uuid.uuid4()
+    st_pete_id = st_pete_code.id if st_pete_code else uuid.uuid4()
+    pasco_id = pasco_code.id if pasco_code else uuid.uuid4()
+    
+    valid_period = '[2026-06-04 00:00:00, 2027-06-04 00:00:00]'
+    
+    for task_name in required_permits:
+        if "Florida" in task_name or "State" in task_name:
+            mc_id = state_id
+        elif "Hillsborough" in task_name:
+            mc_id = hillsborough_id
+        elif "St. Petersburg" in task_name or "Pinellas" in task_name:
+            mc_id = st_pete_id
+        elif "Pasco" in task_name or "Annual Growth" in task_name:
+            mc_id = pasco_id
+        else:
+            mc_id = state_id
+            
+        item = PropertyCompliance(
+            property_id=db_property.id,
+            municipal_code_id=mc_id,
+            is_compliant=False,
+            violation_notes=task_name,
+            valid_period=valid_period,
+            status="PENDING",
+            task_name=task_name
+        )
+        db.add(item)
+    db.commit()
     
     return {
         "id": db_property.id,
