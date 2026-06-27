@@ -113,7 +113,7 @@
     // Override handleTaskAction to support checklistItem upload flow
     window.handleTaskAction = function(actionType, propertyId, index, checklistItemId) {
         if (actionType === 'complete_permit' && checklistItemId) {
-            uploadComplianceDocument(checklistItemId);
+            window.location.href = '/dashboard/tasks/' + checklistItemId;
         } else {
             // Original action fallbacks
             if (actionType === 'upload_hoa') {

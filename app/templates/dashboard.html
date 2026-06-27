@@ -1939,7 +1939,7 @@ Processing Time: ${data.estimated_processing_time}`);
                                     <span class="text-[10px] uppercase text-outline font-bold block">Status</span>
                                     <span class="text-sm font-medium ${statusColor}">${statusText}</span>
                                 </div>
-                                <button onclick="handleTaskAction('${t.actionType}', '${t.propertyId}', ${idx})" class="${btnClass}">${t.actionText}</button>
+                                <button onclick="handleTaskAction('${t.actionType}', '${t.propertyId}', ${idx}, '${t.complianceId || ''}')" class="${btnClass}">${t.actionText}</button>
                             </div>
                         </div>
                     `;
