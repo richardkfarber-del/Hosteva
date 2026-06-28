@@ -7,7 +7,7 @@ celery_app = Celery(
     "hosteva",
     broker=REDIS_URL,
     backend=REDIS_URL,
-    include=["app.tasks.audit", "app.tasks.calendar", "app.tasks.inbox"]
+    include=["app.tasks.audit", "app.tasks.calendar", "app.tasks.inbox", "app.tasks.scraper"]
 )
 
 celery_app.conf.update(

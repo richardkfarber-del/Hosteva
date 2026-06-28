@@ -334,55 +334,61 @@ def create_property(
     # Seed checklist items in property_compliance
     import uuid
     from app.models.compliance import PropertyCompliance, MunicipalCode
+    from app.tasks.scraper import run_agent_compliance_scraper
     
-    # Determine tasks based on location
-    tasks = audit_results.get("required_permits", [])
-    if not tasks and db_property.required_permits:
-        try:
-            tasks = json.loads(db_property.required_permits)
-        except:
-            pass
+    # 1. Look up matched municipal code
+    municipal_code = None
+    if city_name:
+        municipal_code = db.query(MunicipalCode).filter(
+            MunicipalCode.municipality_name.ilike(city_name),
+            MunicipalCode.jurisdiction_type.ilike("City"),
+            MunicipalCode.state.ilike(state_name)
+        ).first()
+        
+    if not municipal_code and county_name:
+        clean_county = county_name.replace(" County", "").strip()
+        municipal_code = db.query(MunicipalCode).filter(
+            (MunicipalCode.municipality_name.ilike(county_name)) | 
+            (MunicipalCode.municipality_name.ilike(clean_county)),
+            MunicipalCode.jurisdiction_type.ilike("County"),
+            MunicipalCode.state.ilike(state_name)
+        ).first()
+        
+    valid_period = '[2026-06-04 00:00:00, 2027-06-04 00:00:00]'
+    
+    if municipal_code:
+        # Match found! Use pre-compiled rules
+        tasks = []
+        if municipal_code.requires_permit:
+            tasks.append(f"{city_name} Short-Term Rental Permit")
+        if municipal_code.tax_rate_registration_fee and ("tax" in municipal_code.tax_rate_registration_fee.lower() or municipal_code.tax_rate):
+            tasks.append(f"{state_name} Transient Occupancy Tax Registration")
             
-    if tasks:
-        # Look up matched municipal code IDs
-        state_code = db.query(MunicipalCode).filter(MunicipalCode.municipality_name.ilike("%State of Florida%")).first()
-        if not state_code:
-            state_code = db.query(MunicipalCode).filter(MunicipalCode.municipality_name.ilike("%Florida%")).first()
-        if not state_code:
-            state_code = db.query(MunicipalCode).first()
-        
-        fallback_mc_id = state_code.id if state_code else None
-        if not fallback_mc_id:
-            fallback_mc_id = uuid.uuid4()
-        
-        hillsborough_code = db.query(MunicipalCode).filter(MunicipalCode.municipality_name.ilike("%Hillsborough County%")).first()
-        st_pete_code = db.query(MunicipalCode).filter(MunicipalCode.municipality_name.ilike("%St. Petersburg%")).first()
-        pasco_code = db.query(MunicipalCode).filter(MunicipalCode.municipality_name.ilike("%Pasco County%")).first()
-        
-        state_id = state_code.id if state_code else fallback_mc_id
-        hillsborough_id = hillsborough_code.id if hillsborough_code else (state_id or fallback_mc_id)
-        st_pete_id = st_pete_code.id if st_pete_code else (state_id or fallback_mc_id)
-        pasco_id = pasco_code.id if pasco_code else (state_id or fallback_mc_id)
-        
-        valid_period = '[2026-06-04 00:00:00, 2027-06-04 00:00:00]'
-        
-        for task_name in tasks:
-            if "Florida" in task_name or "State" in task_name:
-                mc_id = state_id
-            elif "Hillsborough" in task_name:
-                mc_id = hillsborough_id
-            elif "St. Petersburg" in task_name or "Pinellas" in task_name:
-                mc_id = st_pete_id
-            elif "Pasco" in task_name or "Annual Growth" in task_name:
-                mc_id = pasco_id
-            else:
-                mc_id = state_id
+        # Add Florida defaults if FL
+        if state_name.upper() == "FL":
+            if "DBPR Vacation Rental License" not in tasks:
+                tasks.append("DBPR Vacation Rental License")
+            if "Florida Dept of Revenue Sales Tax Registration" not in tasks:
+                tasks.append("Florida Dept of Revenue Sales Tax Registration")
+            if "County Tourist Development Tax Account" not in tasks:
+                tasks.append("County Tourist Development Tax Account")
                 
+        # If tasks list is still empty, default to required permits from audit results
+        if not tasks:
+            try:
+                tasks = json.loads(db_property.required_permits) if db_property.required_permits else []
+            except:
+                tasks = []
+                
+        if not tasks:
+            tasks = ["DBPR Vacation Rental License", "Florida Dept of Revenue Sales Tax Registration", "County Tourist Development Tax Account"]
+            
+        for task_name in tasks:
             item = PropertyCompliance(
                 property_id=db_property.id,
-                municipal_code_id=mc_id,
+                municipal_code_id=municipal_code.id,
                 is_compliant=False,
-                status="PENDING",
+                status="NOT_UPLOADED",
                 verification_notes=None,
                 task_name=task_name,
                 violation_notes=task_name,
@@ -390,6 +396,46 @@ def create_property(
             )
             db.add(item)
         db.commit()
+    else:
+        # Cache miss! Create temporary MunicipalCode record and trigger Real-time AI Scraper
+        temp_mc = MunicipalCode(
+            municipality_name=city_name,
+            jurisdiction_type="City" if city_name else "County",
+            ordinance_number="PENDING-SCRAPE",
+            str_prohibited=False,
+            is_allowed=True,
+            requires_permit=True,
+            state=state_name,
+            is_ai_scraped=True,
+            is_expert_verified=False
+        )
+        db.add(temp_mc)
+        db.commit()
+        db.refresh(temp_mc)
+        
+        # Create temporary check task
+        task_name = "Zoning Rules Under Manual Curation"
+        item = PropertyCompliance(
+            property_id=db_property.id,
+            municipal_code_id=temp_mc.id,
+            is_compliant=False,
+            status="PENDING_REVIEW",  # Triggers Rules Under Manual Review indicator
+            task_name=task_name,
+            violation_notes="System enqueued for manual curator review.",
+            valid_period=valid_period
+        )
+        db.add(item)
+        db.commit()
+        
+        # Trigger scraper Celery task
+        db_property.zoning_status = "Pending"
+        db.commit()
+        run_agent_compliance_scraper.delay(
+            str(db_property.id),
+            city_name,
+            county_name,
+            state_name
+        )
 
     return {
         "id": db_property.id,

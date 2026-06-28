@@ -189,9 +189,13 @@
                                 <div><span class="font-bold text-outline">County/Municipality:</span> <span id="prefill-jurisdiction">N/A</span></div>
                                 <div><span class="font-bold text-outline">Estimated Parcel ID:</span> <span id="prefill-parcel">N/A</span></div>
                             </div>
-                            <div class="flex justify-start mt-2">
+                            <div class="flex flex-wrap gap-2 mt-2">
                                 <button id="autofill-btn" onclick="autofillApplication()" class="bg-[#00855c] text-white px-4 py-2 rounded-lg text-xs font-bold hover:opacity-90 transition-opacity">
                                     Apply via Hosteva Concierge (Auto-Fill)
+                                </button>
+                                <button id="download-permit-btn" onclick="downloadPermitPackage()" class="bg-primary text-white px-4 py-2 rounded-lg text-xs font-bold hover:opacity-90 transition-opacity flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-xs">download</span>
+                                    Download Permit Package
                                 </button>
                             </div>
                         </div>
@@ -599,6 +603,62 @@
             history.scrollTop = history.scrollHeight;
             
             document.getElementById("chat-panel").classList.remove("hidden");
+        }
+
+        async function downloadPermitPackage() {
+            const btn = document.getElementById("download-permit-btn");
+            const originalHTML = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = `
+                <span class="flex items-center gap-1">
+                    <span class="material-symbols-outlined text-xs animate-spin">progress_activity</span>
+                    Generating PDF Package...
+                </span>
+            `;
+            
+            try {
+                const response = await fetch(`/api/v1/compliance/tasks/${taskId}/fill-permit`, {
+                    method: 'POST',
+                    headers
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.download_url) {
+                        const link = document.createElement('a');
+                        link.href = data.download_url;
+                        link.download = `permit_${taskId}_pkg.zip`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        
+                        btn.innerHTML = `
+                            <span class="flex items-center gap-1 text-white">
+                                <span class="material-symbols-outlined text-xs">check_circle</span>
+                                Package Downloaded!
+                            </span>
+                        `;
+                        btn.className = "bg-tertiary text-white px-4 py-2 rounded-lg text-xs font-bold cursor-default";
+                    } else {
+                        alert(data.warning || "Zoning application form template is not available.");
+                        if (data.source_url) {
+                            window.open(data.source_url, "_blank");
+                        }
+                        btn.innerHTML = originalHTML;
+                        btn.disabled = false;
+                    }
+                } else {
+                    const errorData = await response.json().catch(() => ({}));
+                    alert(`Failed to fill permit PDF: ${errorData.detail || 'Server error'}`);
+                    btn.innerHTML = originalHTML;
+                    btn.disabled = false;
+                }
+            } catch (err) {
+                console.error("Download permit package error:", err);
+                alert("An error occurred during permit package generation.");
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
+            }
         }
 
         // Fetch Guidance Details

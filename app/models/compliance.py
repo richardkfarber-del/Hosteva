@@ -43,16 +43,24 @@ class MunicipalCode(Base):
     tax_rate_registration_fee = Column(String(255), nullable=True)
     last_verified_date = Column(Date, nullable=True)
 
+    # --- NEW FIELDS FOR PHASE III MULTI-STATE & AI AGENTIC ---
+    state = Column(String(50), nullable=True, index=True)
+    is_ai_scraped = Column(Boolean, default=False, nullable=False)
+    is_expert_verified = Column(Boolean, default=False, nullable=False)
+    scraped_at = Column(DateTime(timezone=True), nullable=True)
+    form_template_path = Column(String(500), nullable=True)
+    form_layout_json = Column(Text, nullable=True)
+
     if is_sqlite:
         __table_args__ = (
             CheckConstraint('length(municipality_name) > 0', name='chk_mun_name_length'),
-            UniqueConstraint('municipality_name', 'jurisdiction_type', name='uq_municipal_codes_name_type'),
+            UniqueConstraint('municipality_name', 'jurisdiction_type', 'state', name='uq_municipal_codes_name_type_state'),
         )
     else:
         __table_args__ = (
             CheckConstraint('length(municipality_name) > 0', name='chk_mun_name_length'),
             CheckConstraint("ordinance_number ~ '^[A-Z0-9-]+$'", name='chk_ordinance_format'),
-            UniqueConstraint('municipality_name', 'jurisdiction_type', name='uq_municipal_codes_name_type'),
+            UniqueConstraint('municipality_name', 'jurisdiction_type', 'state', name='uq_municipal_codes_name_type_state'),
         )
 
 class HOARule(Base):

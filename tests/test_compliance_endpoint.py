@@ -16,6 +16,7 @@ from app.models.compliance import MunicipalCode, PropertyCompliance
 from app.models.property import Property
 from app.models.host import Host
 import app.db_models
+from app.tasks.scraper import run_agent_compliance_scraper
 
 SQLALCHEMY_DATABASE_URL = "sqlite:///./test_compliance_endpoint.db"
 engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
@@ -88,7 +89,8 @@ def setup_test_db():
             str_prohibited=True,
             jurisdiction_type="City",
             requires_permit=True,
-            permit_name="Florida DBPR License task"
+            permit_name="Florida DBPR License task",
+            state="FL"
         )
 
 
@@ -102,7 +104,8 @@ def setup_test_db():
             str_prohibited=False,
             jurisdiction_type="State",
             requires_permit=True,
-            permit_name="Florida DBPR License"
+            permit_name="Florida DBPR License",
+            state="FL"
         )
         db.add(mc_state)
         
@@ -260,6 +263,75 @@ def test_compliance_task_chat():
     assert response.status_code == 200
     data = response.json()
     assert "$250" in data["response"]
+
+def test_agent_trigger_endpoint():
+    """
+    Test that triggering the scraper agent returns 202 and enqueues the Celery scraper task.
+    """
+    payload = {
+        "property_id": "property_test_1",
+        "city": "Key West",
+        "county": "Monroe County",
+        "state": "FL"
+    }
+    with patch("app.tasks.scraper.run_agent_compliance_scraper.delay") as mock_delay:
+        response = client.post("/api/v1/compliance/agent/trigger", json=payload)
+        assert response.status_code == 202
+        data = response.json()
+        assert data["status"] == "SCRAPING_ACTIVE"
+        assert mock_delay.called
+
+def test_fill_permit_form_endpoint():
+    """
+    Test that calling POST /tasks/{id}/fill-permit generates the permit ZIP package.
+    """
+    # 1. Create a task with a valid municipal code
+    db = TestingSessionLocal()
+    
+    # Update state_code to have source_url so fill-permit doesn't fail early
+    mc = db.query(MunicipalCode).filter(MunicipalCode.municipality_name == "Miami").first()
+    mc.source_url = "https://www.miami.gov"
+    mc.tax_rate_registration_fee = "12%"
+    
+    task_id = uuid.uuid4()
+    task = PropertyCompliance(
+        id=task_id,
+        property_id="property_test_1",
+        municipal_code_id=mc.id,
+        task_name="Miami Short-Term Rental Permit",
+        violation_notes="Miami Short-Term Rental Permit",
+        is_compliant=False,
+        status="NOT_UPLOADED",
+        valid_period="[2026-06-04 00:00:00, 2027-06-04 00:00:00]"
+    )
+    db.add(task)
+    db.commit()
+    db.close()
+    
+    response = client.post(f"/api/v1/compliance/tasks/{task_id}/fill-permit")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "READY"
+    assert "download_url" in data
+    
+    # 2. Check that the ZIP file exists locally and contains the two PDFs
+    import os
+    import zipfile
+    download_path = data["download_url"]
+    assert download_path.startswith("/static/generated_permits/")
+    
+    local_zip_path = os.path.join("app", download_path.lstrip("/"))
+    assert os.path.exists(local_zip_path)
+    
+    with zipfile.ZipFile(local_zip_path, 'r') as zip_file:
+        files = zip_file.namelist()
+        assert "permit_application.pdf" in files
+        assert "submission_instructions.pdf" in files
+        
+    # Clean up the generated zip file
+    if os.path.exists(local_zip_path):
+        os.remove(local_zip_path)
+
 
 
 

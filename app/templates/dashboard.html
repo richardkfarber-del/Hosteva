@@ -1471,7 +1471,48 @@ Processing Time: ${data.estimated_processing_time}`);
                     const alertsList = clone.querySelector('.single-alerts-list');
                     alertsList.innerHTML = '';
                     
-                    if (p.required_permits && p.required_permits.length > 0) {
+                    if (checklistItems && checklistItems.length > 0) {
+                        checklistItems.forEach(item => {
+                            let iconColor = 'text-blue-600';
+                            let bgColor = 'bg-blue-100';
+                            let icon = 'assignment';
+                            let taskStatus = 'Not Uploaded';
+                            
+                            if (item.status === 'APPROVED' || item.is_compliant) {
+                                iconColor = 'text-green-600';
+                                bgColor = 'bg-green-100';
+                                icon = 'check_circle';
+                                taskStatus = 'Approved';
+                            } else if (item.status === 'PENDING_REVIEW') {
+                                iconColor = 'text-yellow-600';
+                                bgColor = 'bg-yellow-100';
+                                icon = 'schedule';
+                                taskStatus = 'Rules Under Manual Review';
+                            } else if (item.status === 'REJECTED') {
+                                iconColor = 'text-red-600';
+                                bgColor = 'bg-red-100';
+                                icon = 'error';
+                                taskStatus = 'Rejected - Re-upload Required';
+                            } else if (item.status === 'PENDING') {
+                                iconColor = 'text-orange-600';
+                                bgColor = 'bg-orange-100';
+                                icon = 'autorenew';
+                                taskStatus = 'Audit Pending';
+                            }
+                            
+                            alertsList.innerHTML += `
+                                <li class="flex gap-4 items-start group">
+                                    <div class="mt-1 w-8 h-8 rounded-full ${bgColor} flex items-center justify-center shrink-0">
+                                        <span class="material-symbols-outlined ${iconColor} text-lg">${icon}</span>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-semibold text-on-surface">${item.task_name || item.violation_notes}</p>
+                                        <p class="text-xs text-on-surface-variant">Status: <strong>${taskStatus}</strong>.</p>
+                                    </div>
+                                </li>
+                            `;
+                        });
+                    } else if (p.required_permits && p.required_permits.length > 0) {
                         p.required_permits.forEach(permit => {
                             const isTaskCompliant = checklistItems.find(item => item.violation_notes === permit)?.is_compliant;
                             const iconColor = isTaskCompliant ? 'text-green-600' : p.zoning_status === 'Violation' ? 'text-red-600' : 'text-yellow-600';
@@ -1798,6 +1839,25 @@ Processing Time: ${data.estimated_processing_time}`);
                         if (item.status === 'APPROVED') {
                             return;
                         }
+                        
+                        let priority = 'Required Permit';
+                        let badgeClass = 'bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider rounded-full';
+                        let actionText = 'Complete Now';
+                        
+                        if (item.status === 'PENDING_REVIEW') {
+                            priority = 'Manual Review';
+                            badgeClass = 'bg-yellow-100 text-yellow-800 text-[10px] font-bold uppercase tracking-wider rounded-full';
+                            actionText = 'Review Guidance';
+                        } else if (item.status === 'REJECTED') {
+                            priority = 'Rejected';
+                            badgeClass = 'bg-red-100 text-red-800 text-[10px] font-bold uppercase tracking-wider rounded-full';
+                            actionText = 'Re-upload';
+                        } else if (item.status === 'PENDING') {
+                            priority = 'Audit Processing';
+                            badgeClass = 'bg-orange-100 text-orange-800 text-[10px] font-bold uppercase tracking-wider rounded-full';
+                            actionText = 'View Progress';
+                        }
+                        
                         allTasks.push({
                             type: 'compliance',
                             urgent: true,
@@ -1805,9 +1865,9 @@ Processing Time: ${data.estimated_processing_time}`);
                             propertyAddress: p.address,
                             propertyId: p.id,
                             complianceId: item.id,
-                            priority: 'Required Permit',
-                            badgeClass: 'bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider rounded-full',
-                            actionText: 'Complete Now',
+                            priority: priority,
+                            badgeClass: badgeClass,
+                            actionText: actionText,
                             actionType: 'complete_permit'
                         });
                     });

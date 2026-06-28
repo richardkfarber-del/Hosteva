@@ -235,10 +235,20 @@ def get_compliance_by_address(address: str, db: Session = Depends(get_db)):
     
     # 2. Query municipal_codes
     municipal_code = None
+    state_code = state.strip() if state else ""
+    if len(state_code) > 2:
+        state_map = {
+            "florida": "FL", "california": "CA", "texas": "TX", "new york": "NY",
+            "colorado": "CO", "hawaii": "HI", "georgia": "GA", "north carolina": "NC",
+            "tennessee": "TN", "arizona": "AZ"
+        }
+        state_code = state_map.get(state_code.lower(), state_code)
+
     if city:
         municipal_code = db.query(MunicipalCode).filter(
             MunicipalCode.municipality_name.ilike(city),
-            MunicipalCode.jurisdiction_type.ilike("City")
+            MunicipalCode.jurisdiction_type.ilike("City"),
+            ((MunicipalCode.state.ilike(state_code)) | (MunicipalCode.state.is_(None)))
         ).first()
         
     if not municipal_code and county:
@@ -246,12 +256,14 @@ def get_compliance_by_address(address: str, db: Session = Depends(get_db)):
         municipal_code = db.query(MunicipalCode).filter(
             (MunicipalCode.municipality_name.ilike(county)) | 
             (MunicipalCode.municipality_name.ilike(clean_county)),
-            MunicipalCode.jurisdiction_type.ilike("County")
+            MunicipalCode.jurisdiction_type.ilike("County"),
+            ((MunicipalCode.state.ilike(state_code)) | (MunicipalCode.state.is_(None)))
         ).first()
         
-    if not municipal_code and (state == "FL" or state == "Florida" or (state and state.upper() == "FL")):
+    if not municipal_code and (state_code.upper() == "FL" or not state_code):
         municipal_code = db.query(MunicipalCode).filter(
-            MunicipalCode.municipality_name.ilike("State of Florida")
+            MunicipalCode.municipality_name.ilike("State of Florida"),
+            ((MunicipalCode.state.ilike("FL")) | (MunicipalCode.state.is_(None)))
         ).first()
         
     # 3. Query hoa_rules
@@ -623,6 +635,229 @@ def compliance_task_chat(
         "response": response_text,
         "links": links,
         "prefill_data": prefill_data
+    }
+
+from pydantic import BaseModel
+class AgentTriggerRequest(BaseModel):
+    property_id: str
+    city: str
+    county: str
+    state: str
+
+@router.post("/agent/trigger", status_code=202)
+def trigger_agent_compliance_scraper(
+    payload: AgentTriggerRequest,
+    db: Session = Depends(get_db)
+):
+    # Check if a temporary MunicipalCode record exists; if not, create one
+    temp_mc = db.query(MunicipalCode).filter(
+        MunicipalCode.municipality_name.ilike(payload.city),
+        MunicipalCode.state.ilike(payload.state)
+    ).first()
+    
+    if not temp_mc:
+        temp_mc = MunicipalCode(
+            municipality_name=payload.city,
+            jurisdiction_type="City",
+            ordinance_number="PENDING-SCRAPE",
+            str_prohibited=False,
+            is_allowed=True,
+            requires_permit=True,
+            state=payload.state,
+            is_ai_scraped=True,
+            is_expert_verified=False
+        )
+        db.add(temp_mc)
+        db.commit()
+        db.refresh(temp_mc)
+        
+    from app.tasks.scraper import run_agent_compliance_scraper
+    run_agent_compliance_scraper.delay(
+        payload.property_id,
+        payload.city,
+        payload.county,
+        payload.state
+    )
+    
+    return {
+        "property_id": payload.property_id,
+        "status": "SCRAPING_ACTIVE",
+        "message": "Zoning rules not found in pre-compiled database. Initiating Real-time AI Scraper Agent."
+    }
+
+@router.post("/tasks/{id}/fill-permit")
+def fill_permit_form(
+    id: str,
+    db: Session = Depends(get_db)
+):
+    import zipfile
+    import io
+    from PyPDF2 import PdfReader, PdfWriter
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.pagesizes import letter
+    
+    task_uuid = uuid.UUID(id) if isinstance(id, str) and "-" in id else id
+    task = db.query(PropertyCompliance).filter(PropertyCompliance.id == task_uuid).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Compliance task not found")
+        
+    property_obj = db.query(Property).filter(Property.id == task.property_id).first()
+    if not property_obj:
+        raise HTTPException(status_code=404, detail="Property not found")
+        
+    host_obj = db.query(Host).filter(Host.id == property_obj.user_id).first()
+    if not host_obj:
+        raise HTTPException(status_code=404, detail="Host profile not found")
+        
+    mc = db.query(MunicipalCode).filter(MunicipalCode.id == task.municipal_code_id).first()
+    if not mc:
+        raise HTTPException(status_code=404, detail="Municipal rules not found")
+        
+    # Check if we should fall back to direct portal link if no rules source is present
+    if not mc.source_url and not mc.tax_rate_registration_fee:
+        return {
+            "status": "FAILED",
+            "warning": "Zoning application form template is not available for this county yet.",
+            "source_url": "https://www.myflorida.com/"
+        }
+        
+    # Local path for template PDF
+    template_dir = "app/static/templates"
+    os.makedirs(template_dir, exist_ok=True)
+    template_filename = f"template_{mc.state}_{mc.municipality_name.replace(' ', '_')}.pdf"
+    template_path = os.path.join(template_dir, template_filename)
+    
+    # 1. Ensure a template file exists dynamically
+    if not os.path.exists(template_path):
+        os.makedirs(os.path.dirname(template_path), exist_ok=True)
+        c = canvas.Canvas(template_path, pagesize=letter)
+        c.setFont("Helvetica-Bold", 16)
+        c.drawString(100, 700, "SHORT-TERM RENTAL LICENSE APPLICATION")
+        c.setFont("Helvetica-Bold", 12)
+        c.drawString(100, 680, f"Authority: {mc.municipality_name} ({mc.state})")
+        c.setFont("Helvetica", 10)
+        c.drawString(100, 660, f"Document Reference: STR-REG-{mc.state}-{mc.municipality_name.replace(' ', '').upper()}")
+        
+        c.drawString(100, 600, "1. APPLICANT / HOST NAME:")
+        c.drawString(100, 550, "2. PROPERTY LOCATION ADDRESS:")
+        c.drawString(100, 500, "3. CONTACT EMAIL ADDRESS:")
+        c.drawString(100, 450, "4. TAX ID / REGISTRATION REF:")
+        c.drawString(100, 300, "Applicant Signature: _______________________")
+        c.drawString(400, 300, "Date: _________________")
+        c.save()
+        
+    # 2. Parse form layout mappings or use default coordinate mappings
+    layout_data = {}
+    if mc.form_layout_json:
+        try:
+            layout_data = json.loads(mc.form_layout_json)
+        except:
+            pass
+            
+    # Default layout coordinates if none specified in DB
+    if not layout_data:
+        layout_data = {
+            "flat": {
+                "pages": [
+                    {
+                        "page_number": 0,
+                        "fields": [
+                            {"x": 300, "y": 600, "value_type": "host_name"},
+                            {"x": 300, "y": 550, "value_type": "property_address"},
+                            {"x": 300, "y": 500, "value_type": "host_email"},
+                            {"x": 300, "y": 450, "value_type": "tax_id"}
+                        ]
+                    }
+                ]
+            }
+        }
+        
+    host_name = getattr(host_obj, "owner_name", None) or host_obj.username or "Richard Farber"
+    property_address = property_obj.address
+    host_email = host_obj.email or "host@example.com"
+    tax_id = f"TX-ID-{mc.state}-{id[:8].upper()}"
+    
+    # 3. Create pre-filled overlay PDF
+    packet = io.BytesIO()
+    can = canvas.Canvas(packet, pagesize=letter)
+    can.setFont("Helvetica", 10)
+    
+    flat_config = layout_data.get("flat", {})
+    for page in flat_config.get("pages", []):
+        if page.get("page_number") == 0:
+            for field in page.get("fields", []):
+                x = field.get("x")
+                y = field.get("y")
+                v_type = field.get("value_type")
+                val = ""
+                if v_type == "host_name":
+                    val = host_name
+                elif v_type == "property_address":
+                    val = property_address
+                elif v_type == "host_email":
+                    val = host_email
+                elif v_type == "tax_id":
+                    val = tax_id
+                can.drawString(x, y, val)
+    can.save()
+    
+    packet.seek(0)
+    new_pdf = PdfReader(packet)
+    
+    # 4. Merge overlay with template
+    existing_pdf = PdfReader(template_path)
+    output_writer = PdfWriter()
+    
+    page = existing_pdf.pages[0]
+    page.merge_page(new_pdf.pages[0])
+    output_writer.add_page(page)
+    
+    for i in range(1, len(existing_pdf.pages)):
+        output_writer.add_page(existing_pdf.pages[i])
+        
+    filled_pdf_bytes = io.BytesIO()
+    output_writer.write(filled_pdf_bytes)
+    filled_pdf_bytes.seek(0)
+    
+    # 5. Generate Instruction Sheet PDF dynamically summarizing rules
+    instruction_bytes = io.BytesIO()
+    c_inst = canvas.Canvas(instruction_bytes, pagesize=letter)
+    c_inst.setFont("Helvetica-Bold", 18)
+    c_inst.drawString(100, 720, "Hosteva Short-Term Rental Seeding & Guide")
+    c_inst.setFont("Helvetica-Bold", 14)
+    c_inst.drawString(100, 690, f"Jurisdiction: {mc.municipality_name}, {mc.state}")
+    
+    c_inst.setFont("Helvetica", 10)
+    c_inst.drawString(100, 650, f"Permit/License Required: {'Yes' if mc.requires_permit else 'No'}")
+    c_inst.drawString(100, 630, f"Minimum Stay Requirement: {mc.minimum_stay_requirement or 'None'}")
+    c_inst.drawString(100, 610, f"Occupancy Limits: {mc.occupancy_limits or 'Not specified'}")
+    c_inst.drawString(100, 590, f"Tax & Fees Details: {mc.tax_rate_registration_fee or 'Not specified'}")
+    c_inst.drawString(100, 570, f"Official Guidelines Portal: {mc.source_url or 'None'}")
+    
+    c_inst.setFont("Helvetica-Bold", 12)
+    c_inst.drawString(100, 520, "Submission Instructions:")
+    c_inst.setFont("Helvetica", 10)
+    c_inst.drawString(100, 500, "1. Download the pre-filled application form from this package.")
+    c_inst.drawString(100, 480, "2. Review the details, sign, and date the form.")
+    c_inst.drawString(100, 460, "3. Submit the form to the official county guidelines portal listed above.")
+    c_inst.drawString(100, 440, "4. Upload the issued license certificate to Hosteva dashboard to verify compliance.")
+    
+    c_inst.save()
+    instruction_bytes.seek(0)
+    
+    # 6. Compress both PDFs into a single ZIP archive saved locally
+    static_gen_dir = "app/static/generated_permits"
+    os.makedirs(static_gen_dir, exist_ok=True)
+    zip_filename = f"permit_{task.id}_pkg.zip"
+    zip_filepath = os.path.join(static_gen_dir, zip_filename)
+    
+    with zipfile.ZipFile(zip_filepath, 'w') as zip_file:
+        zip_file.writestr("permit_application.pdf", filled_pdf_bytes.getvalue())
+        zip_file.writestr("submission_instructions.pdf", instruction_bytes.getvalue())
+        
+    return {
+        "download_url": f"/static/generated_permits/{zip_filename}",
+        "status": "READY"
     }
 
 
