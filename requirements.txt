@@ -149,8 +149,15 @@ vine==5.1.0
     #   amqp
     #   celery
     #   kombu
-wcwidth==0.7.0
-    # via prompt-toolkit
 icalendar==7.2.0
     # via hosteva (pyproject.toml)
+wcwidth==0.7.0
+    # via prompt-toolkit
+
+pandas
+openpyxl
+beautifulsoup4
+reportlab
+PyPDF2
+
 

@@ -81,6 +81,58 @@ def main():
         except Exception as col_err:
             print(f"Warning: Could not check/add columns to property_compliance: {col_err}")
 
+        # Check and add columns for municipal_codes table
+        try:
+            columns = [c["name"] for c in inspector.get_columns("municipal_codes")]
+            for col_name, col_type in [
+                ("state", "VARCHAR(50)"),
+                ("is_ai_scraped", "BOOLEAN DEFAULT FALSE"),
+                ("is_expert_verified", "BOOLEAN DEFAULT FALSE"),
+                ("scraped_at", "TIMESTAMP"),
+                ("form_template_path", "VARCHAR(500)"),
+                ("form_layout_json", "TEXT"),
+                ("jurisdiction_type", "VARCHAR(50)"),
+                ("str_permitted_raw", "VARCHAR(100)"),
+                ("permit_required_raw", "VARCHAR(50)"),
+                ("minimum_stay_requirement", "VARCHAR(255)"),
+                ("occupancy_limits", "VARCHAR(255)"),
+                ("tax_rate_registration_fee", "VARCHAR(255)"),
+                ("last_verified_date", "DATE")
+            ]:
+                if col_name not in columns:
+                    with engine.connect() as conn:
+                        if "sqlite" in str(engine.url):
+                            conn.execute(text(f"ALTER TABLE municipal_codes ADD COLUMN {col_name} {col_type};"))
+                        else:
+                            conn.execute(text(f"ALTER TABLE municipal_codes ADD COLUMN IF NOT EXISTS {col_name} {col_type};"))
+                        conn.commit()
+                    print(f"Added {col_name} column to municipal_codes table.")
+                else:
+                    print(f"{col_name} column already exists in municipal_codes table.")
+        except Exception as col_err:
+            print(f"Warning: Could not check/add columns to municipal_codes: {col_err}")
+
+        # Auto-seed GTM rules database if empty
+        from sqlalchemy import func
+        from app.models.compliance import MunicipalCode
+        from scripts.seed_rules import seed_rules
+        from app.database import SessionLocal
+
+        db_sess = SessionLocal()
+        try:
+            count = db_sess.query(func.count(MunicipalCode.id)).scalar()
+            if count == 0:
+                print("Database municipal_codes table is empty. Running rules seeding...")
+                excel_dir = os.path.dirname(__file__)
+                seed_rules(db_sess, excel_dir)
+                print("Database seeding completed successfully.")
+            else:
+                print(f"Database already contains {count} municipal code rules. Skipping auto-seeding.")
+        except Exception as seed_err:
+            print(f"Warning: Auto-seeding failed: {seed_err}")
+        finally:
+            db_sess.close()
+
         # Data Cleanup: Delete all existing property records as requested by user
         try:
             with engine.connect() as conn:
