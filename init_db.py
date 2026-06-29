@@ -113,9 +113,14 @@ def main():
             print(f"Warning: Could not check/add columns to municipal_codes: {col_err}")
 
         # Auto-seed GTM rules database if empty
+        import sys
+        scripts_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "scripts"))
+        if scripts_dir not in sys.path:
+            sys.path.append(scripts_dir)
+
         from sqlalchemy import func
         from app.models.compliance import MunicipalCode
-        from scripts.seed_rules import seed_rules
+        from seed_rules import seed_rules
         from app.database import SessionLocal
 
         db_sess = SessionLocal()
