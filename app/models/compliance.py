@@ -7,11 +7,44 @@ import os
 db_url = os.environ.get("INTERNAL_DATABASE_URL") or os.environ.get("DATABASE_URL", "")
 is_sqlite = "sqlite" in db_url or not db_url
 
-if is_sqlite:
-    from sqlalchemy.types import String as TSTZRANGE
-    from sqlalchemy.dialects.postgresql import UUID
-else:
-    from sqlalchemy.dialects.postgresql import UUID, TSTZRANGE
+from sqlalchemy.types import TypeDecorator, String as StringType
+from sqlalchemy.dialects.postgresql import UUID as PostgresUUID, TSTZRANGE as PostgresTSTZRANGE
+
+class TSTZRANGE(TypeDecorator):
+    impl = StringType
+    cache_ok = True
+
+    def load_dialect_impl(self, dialect):
+        if dialect.name == "postgresql":
+            return dialect.type_descriptor(PostgresTSTZRANGE())
+        return dialect.type_descriptor(StringType())
+
+class UUID(TypeDecorator):
+    impl = StringType
+    cache_ok = True
+
+    def __init__(self, as_uuid=True, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def load_dialect_impl(self, dialect):
+        if dialect.name == "postgresql":
+            return dialect.type_descriptor(PostgresUUID(as_uuid=True))
+        return dialect.type_descriptor(StringType(36))
+
+    def process_bind_param(self, value, dialect):
+        if value is None:
+            return value
+        return str(value)
+
+    def process_result_value(self, value, dialect):
+        if value is None:
+            return value
+        if isinstance(value, uuid.UUID):
+            return value
+        try:
+            return uuid.UUID(str(value))
+        except Exception:
+            return value
 
 class MunicipalCode(Base):
     __tablename__ = "municipal_codes"

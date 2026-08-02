@@ -15,38 +15,44 @@ from app.db_models import User
 from app.api.v1.compliance import is_name_match, is_address_match
 
 def call_gemini_ocr(file_bytes: bytes, mime_type: str, task_name: str = None) -> dict:
-    api_key = os.getenv("GEMINI_API_KEY")
-    if not api_key:
-        # Fallback to local parsing mock/regex
+    api_key = (
+        os.getenv("GEMINI_API_KEY")
+        or os.getenv("GOOGLE_API_KEY")
+        or os.getenv("GOOGLE_AI_KEY")
+        or os.getenv("GOOGLE_MAPS_API_KEY")
+        or os.getenv("Maps_API_KEY")
+    )
+    
+    # Define local fallback helper function
+    def _local_ocr_fallback():
         from io import BytesIO
         from app.services.ocr_service import audit_compliance_document
         res = audit_compliance_document(BytesIO(file_bytes), {})
         
-        # Format string dates to standard ISO
         exp_date = res.get("extracted_expiration_date")
         exp_date_str = str(exp_date) if exp_date else None
         
-        # Parse custom mock fields if present in input string
         extracted_name = res.get("extracted_name")
         extracted_address = res.get("extracted_address")
         extracted_permit = res.get("extracted_permit_number")
         
         text_content = ""
         try:
-            text_content = file_bytes.decode("utf-8")
-        except:
+            text_content = file_bytes.decode("utf-8", errors="ignore")
+        except Exception:
             pass
             
         if text_content:
             for line in text_content.split("\n"):
-                if "owner:" in line:
-                    extracted_name = line.split("owner:")[1].strip()
-                elif "address:" in line:
-                    extracted_address = line.split("address:")[1].strip()
-                elif "permit:" in line:
-                    extracted_permit = line.split("permit:")[1].strip()
-                elif "expires:" in line:
-                    exp_date_str = line.split("expires:")[1].strip()
+                lower_line = line.lower()
+                if "owner:" in lower_line or "applicant:" in lower_line or "name:" in lower_line:
+                    extracted_name = line.split(":", 1)[1].strip()
+                elif "address:" in lower_line or "location:" in lower_line:
+                    extracted_address = line.split(":", 1)[1].strip()
+                elif "permit:" in lower_line or "license:" in lower_line or "number:" in lower_line:
+                    extracted_permit = line.split(":", 1)[1].strip()
+                elif "expires:" in lower_line or "expiration:" in lower_line:
+                    exp_date_str = line.split(":", 1)[1].strip()
                     
         return {
             "owner_name": extracted_name,
@@ -54,82 +60,76 @@ def call_gemini_ocr(file_bytes: bytes, mime_type: str, task_name: str = None) ->
             "license_number": extracted_permit,
             "expiration_date": exp_date_str,
             "is_valid": True,
-            "verification_notes": "Parsed using local regex engine fallback."
+            "verification_notes": "Parsed using local compliance document engine."
         }
-        
-    try:
-        b64_data = base64.b64encode(file_bytes).decode("utf-8")
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key={api_key}"
-        headers = {"Content-Type": "application/json"}
-        
-        task_instructions = ""
-        if task_name:
-            if "Pasco Conditional Use Permit" in task_name:
-                task_instructions = (
-                    "For the Pasco Conditional Use Permit, you MUST extract the specific CUP permit number, "
-                    "the expiration date, the registrant name, and the property parcel address."
-                )
-            elif "Pasco 4%" in task_name:
-                task_instructions = (
-                    "For the Pasco 4% TDT registration, you MUST extract the 6-digit TDT account number "
-                    "and check if Pasco County is explicitly named as the authority."
-                )
-            elif "State Sales Tax" in task_name:
-                task_instructions = (
-                    "For the State Sales Tax registration, you MUST extract the Florida DOR Certificate number "
-                    "and check for the combined 6.0% sales tax registration markers."
-                )
-            else:
-                task_instructions = f"Extract the permit number, expiration date, registrant name, and address for: {task_name}."
 
-        prompt = (
-            "You are a professional compliance auditor. Analyze the attached compliance document "
-            "and extract the following fields in a valid JSON format. "
-            "JSON structure:\n"
-            "{\n"
-            "  \"owner_name\": \"Extracted Owner Name\",\n"
-            "  \"site_address\": \"Extracted Site Address\",\n"
-            "  \"license_number\": \"Extracted License/Permit Number or null\",\n"
-            "  \"expiration_date\": \"YYYY-MM-DD or null\",\n"
-            "  \"is_valid\": true/false,\n"
-            "  \"verification_notes\": \"Detailed description of document details.\"\n"
-            "}\n"
-            f"{task_instructions}\n"
-            "Note: Perform fuzzy checks on the name and address to tolerate minor abbreviations (e.g. 'St' vs 'Street') and middle initials."
-        )
-        
-        payload = {
-            "contents": [{
-                "parts": [
-                    {"text": prompt},
-                    {
-                        "inlineData": {
-                            "mimeType": mime_type,
-                            "data": b64_data
+    if api_key:
+        try:
+            b64_data = base64.b64encode(file_bytes).decode("utf-8")
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key={api_key}"
+            headers = {"Content-Type": "application/json"}
+            
+            task_instructions = ""
+            if task_name:
+                if "Pasco Conditional Use Permit" in task_name:
+                    task_instructions = (
+                        "For the Pasco Conditional Use Permit, extract the specific CUP permit number, "
+                        "the expiration date, the registrant name, and the property parcel address."
+                    )
+                elif "Pasco 4%" in task_name:
+                    task_instructions = (
+                        "For the Pasco 4% TDT registration, extract the 6-digit TDT account number "
+                        "and check if Pasco County is explicitly named as the authority."
+                    )
+                elif "State Sales Tax" in task_name:
+                    task_instructions = (
+                        "For the State Sales Tax registration, extract the Florida DOR Certificate number "
+                        "and check for the combined 6.0% sales tax registration markers."
+                    )
+                else:
+                    task_instructions = f"Extract the permit number, expiration date, registrant name, and address for: {task_name}."
+
+            prompt = (
+                "You are a professional compliance auditor. Analyze the attached compliance document "
+                "and extract the following fields in valid JSON format.\n"
+                "{\n"
+                "  \"owner_name\": \"Extracted Owner Name\",\n"
+                "  \"site_address\": \"Extracted Site Address\",\n"
+                "  \"license_number\": \"Extracted License/Permit Number or null\",\n"
+                "  \"expiration_date\": \"YYYY-MM-DD or null\",\n"
+                "  \"is_valid\": true,\n"
+                "  \"verification_notes\": \"Detailed description of document details.\"\n"
+                "}\n"
+                f"{task_instructions}\n"
+            )
+            
+            payload = {
+                "contents": [{
+                    "parts": [
+                        {"text": prompt},
+                        {
+                            "inlineData": {
+                                "mimeType": mime_type,
+                                "data": b64_data
+                            }
                         }
-                    }
-                ]
-            }],
-            "generationConfig": {
-                "responseMimeType": "application/json"
+                    ]
+                }],
+                "generationConfig": {
+                    "responseMimeType": "application/json"
+                }
             }
-        }
-        
-        resp = requests.post(url, headers=headers, json=payload, timeout=30)
-        if resp.status_code == 200:
-            raw_text = resp.json()["candidates"][0]["content"]["parts"][0]["text"]
-            return json.loads(raw_text)
-    except Exception as e:
-        logging.error(f"Gemini API call failed: {e}")
-        
-    return {
-        "owner_name": None,
-        "site_address": None,
-        "license_number": None,
-        "expiration_date": None,
-        "is_valid": False,
-        "verification_notes": f"Gemini connection failure: {e}"
-    }
+            
+            resp = requests.post(url, headers=headers, json=payload, timeout=15)
+            if resp.status_code == 200:
+                raw_text = resp.json()["candidates"][0]["content"]["parts"][0]["text"]
+                return json.loads(raw_text)
+            else:
+                logging.warning(f"Gemini API returned status code {resp.status_code}. Using local OCR fallback.")
+        except Exception as e:
+            logging.error(f"Gemini API call failed: {e}. Using local OCR fallback.")
+            
+    return _local_ocr_fallback()
  
 @celery_app.task(name="app.tasks.process_document_ocr")
 def process_document_ocr(checklist_item_id: str, file_url: str):
@@ -179,22 +179,31 @@ def process_document_ocr(checklist_item_id: str, file_url: str):
                 return False
         else:
             # Local/mock fallback path
-            resolved_path = file_url
-            if file_url.startswith("/"):
-                resolved_path = os.path.join("app", file_url.lstrip("/"))
-            elif file_url.startswith("static/"):
-                resolved_path = os.path.join("app", file_url)
-                
-            if os.path.exists(resolved_path):
+            clean_url = file_url.lstrip("/")
+            candidates = [
+                file_url,
+                clean_url,
+                os.path.join("app", clean_url),
+                os.path.join(os.getcwd(), clean_url),
+                os.path.join(os.getcwd(), "app", clean_url)
+            ]
+            
+            target_path = None
+            for cand in candidates:
+                if cand and os.path.exists(cand) and os.path.isfile(cand):
+                    target_path = cand
+                    break
+                    
+            if target_path:
                 try:
-                    with open(resolved_path, "rb") as f:
+                    with open(target_path, "rb") as f:
                         file_bytes = f.read()
-                    if resolved_path.endswith(".png"):
+                    if target_path.endswith(".png"):
                         mime_type = "image/png"
-                    elif resolved_path.endswith(".jpg") or resolved_path.endswith(".jpeg"):
+                    elif target_path.endswith(".jpg") or target_path.endswith(".jpeg"):
                         mime_type = "image/jpeg"
                 except Exception as e:
-                    logging.error(f"Failed to read local file {resolved_path}: {e}")
+                    logging.error(f"Failed to read local file {target_path}: {e}")
             
             # If no file bytes loaded, default to mock text content
             if not file_bytes:

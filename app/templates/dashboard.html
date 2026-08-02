@@ -2059,50 +2059,64 @@ Processing Time: ${data.estimated_processing_time}`);
             const propertyId = window.uploadTargetPropertyId;
             if (!propertyId) return;
 
-            // Simulated upload process with beautiful premium experience
             const notification = document.createElement('div');
             notification.className = 'fixed bottom-24 right-8 z-50 bg-[#001c37] text-white p-6 rounded-xl shadow-2xl flex items-center gap-4 border border-[#75fbbf]/20 ';
             notification.innerHTML = `
                 <span class="material-symbols-outlined text-[#75fbbf] animate-spin text-2xl">progress_activity</span>
                 <div>
-                    <h4 class="font-headline font-bold text-sm">Uploading HOA Docs...</h4>
-                    <p class="text-xs text-gray-400">AI scanning for STR restrictions & rules.</p>
+                    <h4 class="font-headline font-bold text-sm">AI Vision & OCR Scanner</h4>
+                    <p class="text-xs text-gray-400">Extracting HOA covenants, stay limits & rules...</p>
                 </div>
             `;
             document.body.appendChild(notification);
 
-            // Wait 2.0s
-            setTimeout(async () => {
-                try {
-                    // Call the evaluation endpoint to update zoning status of the property to Compliant
-                    const resp = await fetch(`/api/properties/${propertyId}/evaluate`, {
-                        method: 'POST',
-                        headers: headers
-                    });
-                    
-                    notification.innerHTML = `
-                        <span class="material-symbols-outlined text-[#75fbbf] text-2xl">check_circle</span>
-                        <div>
-                            <h4 class="font-headline font-bold text-sm text-[#75fbbf]">Audit Complete!</h4>
-                            <p class="text-xs text-gray-400">Zoning verified. Property is now Compliant.</p>
-                        </div>
-                    `;
-                    
-                    // Refresh properties list from the database
-                    await fetchProperties();
-                    
-                    // Re-render the tasks view to reflect the resolved task
-                    viewTasks();
-                    
-                    setTimeout(() => {
-                        notification.remove();
-                    }, 3000);
-                } catch (err) {
-                    console.error('Error updating compliance status:', err);
-                    notification.remove();
-                    alert('Upload failed. Please try again.');
+            try {
+                const formData = new FormData();
+                formData.append('property_id', propertyId);
+                formData.append('file', file);
+
+                const authHeaders = {};
+                if (typeof token !== 'undefined' && token && token !== 'null') {
+                    authHeaders['Authorization'] = `Bearer ${token}`;
                 }
-            }, 2000);
+
+                const resp = await fetch('/api/v1/compliance/hoa/upload', {
+                    method: 'POST',
+                    headers: authHeaders,
+                    body: formData
+                });
+
+                if (!resp.ok) {
+                    throw new Error('Upload failed with status ' + resp.status);
+                }
+
+                const result = await resp.json();
+
+                const isApproved = result.status === 'APPROVED';
+                notification.innerHTML = `
+                    <span class="material-symbols-outlined ${isApproved ? 'text-[#75fbbf]' : 'text-red-400'} text-2xl">${isApproved ? 'check_circle' : 'warning'}</span>
+                    <div>
+                        <h4 class="font-headline font-bold text-sm ${isApproved ? 'text-[#75fbbf]' : 'text-red-400'}">${isApproved ? 'AI Audit Approved!' : 'HOA Restriction Detected'}</h4>
+                        <p class="text-xs text-gray-400">${result.key_rules_notes || 'HOA rules parsed successfully.'}</p>
+                    </div>
+                `;
+
+                // Refresh properties list & tasks
+                if (typeof fetchProperties === 'function') {
+                    await fetchProperties();
+                }
+                if (typeof viewTasks === 'function') {
+                    viewTasks();
+                }
+
+                setTimeout(() => {
+                    notification.remove();
+                }, 4000);
+            } catch (err) {
+                console.error('Error uploading HOA document:', err);
+                notification.remove();
+                alert('HOA Document upload failed. Please try again.');
+            }
         }
     </script>
 </body>

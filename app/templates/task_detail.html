@@ -485,12 +485,15 @@
             subEl.innerText = "Extracting registrant name, address bounds, and validation checks.";
 
             const formData = new FormData();
-            formData.append("file", file);
+            const uploadHeaders = {};
+            if (token && token !== "null" && token !== "undefined") {
+                uploadHeaders["Authorization"] = `Bearer ${token}`;
+            }
 
             try {
                 const response = await fetch(`/api/v1/compliance/tasks/${taskId}/upload`, {
                     method: "POST",
-                    headers,
+                    headers: uploadHeaders,
                     body: formData
                 });
                 

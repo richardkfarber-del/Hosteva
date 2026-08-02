@@ -508,3 +508,20 @@ def upload_vision(
     except Exception as e:
         print(f"DEBUG: Vision upload error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/{property_id}/upload-hoa")
+def upload_hoa_for_property(
+    property_id: str,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    """
+    POST /api/properties/{property_id}/upload-hoa
+    Accepts an uploaded HOA document for a property and runs AI rules extraction.
+    """
+    from app.api.v1.compliance import upload_hoa_document
+    class FormWrapper:
+        pass
+    return upload_hoa_document(property_id=property_id, file=file, db=db)
+
