@@ -113,33 +113,36 @@ def main():
             print(f"Warning: Could not check/add columns to municipal_codes: {col_err}")
 
         # Auto-seed GTM rules database if empty
-        import sys
-        scripts_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "scripts"))
-        if scripts_dir not in sys.path:
-            sys.path.append(scripts_dir)
-
-        from sqlalchemy import func
-        from app.models.compliance import MunicipalCode
         try:
-            from scripts.seed_rules import seed_rules
-        except ImportError:
-            from seed_rules import seed_rules
-        from app.database import SessionLocal
+            import sys
+            scripts_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "scripts"))
+            if scripts_dir not in sys.path:
+                sys.path.append(scripts_dir)
 
-        db_sess = SessionLocal()
-        try:
-            count = db_sess.query(func.count(MunicipalCode.id)).scalar()
-            if count == 0:
-                print("Database municipal_codes table is empty. Running rules seeding...")
-                excel_dir = os.path.dirname(__file__)
-                seed_rules(db_sess, excel_dir)
-                print("Database seeding completed successfully.")
-            else:
-                print(f"Database already contains {count} municipal code rules. Skipping auto-seeding.")
-        except Exception as seed_err:
-            print(f"Warning: Auto-seeding failed: {seed_err}")
-        finally:
-            db_sess.close()
+            from sqlalchemy import func
+            from app.models.compliance import MunicipalCode
+            try:
+                from scripts.seed_rules import seed_rules
+            except ImportError:
+                from seed_rules import seed_rules
+            from app.database import SessionLocal
+
+            db_sess = SessionLocal()
+            try:
+                count = db_sess.query(func.count(MunicipalCode.id)).scalar()
+                if count == 0:
+                    print("Database municipal_codes table is empty. Running rules seeding...")
+                    excel_dir = os.path.dirname(__file__)
+                    seed_rules(db_sess, excel_dir)
+                    print("Database seeding completed successfully.")
+                else:
+                    print(f"Database already contains {count} municipal code rules. Skipping auto-seeding.")
+            except Exception as seed_err:
+                print(f"Warning: Auto-seeding failed: {seed_err}")
+            finally:
+                db_sess.close()
+        except Exception as seed_init_err:
+            print(f"Warning: Skipping auto-seeding step during database initialization: {seed_init_err}")
 
         # Data Cleanup: Delete all existing property records as requested by user
         try:

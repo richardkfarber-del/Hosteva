@@ -14,6 +14,7 @@ RUN uv pip install --system -r requirements.txt
 # CRITICAL: Copy the actual application files AFTER installing dependencies
 # This ensures app/templates/ and app/static/ are not dropped by the package build.
 COPY app/ /workspace/app/
+COPY scripts/ /workspace/scripts/
 COPY README.md /workspace/
 COPY init_db.py /workspace/
 
