@@ -120,7 +120,10 @@ def main():
 
         from sqlalchemy import func
         from app.models.compliance import MunicipalCode
-        from seed_rules import seed_rules
+        try:
+            from scripts.seed_rules import seed_rules
+        except ImportError:
+            from seed_rules import seed_rules
         from app.database import SessionLocal
 
         db_sess = SessionLocal()
