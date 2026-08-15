@@ -213,6 +213,7 @@ def get_checklist_items(property_id: str, db: Session = Depends(get_db)) -> List
     ]
 
 @router.get("", response_model=AddressComplianceResponse)
+@router.get("/address", response_model=AddressComplianceResponse)
 def get_compliance_by_address(address: str, db: Session = Depends(get_db)):
     """
     GET /api/v1/compliance?address=[address]
@@ -317,9 +318,15 @@ def get_compliance_by_address(address: str, db: Session = Depends(get_db)):
     if not city and not county and not state:
         raise HTTPException(status_code=404, detail="No compliance rules found for this address location.")
 
+    # Check if jurisdiction is under review or fallback
+    is_under_review = False
+    if not municipal_code or (municipal_code and municipal_code.municipality_name == "State of Florida" and city and city.lower() != "florida"):
+        is_under_review = True
+
     return AddressComplianceResponse(
         address=address,
         is_compliant=is_compliant,
+        is_under_review=is_under_review,
         municipal_code=municipal_code,
         hoa_rule=hoa_rule,
         checklist=checklist

@@ -766,7 +766,7 @@
                         linksDiv.className = "flex flex-col gap-1.5 mt-2";
                         data.links.forEach(l => {
                             linksDiv.innerHTML += `
-                                <a href="${l.url}" target="_blank" class="inline-flex items-center gap-1 text-xs text-primary font-bold hover:underline">
+                                <a href="${l.url}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-xs text-primary font-bold hover:underline">
                                     <span class="material-symbols-outlined text-xs">open_in_new</span> ${l.label}
                                 </a>
                             `;

@@ -116,6 +116,7 @@ class AddressComplianceChecklist(BaseModel):
 class AddressComplianceResponse(BaseModel):
     address: str
     is_compliant: bool
+    is_under_review: bool = False
     municipal_code: Optional[MunicipalRuleResponse] = None
     hoa_rule: Optional[HOARuleResponse] = None
     checklist: List[AddressComplianceChecklist] = []

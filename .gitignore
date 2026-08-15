@@ -1,10 +1,58 @@
-.openclaw/
-.openclaw-madcloser/
-venv/
+# Python
 __pycache__/
-node_modules/
+*/__pycache__/
+*/*/__pycache__/
+*/*/*/__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Database
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# Windows metadata
+*:Zone.Identifier
+
+# Environment & IDE
 .env
+.vscode/
+.idea/
+
+# Logs
 *.log
 *.bak
+
+# OpenClaw & scratch
+.openclaw/
+.openclaw-madcloser/
 openclaw-state.tgz
 .hidden_archive/
+scratch/
+
+# Uploads & temporary storage
+app/static/uploaded_permits/*
+app/storage/private_uploads/*

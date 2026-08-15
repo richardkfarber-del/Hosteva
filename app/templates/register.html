@@ -45,6 +45,12 @@
             <p class="text-sm text-slate-500 mt-1">Get started with intelligent STR compliance</p>
         </div>
 
+        
+        <div id="property-pending-banner" class="hidden mb-4 p-3.5 bg-primary/10 border border-primary/20 rounded-xl flex items-center gap-2 text-xs font-semibold text-primary">
+            <span class="material-symbols-outlined text-base">home_pin</span>
+            <span>Connecting property: <strong id="pending-address-text"></strong></span>
+        </div>
+
         <div id="error-alert" class="hidden mb-6 p-4 rounded-xl bg-red-50 border border-red-100 text-red-600 text-sm flex items-start gap-2">
             <span class="material-symbols-outlined text-md">error</span>
             <span id="error-message">Registration failed. Please check details.</span>
@@ -142,7 +148,20 @@
                         localStorage.setItem('token', loginData.access_token);
                         localStorage.setItem('access_token', loginData.access_token);
                         sessionStorage.setItem('token', loginData.access_token);
-                        window.location.href = '/dashboard';
+
+                        const urlParams = new URLSearchParams(window.location.search);
+                        const addressParam = urlParams.get('address') || sessionStorage.getItem('pending_property_address') || '';
+                        const planParam = urlParams.get('plan') || '';
+
+                        let targetUrl = '/dashboard';
+                        const queryParts = [];
+                        if (addressParam) queryParts.push(`initial_address=${encodeURIComponent(addressParam)}`);
+                        if (planParam === 'compliance_essentials') queryParts.push(`plan=compliance_essentials&checkout=prompt`);
+                        
+                        if (queryParts.length > 0) {
+                            targetUrl += '?' + queryParts.join('&');
+                        }
+                        window.location.href = targetUrl;
                     } else {
                         window.location.href = '/login';
                     }

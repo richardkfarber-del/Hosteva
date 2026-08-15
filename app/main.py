@@ -8,7 +8,7 @@ from typing import Optional
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from app.database import engine, Base, get_db
-from app.routers import user, listings, ordinances, zoning, compliance, hosts, properties, notifications, dashboard_api, eligibility, florida_compliance, listing_optimizer, permit_generator, recommendations, subscriptions, documents, market_intelligence, pricing
+from app.routers import user, waitlist, listings, ordinances, zoning, compliance, hosts, properties, notifications, dashboard_api, eligibility, florida_compliance, listing_optimizer, permit_generator, recommendations, subscriptions, documents, market_intelligence, pricing
 from app.integrations.ota_routes import router as ota_router
 from app.api.routes import swarm, queue, properties as v1_properties
 from app.api.v1.onboarding.validate import router as validate_router
@@ -124,6 +124,7 @@ app.include_router(permit_generator.router)
 app.include_router(recommendations.router)
 app.include_router(subscriptions.router, prefix="/api")
 app.include_router(pricing.router)
+app.include_router(waitlist.router)
 app.include_router(documents.router, prefix="/api")
 app.include_router(market_intelligence.router)
 app.include_router(ota_router)
@@ -189,6 +190,27 @@ def read_register(request: Request):
         name="register.html",
         context={"request": request}
     )
+
+
+@app.get("/terms", include_in_schema=False)
+def read_terms(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="terms.html",
+        context={"request": request}
+    )
+
+@app.get("/privacy", include_in_schema=False)
+def read_privacy(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="privacy.html",
+        context={"request": request}
+    )
+
+@app.get("/features", include_in_schema=False)
+def read_features(request: Request):
+    return RedirectResponse(url="/#features", status_code=302)
 
 @app.get("/integrations", include_in_schema=False)
 def read_integrations(request: Request):

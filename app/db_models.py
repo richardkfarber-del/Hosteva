@@ -72,3 +72,13 @@ class GuestMessage(Base):
     is_replied = Column(Integer, default=0)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
+
+
+
+class WaitlistLead(Base):
+    __tablename__ = "waitlist_leads"
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String(255), nullable=False, index=True)
+    portfolio_size = Column(String(50), nullable=True)
+    tier_interest = Column(String(100), default="PHASE_2_AUTOMATION")
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)

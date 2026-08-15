@@ -565,25 +565,25 @@ tailwind.config = {
                     </div>
                 </div>
             </div>
-            <!-- Secondary Section: Recent Activity / Quick Actions -->
+            <!-- Secondary Section: Quick Compliance Actions -->
             <section class="mt-12">
-                <h3 class="font-headline text-2xl font-bold mb-6">Quick Actions</h3>
+                <h3 class="font-headline text-2xl font-bold mb-6">Quick Compliance Actions</h3>
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <button class="flex flex-col items-center justify-center gap-3 p-6 bg-surface-container-low hover:bg-surface-container-high transition-all rounded-2xl group active:scale-95">
-                        <span class="material-symbols-outlined text-3xl text-primary group-hover:scale-110 transition-transform">calendar_month</span>
-                        <span class="font-label text-sm font-semibold uppercase tracking-wider">Bookings</span>
+                    <button onclick="window.location.href='/wizard'" class="flex flex-col items-center justify-center gap-3 p-6 bg-surface-container-low hover:bg-surface-container-high transition-all rounded-2xl group active:scale-95">
+                        <span class="material-symbols-outlined text-3xl text-primary group-hover:scale-110 transition-transform">shield</span>
+                        <span class="font-label text-sm font-semibold uppercase tracking-wider">Audit Property</span>
                     </button>
-                    <button class="flex flex-col items-center justify-center gap-3 p-6 bg-surface-container-low hover:bg-surface-container-high transition-all rounded-2xl group active:scale-95">
-                        <span class="material-symbols-outlined text-3xl text-primary group-hover:scale-110 transition-transform">message</span>
-                        <span class="font-label text-sm font-semibold uppercase tracking-wider">Messages</span>
-                    </button>
-                    <button class="flex flex-col items-center justify-center gap-3 p-6 bg-surface-container-low hover:bg-surface-container-high transition-all rounded-2xl group active:scale-95">
-                        <span class="material-symbols-outlined text-3xl text-primary group-hover:scale-110 transition-transform">construction</span>
-                        <span class="font-label text-sm font-semibold uppercase tracking-wider">Maintenance</span>
+                    <button onclick="viewTasks()" class="flex flex-col items-center justify-center gap-3 p-6 bg-surface-container-low hover:bg-surface-container-high transition-all rounded-2xl group active:scale-95">
+                        <span class="material-symbols-outlined text-3xl text-primary group-hover:scale-110 transition-transform">playlist_add_check</span>
+                        <span class="font-label text-sm font-semibold uppercase tracking-wider">Action Items</span>
                     </button>
                     <button onclick="openAddPropertyModal()" class="flex flex-col items-center justify-center gap-3 p-6 bg-surface-container-low hover:bg-surface-container-high transition-all rounded-2xl group active:scale-95">
                         <span class="material-symbols-outlined text-3xl text-primary group-hover:scale-110 transition-transform">add_business</span>
                         <span class="font-label text-sm font-semibold uppercase tracking-wider">Add Property</span>
+                    </button>
+                    <button onclick="exportCompliancePDF()" class="flex flex-col items-center justify-center gap-3 p-6 bg-surface-container-low hover:bg-surface-container-high transition-all rounded-2xl group active:scale-95">
+                        <span class="material-symbols-outlined text-3xl text-primary group-hover:scale-110 transition-transform">description</span>
+                        <span class="font-label text-sm font-semibold uppercase tracking-wider">Export Report</span>
                     </button>
                 </div>
             </section>
@@ -1347,6 +1347,45 @@ Processing Time: ${data.estimated_processing_time}`);
                 dynamicContent.innerHTML = '';
                 
                 if (properties.length === 0) {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const initialAddress = urlParams.get('initial_address') || sessionStorage.getItem('pending_property_address');
+                    
+                    if (initialAddress) {
+                        console.log("Auto-provisioning initial property:", initialAddress);
+                        dynamicContent.innerHTML = `
+                            <div class="bg-surface-container-lowest p-12 rounded-2xl shadow-sm border border-outline-variant/20 text-center max-w-lg mx-auto space-y-4">
+                                <div class="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+                                <h3 class="font-headline font-bold text-xl text-on-surface">Provisioning Property & Compliance Rules</h3>
+                                <p class="text-xs text-on-surface-variant">Connecting ${DOMPurify.sanitize(decodeURIComponent(initialAddress))} to your Hosteva dashboard...</p>
+                            </div>
+                        `;
+
+                        try {
+                            const createResp = await fetch('/api/properties/', {
+                                method: 'POST',
+                                headers: {
+                                    ...headers,
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    address: decodeURIComponent(initialAddress),
+                                    city: "",
+                                    state: "FL",
+                                    zip_code: "",
+                                    property_type: "Single Family"
+                                })
+                            });
+
+                            if (createResp.ok) {
+                                sessionStorage.removeItem('pending_property_address');
+                                window.history.replaceState({}, document.title, window.location.pathname);
+                                return await fetchProperties();
+                            }
+                        } catch (createErr) {
+                            console.error("Auto-provisioning property failed:", createErr);
+                        }
+                    }
+
                     const template = document.getElementById('layout-empty');
                     const clone = template.content.cloneNode(true);
                     

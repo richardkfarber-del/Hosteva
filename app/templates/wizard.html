@@ -176,7 +176,7 @@
                         <span class="material-symbols-outlined text-4xl text-primary icon-filled bg-white p-3 rounded-2xl shadow-sm border border-outline-variant/10">key</span>
                         <h3 class="font-headline text-2xl font-extrabold text-on-surface tracking-tight">Unlock Your Compliance Roadmap</h3>
                         <p class="text-on-surface-variant text-sm leading-relaxed">Don't let hidden violations risk your rental income. Upgrade to reveal the full audit, access locked compliance details, and get a step-by-step resolution roadmap.</p>
-                        <button onclick="window.location.href='/register';" class="mt-4 w-full bg-primary hover:bg-primary-container text-on-primary font-bold py-3.5 px-6 rounded-xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2">
+                        <button onclick="unlockFullReport();" class="mt-4 w-full bg-primary hover:bg-primary-container text-on-primary font-bold py-3.5 px-6 rounded-xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2">
                             <span>Unlock Full Report</span>
                             <span class="material-symbols-outlined text-sm">arrow_forward</span>
                         </button>
@@ -190,6 +190,10 @@
                 <span class="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">description</span>
             </button>
         </div>
+    </div>
+    <!-- Legal Disclaimer Banner -->
+    <div class="mt-6 p-4 rounded-xl bg-surface-container-low border border-outline-variant/15 text-center text-xs text-on-surface-variant leading-relaxed max-w-4xl mx-auto">
+        <p><strong>Legal Disclaimer:</strong> Hosteva is an automated compliance research and management tool. Hosteva does not provide legal advice, and hosts are responsible for final municipal filings.</p>
     </div>
 </div>
 {% endblock %}
@@ -265,7 +269,17 @@
     }
 
     // Submit handler logic
-    async function runAudit() {
+    async function unlockFullReport() {
+        const address = document.getElementById('addressInput').value.trim();
+        if (address) {
+            sessionStorage.setItem('pending_property_address', address);
+            window.location.href = `/register?address=${encodeURIComponent(address)}`;
+        } else {
+            window.location.href = '/register';
+        }
+    }
+
+    function runAudit() {
         const address = addressInput.value.trim();
         const addressError = document.getElementById('addressError');
         
@@ -371,7 +385,7 @@
                 let occupancyText = occupancy ? `Occupancy limit: <strong>${occupancy}</strong>.` : 'No occupancy restrictions registered.';
 
                 let sourceLinkHtml = sourceUrl ? `
-                    <a href="${sourceUrl}" target="_blank" class="text-primary hover:underline font-bold mt-2 inline-flex items-center gap-1">
+                    <a href="${sourceUrl}" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline font-bold mt-2 inline-flex items-center gap-1">
                         View Ordinance Reference <span class="material-symbols-outlined text-xs">open_in_new</span>
                     </a>` : '';
 
@@ -396,14 +410,22 @@
                 cardsStack.appendChild(municipalCard);
             } else {
                 const municipalCard = document.createElement('div');
-                municipalCard.className = 'bg-white rounded-2xl p-5 border border-outline-variant/15 hover:bg-surface-container-low/30 transition-all shadow-sm flex items-start gap-4 text-left';
+                municipalCard.className = 'bg-amber-50/80 rounded-2xl p-5 border border-amber-200/60 shadow-sm flex items-start gap-4 text-left relative overflow-hidden';
                 municipalCard.innerHTML = `
-                    <span class="material-symbols-outlined text-outline icon-filled shrink-0" style="font-size: 24px;">
-                        info
-                    </span>
-                    <div class="space-y-1">
-                        <h4 class="font-headline font-bold text-base text-on-surface">Municipal Regulations</h4>
-                        <p class="text-on-surface-variant text-xs leading-relaxed">No specific municipal zoning rules found for this locality.</p>
+                    <div class="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center text-amber-700 shrink-0 mt-0.5">
+                        <span class="material-symbols-outlined text-xl">psychology</span>
+                    </div>
+                    <div class="space-y-2 flex-grow">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <h4 class="font-headline font-bold text-base text-amber-950">Municipal Zoning Status</h4>
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-200/80 text-amber-900 text-[11px] font-bold tracking-wide uppercase">
+                                <span class="w-2 h-2 rounded-full bg-amber-600 animate-pulse"></span>
+                                Jurisdiction Under Review / AI Scraping in Progress
+                            </span>
+                        </div>
+                        <p class="text-amber-900/90 text-xs leading-relaxed">
+                            This address is located in an unincorporated jurisdiction or municipal zone currently undergoing active automated ordinance verification. Baseline state (DBPR) and county-level tax compliance guidelines apply while hyper-local municipal records are indexed.
+                        </p>
                     </div>
                 `;
                 cardsStack.appendChild(municipalCard);
@@ -425,7 +447,7 @@
                 let notesText = notes ? `Rules notes: ${notes}` : 'No detailed rules notes provided.';
 
                 let siteLinkHtml = website ? `
-                    <a href="${website}" target="_blank" class="text-primary hover:underline font-bold mt-2 inline-flex items-center gap-1">
+                    <a href="${website}" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline font-bold mt-2 inline-flex items-center gap-1">
                         HOA Portal Website <span class="material-symbols-outlined text-xs">open_in_new</span>
                     </a>` : '';
 
