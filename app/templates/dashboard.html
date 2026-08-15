@@ -178,17 +178,25 @@ tailwind.config = {
             </nav>
             
             <div class="mt-auto px-4">
-                <div class="bg-black/20 rounded-xl p-4 border-white/5">
-                    <div class="flex items-center gap-3 mb-2">
-                        <div class="w-8 h-8 rounded-full bg-gradient-to-r from-[#75fbbf] to-[#52aecd] flex items-center justify-center font-bold text-on-surface text-sm" id="sidebar-user-initials">--</div>
-                        <div>
-                            <p class="text-sm font-bold text-slate-800" id="sidebar-user-name">Loading...</p>
-                            <p class="text-xs text-[#52aecd]" id="sidebar-user-tier">...</p>
+                <div class="bg-surface-container-low rounded-2xl p-4 border border-outline-variant/20 shadow-sm" id="sidebar-profile-card">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold text-sm shadow-inner" id="sidebar-user-initials">
+                            <span class="material-symbols-outlined text-lg">person</span>
+                        </div>
+                        <div class="overflow-hidden">
+                            <p class="text-sm font-bold text-on-surface truncate" id="sidebar-user-name">Host</p>
+                            <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-200/80 text-slate-700" id="sidebar-user-tier">Free Tier</span>
                         </div>
                     </div>
-                    <button onclick="upgradeToPro()" class="w-full mt-2 px-4 py-2 bg-gradient-to-br from-primary to-primary-container text-on-surface font-bold text-xs rounded-[8px] uppercase tracking-widest hover:opacity-90 transition-opacity">Upgrade to Pro</button>
-                    <button onclick="logout()" class="w-full text-center text-xs font-semibold text-red-500 hover:text-red-700 transition-colors mt-2" id="sidebar-logout-btn">
-                        Logout
+                    <div id="sidebar-subscription-cta">
+                        <button onclick="upgradeToComplianceEssentials()" class="w-full py-2.5 px-3 bg-gradient-to-r from-primary to-primary-container text-white font-bold text-xs rounded-xl shadow-sm hover:shadow transition-all flex items-center justify-center gap-1.5">
+                            <span class="material-symbols-outlined text-sm">bolt</span>
+                            <span>Upgrade to Essentials</span>
+                        </button>
+                    </div>
+                    <button onclick="logout()" class="w-full text-center text-xs font-semibold text-on-surface-variant hover:text-red-600 transition-colors mt-2.5 pt-2 border-t border-outline-variant/10 flex items-center justify-center gap-1" id="sidebar-logout-btn">
+                        <span class="material-symbols-outlined text-sm">logout</span>
+                        <span>Log Out</span>
                     </button>
                 </div>
             </div>
@@ -1766,12 +1774,41 @@ Processing Time: ${data.estimated_processing_time}`);
                 const response = await fetch('/api/v1/users/me', { headers });
                 if (response.ok) {
                     const data = await response.json();
-                    const name = data.full_name || data.username || 'User';
+                    const name = data.full_name || data.username || 'Host';
                     document.getElementById('sidebar-user-name').innerText = name;
-                    document.getElementById('sidebar-user-tier').innerText = data.tier || 'Free Tier';
-                    document.getElementById('sidebar-user-initials').innerText = name.charAt(0).toUpperCase();
                     
-                    // Also update greeting inside the single-property featured card if present
+                    const tierEl = document.getElementById('sidebar-user-tier');
+                    const ctaContainer = document.getElementById('sidebar-subscription-cta');
+                    const initialsEl = document.getElementById('sidebar-user-initials');
+
+                    // Set clean user initial in avatar box
+                    initialsEl.innerHTML = `<span class="text-primary font-bold text-sm">${name.charAt(0).toUpperCase()}</span>`;
+
+                    if (data.has_active_subscription || (data.tier && (data.tier.toLowerCase().includes('essential') || data.tier.toLowerCase().includes('pro')))) {
+                        tierEl.className = "inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800";
+                        tierEl.innerText = "Essentials Active";
+                        if (ctaContainer) {
+                            ctaContainer.innerHTML = `
+                                <div class="w-full py-2 px-3 bg-emerald-50 border border-emerald-200 text-emerald-800 font-semibold text-xs rounded-xl flex items-center justify-center gap-1.5">
+                                    <span class="material-symbols-outlined text-sm">verified_user</span>
+                                    <span>Protected Host</span>
+                                </div>
+                            `;
+                        }
+                    } else {
+                        tierEl.className = "inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-200/80 text-slate-700";
+                        tierEl.innerText = "Free Tier";
+                        if (ctaContainer) {
+                            ctaContainer.innerHTML = `
+                                <button onclick="upgradeToComplianceEssentials()" class="w-full py-2.5 px-3 bg-gradient-to-r from-primary to-primary-container text-white font-bold text-xs rounded-xl shadow-sm hover:shadow transition-all flex items-center justify-center gap-1.5">
+                                    <span class="material-symbols-outlined text-sm">bolt</span>
+                                    <span>Upgrade ($9.99/mo)</span>
+                                </button>
+                            `;
+                        }
+                    }
+
+                    // Update greeting inside single-property featured card if present
                     const singleUserEl = document.querySelector('.single-user-name');
                     if (singleUserEl) {
                         singleUserEl.innerText = name.split(' ')[0];
@@ -1781,6 +1818,31 @@ Processing Time: ${data.estimated_processing_time}`);
                 console.error('Failed to fetch user profile:', err);
             }
         }
+
+        async function upgradeToComplianceEssentials() {
+            try {
+                const response = await fetch('/api/v1/billing/checkout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', ...headers },
+                    body: JSON.stringify({ tier: 'COMPLIANCE_ESSENTIALS' })
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.checkout_url) {
+                        window.location.href = data.checkout_url;
+                    } else {
+                        alert('Checkout session URL not found.');
+                    }
+                } else {
+                    alert('Failed to initiate checkout session.');
+                }
+            } catch (err) {
+                console.error('Error upgrading to Compliance Essentials:', err);
+                alert('An error occurred during checkout initialization.');
+            }
+        }
+        window.upgradeToComplianceEssentials = upgradeToComplianceEssentials;
+        window.upgradeToPro = upgradeToComplianceEssentials;
 
         // Initialize dashboard state
         document.addEventListener('DOMContentLoaded', async () => {

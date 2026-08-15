@@ -95,16 +95,19 @@ tailwind.config = {
             </nav>
             
             <div class="mt-auto px-4">
-                <div class="bg-black/20 rounded-xl p-4 border border-white/5" id="sidebar-profile-card">
-                    <div class="flex items-center gap-3 mb-2" id="sidebar-user-container">
-                        <div class="w-8 h-8 rounded-full bg-gradient-to-r from-[#75fbbf] to-[#52aecd] flex items-center justify-center font-bold text-on-surface text-sm" id="sidebar-user-initials">--</div>
-                        <div>
-                            <p class="text-sm font-bold text-slate-800" id="sidebar-user-name">Loading...</p>
-                            <p class="text-xs text-[#52aecd]" id="sidebar-user-tier">Pro Host</p>
+                <div class="bg-surface-container-low rounded-2xl p-4 border border-outline-variant/20 shadow-sm" id="sidebar-profile-card">
+                    <div class="flex items-center gap-3 mb-3" id="sidebar-user-container">
+                        <div class="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold text-sm shadow-inner" id="sidebar-user-initials">
+                            <span class="material-symbols-outlined text-lg">person</span>
+                        </div>
+                        <div class="overflow-hidden">
+                            <p class="text-sm font-bold text-on-surface truncate" id="sidebar-user-name">Host</p>
+                            <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-200/80 text-slate-700" id="sidebar-user-tier">Free Tier</span>
                         </div>
                     </div>
-                    <button onclick="logout()" class="w-full text-center text-xs font-semibold text-red-500 hover:text-red-700 transition-colors mt-2" id="sidebar-logout-btn">
-                        Logout
+                    <button onclick="logout()" class="w-full text-center text-xs font-semibold text-on-surface-variant hover:text-red-600 transition-colors mt-2.5 pt-2 border-t border-outline-variant/10 flex items-center justify-center gap-1" id="sidebar-logout-btn">
+                        <span class="material-symbols-outlined text-sm">logout</span>
+                        <span>Log Out</span>
                     </button>
                 </div>
                 <div class="flex flex-col gap-2 mt-4" id="sidebar-auth-buttons">

@@ -107,6 +107,7 @@ async def create_checkout_session(
         "BASIC": os.getenv("STRIPE_PRICE_BASIC") or "price_mock_starter",
         "GROWTH": os.getenv("STRIPE_PRICE_GROWTH") or "price_mock_growth",
         "PRO": os.getenv("STRIPE_PRICE_PRO") or "price_mock_growth",
+        "COMPLIANCE_ESSENTIALS": os.getenv("STRIPE_PRICE_COMPLIANCE_ESSENTIALS") or "price_mock_compliance_essentials",
         "ENTERPRISE": os.getenv("STRIPE_PRICE_ENTERPRISE") or "price_mock_enterprise",
         "PREMIUM": os.getenv("STRIPE_PRICE_PREMIUM") or "price_mock_enterprise"
     }

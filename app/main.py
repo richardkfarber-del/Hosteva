@@ -317,22 +317,34 @@ def get_current_active_user_proxy(current_user: dict = Depends(get_current_user)
     username = current_user.get("username")
     host = db.query(Host).filter(Host.username == username).first()
     if not host:
-        return {"username": "Guest", "email": "", "full_name": "Guest", "tier": "Free Tier"}
+        return {
+            "username": username or "Guest",
+            "email": "",
+            "full_name": username or "Guest",
+            "tier": "Free Tier",
+            "has_active_subscription": False
+        }
     
     sub_tier = "Free Tier"
+    has_active_sub = False
     if host.subscription and host.subscription.status == "active":
-        sub_tier = host.subscription.plan_details or "Pro"
+        has_active_sub = True
+        sub_tier = host.subscription.plan_details or "Compliance Essentials"
         if isinstance(sub_tier, str):
-            sub_tier = sub_tier.capitalize() + " Host"
+            if "compliance" in sub_tier.lower() or "essential" in sub_tier.lower() or "starter" in sub_tier.lower() or "growth" in sub_tier.lower() or "pro" in sub_tier.lower():
+                sub_tier = "Compliance Essentials"
+            else:
+                sub_tier = sub_tier.capitalize() + " Host"
         else:
-            sub_tier = "Pro Host"
+            sub_tier = "Compliance Essentials"
             
     return {
         "id": host.id,
         "username": host.username,
         "email": host.email,
         "full_name": host.username,
-        "tier": sub_tier
+        "tier": sub_tier,
+        "has_active_subscription": has_active_sub
     }
 
 if __name__ == "__main__":
