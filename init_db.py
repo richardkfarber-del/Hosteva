@@ -144,14 +144,6 @@ def main():
         except Exception as seed_init_err:
             print(f"Warning: Skipping auto-seeding step during database initialization: {seed_init_err}")
 
-        # Data Cleanup: Delete all existing property records as requested by user
-        try:
-            with engine.connect() as conn:
-                conn.execute(text("DELETE FROM properties;"))
-                conn.commit()
-            print("Database cleanup: Deleted all property records successfully.")
-        except Exception as cleanup_err:
-            print(f"Warning: Could not clear properties table: {cleanup_err}")
     except Exception as e:
         print(f"Error during database initialization: {e}")
         import traceback

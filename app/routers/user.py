@@ -1,3 +1,4 @@
+import os
 from fastapi import APIRouter, Depends, HTTPException, Response
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
@@ -44,7 +45,16 @@ def login_user(response: Response, form_data: OAuth2PasswordRequestForm = Depend
         raise HTTPException(status_code=401, detail="Incorrect username or password")
         
     access_token = create_access_token(data={"sub": host.username, "role": "host"})
-    response.set_cookie(key="access_token", value=access_token, httponly=True, path="/", max_age=1800, samesite="lax")
+    is_production = os.getenv("ENVIRONMENT", "").lower() == "production"
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        path="/",
+        max_age=1800,
+        samesite="lax",
+        secure=is_production,  # HTTPS-only cookies in production
+    )
     return {"access_token": access_token, "token_type": "bearer"}
 
 @router.get("/me")

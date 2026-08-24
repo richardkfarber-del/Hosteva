@@ -14,8 +14,15 @@ from app.db_models import Subscription, PermitTransaction
 from app.models.compliance import PropertyCompliance
 
 # Configure stripe API keys
-stripe.api_key = os.getenv("STRIPE_SECRET_KEY") or "sk_test_mock"
-STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET") or "whsec_mock"
+stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
+STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET")
+IS_PRODUCTION = os.getenv("ENVIRONMENT", "").lower() == "production"
+
+if IS_PRODUCTION:
+    if not stripe.api_key or str(stripe.api_key).startswith("sk_test"):
+        raise RuntimeError("STRIPE_SECRET_KEY must be a live key in production")
+    if not STRIPE_WEBHOOK_SECRET:
+        raise RuntimeError("STRIPE_WEBHOOK_SECRET must be set in production")
 FRONTEND_URL = os.getenv("FRONTEND_URL") or "http://localhost:3000"
 
 router = APIRouter(
@@ -83,6 +90,11 @@ async def create_checkout_session(
                 "session_id": checkout_session.id
             }
         except Exception as e:
+            if IS_PRODUCTION:
+                raise HTTPException(
+                    status_code=502,
+                    detail="Payment provider unavailable. Please try again shortly.",
+                )
             # Fallback mock checkout URL for testing
             mock_session_id = f"cs_test_{client_reference_id[:8]}"
             new_tx = PermitTransaction(
@@ -102,17 +114,19 @@ async def create_checkout_session(
     
     # Otherwise it's a subscription checkout
     price_ids = {
-        "FREE": os.getenv("STRIPE_PRICE_FREE") or "price_mock_free",
-        "STARTER": os.getenv("STRIPE_PRICE_STARTER") or "price_mock_starter",
-        "BASIC": os.getenv("STRIPE_PRICE_BASIC") or "price_mock_starter",
-        "GROWTH": os.getenv("STRIPE_PRICE_GROWTH") or "price_mock_growth",
-        "PRO": os.getenv("STRIPE_PRICE_PRO") or "price_mock_growth",
-        "COMPLIANCE_ESSENTIALS": os.getenv("STRIPE_PRICE_COMPLIANCE_ESSENTIALS") or "price_mock_compliance_essentials",
-        "ENTERPRISE": os.getenv("STRIPE_PRICE_ENTERPRISE") or "price_mock_enterprise",
-        "PREMIUM": os.getenv("STRIPE_PRICE_PREMIUM") or "price_mock_enterprise"
+        "FREE": os.getenv("STRIPE_PRICE_FREE") or ("price_mock_free" if not IS_PRODUCTION else None),
+        "STARTER": os.getenv("STRIPE_PRICE_STARTER") or ("price_mock_starter" if not IS_PRODUCTION else None),
+        "BASIC": os.getenv("STRIPE_PRICE_BASIC") or ("price_mock_starter" if not IS_PRODUCTION else None),
+        "GROWTH": os.getenv("STRIPE_PRICE_GROWTH") or ("price_mock_growth" if not IS_PRODUCTION else None),
+        "PRO": os.getenv("STRIPE_PRICE_PRO") or ("price_mock_growth" if not IS_PRODUCTION else None),
+        "COMPLIANCE_ESSENTIALS": os.getenv("STRIPE_PRICE_COMPLIANCE_ESSENTIALS") or ("price_mock_compliance_essentials" if not IS_PRODUCTION else None),
+        "ENTERPRISE": os.getenv("STRIPE_PRICE_ENTERPRISE") or ("price_mock_enterprise" if not IS_PRODUCTION else None),
+        "PREMIUM": os.getenv("STRIPE_PRICE_PREMIUM") or ("price_mock_enterprise" if not IS_PRODUCTION else None)
     }
 
     selected_price = price_ids.get(tier_val, price_ids["STARTER"])
+    if IS_PRODUCTION and not selected_price:
+        raise HTTPException(status_code=500, detail="Billing not configured")
     
     try:
         checkout_session = stripe.checkout.Session.create(
@@ -138,6 +152,11 @@ async def create_checkout_session(
             "session_id": checkout_session.id
         }
     except Exception as e:
+        if IS_PRODUCTION:
+            raise HTTPException(
+                status_code=502,
+                detail="Payment provider unavailable. Please try again shortly.",
+            )
         mock_session_id = f"cs_test_sub_{client_reference_id[:8]}"
         return {
             "status": "pending",

@@ -55,8 +55,15 @@ async def get_current_user_optional(request: Request, db: Session = Depends(get_
 
 router = APIRouter(prefix="/subscriptions", tags=["subscriptions"])
 
-stripe.api_key = os.environ.get("STRIPE_SECRET_KEY", "sk_test_mock")
-STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "whsec_mock")
+stripe.api_key = os.environ.get("STRIPE_SECRET_KEY")
+STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET")
+IS_PRODUCTION = os.environ.get("ENVIRONMENT", "").lower() == "production"
+
+if IS_PRODUCTION:
+    if not stripe.api_key or stripe.api_key.startswith("sk_test"):
+        raise RuntimeError("STRIPE_SECRET_KEY must be a live key in production")
+    if not STRIPE_WEBHOOK_SECRET or STRIPE_WEBHOOK_SECRET.startswith("whsec_mock"):
+        raise RuntimeError("STRIPE_WEBHOOK_SECRET must be set in production")
 
 class SubscriptionRequest(BaseModel):
     tier: str
@@ -73,12 +80,17 @@ async def create_checkout_session(
     if tier_lower not in ["basic", "pro", "premium"]:
         raise HTTPException(status_code=400, detail="Invalid tier selected")
     
+    IS_PRODUCTION = os.environ.get("ENVIRONMENT", "").lower() == "production"
     # Map tiers to Stripe Price IDs (using environment variables or hardcoded mocks for tests)
     price_ids = {
-        "basic": os.environ.get("STRIPE_PRICE_BASIC", "price_mock_basic"),
-        "pro": os.environ.get("STRIPE_PRICE_PRO", "price_mock_pro"),
-        "premium": os.environ.get("STRIPE_PRICE_PREMIUM", "price_mock_premium")
+        "basic": os.environ.get("STRIPE_PRICE_BASIC", "price_mock_basic" if not IS_PRODUCTION else None),
+        "pro": os.environ.get("STRIPE_PRICE_PRO", "price_mock_pro" if not IS_PRODUCTION else None),
+        "premium": os.environ.get("STRIPE_PRICE_PREMIUM", "price_mock_premium" if not IS_PRODUCTION else None)
     }
+    
+    if IS_PRODUCTION:
+        if not price_ids["basic"] or not price_ids["pro"] or not price_ids["premium"]:
+            raise HTTPException(status_code=500, detail="Billing not configured")
 
     client_reference_id = current_host.id if current_host else "user_mock_123"
 
@@ -102,6 +114,12 @@ async def create_checkout_session(
             "message": "Transaction initiated.",
         }
     except Exception as e:
+        if IS_PRODUCTION:
+            raise HTTPException(
+                status_code=502,
+                detail="Payment provider unavailable. Please try again shortly.",
+            )
+        # Dev/test only
         return {
             "status": "pending",
             "checkout_url": f"/checkout-mock?session_id=session_12345&type=subscription&tier={request.tier}&client_ref={client_reference_id}",

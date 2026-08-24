@@ -105,7 +105,10 @@ def serve_sw():
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    return PlainTextResponse(str(traceback.format_exc()), status_code=500)
+    # Log full traceback server-side; never expose it to clients in production
+    traceback.print_exc()
+    detail = str(traceback.format_exc()) if os.getenv("ENVIRONMENT") != "production" else "Internal server error"
+    return PlainTextResponse(detail, status_code=500)
 
 app.include_router(listings.router)
 app.include_router(zoning.router)

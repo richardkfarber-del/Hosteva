@@ -25,17 +25,19 @@ def run_gemini_audit(city: str, county: str, state: str, address: str, address_c
         "legal_subdivision_name": city if city else "Unknown Subdivision",
         "hoa_detected": False,
         "hoa_rules_available": False,
-        "eligibility_status": "Compliant",
+        "eligibility_status": "Pending",  # was "Compliant" — never claim compliant on failure
         "required_permits": [
+            "Manual review required: automated compliance audit unavailable",
             "DBPR Condominium/Cooperative/Apartment License",
             "Florida Dept of Revenue Sales Tax Registration",
-            "County Tourist Development Tax Account"
+            "County Tourist Development Tax Account",
         ],
         "local_restrictions": {
             "Noise": "Quiet hours observed daily from 10 PM to 7 AM. Noise level must not exceed 55 dBA.",
             "Parking": "Maximum 2 vehicles permitted on-site. Parking on lawns or shared neighborhood easements is prohibited.",
-            "Trash": "Trash must be stored in approved bins and kept out of public view except on scheduled collection days (Mondays and Thursdays)."
-        }
+            "Trash": "Trash must be stored in approved bins and kept out of public view except on scheduled collection days (Mondays and Thursdays).",
+            "Disclaimer": "Automated audit unavailable. Results require manual verification before listing.",
+        },
     }
     
     if "spring hill" in address.lower() or "stable run" in address.lower():
