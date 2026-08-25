@@ -36,7 +36,7 @@ def run_gemini_audit(city: str, county: str, state: str, address: str, address_c
             "Noise": "Quiet hours observed daily from 10 PM to 7 AM. Noise level must not exceed 55 dBA.",
             "Parking": "Maximum 2 vehicles permitted on-site. Parking on lawns or shared neighborhood easements is prohibited.",
             "Trash": "Trash must be stored in approved bins and kept out of public view except on scheduled collection days (Mondays and Thursdays).",
-            "Disclaimer": "Automated audit unavailable. Results require manual verification before listing.",
+            "disclaimer": "Hosteva automated compliance results are informational only and do not constitute legal advice. Verify with local counsel or licensing authorities before listing.",
         },
     }
     
@@ -133,6 +133,10 @@ def run_gemini_audit(city: str, county: str, state: str, address: str, address_c
                 text_response = text_response.split("```")[1].split("```")[0].strip()
             
             parsed_data = json.loads(text_response)
+            
+            if "local_restrictions" not in parsed_data:
+                parsed_data["local_restrictions"] = {}
+            parsed_data["local_restrictions"]["disclaimer"] = "Hosteva automated compliance results are informational only and do not constitute legal advice. Verify with local counsel or licensing authorities before listing."
             
             # Post-process to ensure Action Required is set if rules are unavailable
             if parsed_data.get("hoa_detected") and not parsed_data.get("hoa_rules_available"):

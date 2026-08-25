@@ -110,11 +110,13 @@ def get_user_analytics(current_user: dict = Depends(get_current_user), db: Sessi
     else:
         sub_tier = getattr(host, "subscription_tier", "Pro")
 
+    is_production = os.getenv("ENVIRONMENT", "").lower() == "production"
+    recent_queries = [] if is_production else [
+        {"query": "What are the STR laws in Miami?", "date": "2026-04-10"},
+        {"query": "Do I need a permit for Aspen?", "date": "2026-04-11"},
+        {"query": "Is a 30-day minimum stay required in Orlando?", "date": "2026-04-12"}
+    ]
     return {
         "subscription_tier": sub_tier,
-        "recent_queries": [
-            {"query": "What are the STR laws in Miami?", "date": "2026-04-10"},
-            {"query": "Do I need a permit for Aspen?", "date": "2026-04-11"},
-            {"query": "Is a 30-day minimum stay required in Orlando?", "date": "2026-04-12"}
-        ]
+        "recent_queries": recent_queries
     }

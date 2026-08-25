@@ -54,7 +54,12 @@ async def create_checkout_session(
             raise HTTPException(status_code=400, detail="property_id is required for permit filing checkout")
         
         # Define mock or real price ID
-        price_id = os.getenv("STRIPE_PRICE_PERMIT_FILING") or "price_mock_permit_filing"
+        IS_PRODUCTION = os.getenv("ENVIRONMENT", "").lower() == "production"
+        price_id = os.getenv("STRIPE_PRICE_PERMIT_FILING") or (
+            "price_mock_permit_filing" if not IS_PRODUCTION else None
+        )
+        if not price_id:
+            raise HTTPException(status_code=500, detail="Billing not configured")
         
         try:
             checkout_session = stripe.checkout.Session.create(

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+
+<html class="h-full antialiased bg-background text-on-surface" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Eligibility Audit Results - Hosteva</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Manrope:wght@500;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-container": "#a0d5fd",
+                        "inverse-on-surface": "#eaf1ff",
+                        "background": "#f8f9ff",
+                        "on-error": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "surface-variant": "#d2e4ff",
+                        "surface-container-low": "#eff4ff",
+                        "on-primary-fixed-variant": "#004e5b",
+                        "secondary-fixed": "#c8e6ff",
+                        "surface-bright": "#f8f9ff",
+                        "secondary": "#2a6486",
+                        "on-tertiary-container": "#f5fff7",
+                        "inverse-surface": "#19324d",
+                        "on-secondary-container": "#225d80",
+                        "surface-dim": "#c4dcff",
+                        "on-primary-container": "#f9fdff",
+                        "on-primary-fixed": "#001f26",
+                        "tertiary-container": "#00855c",
+                        "on-tertiary-fixed": "#002114",
+                        "tertiary-fixed": "#75fbbf",
+                        "surface-tint": "#006879",
+                        "outline-variant": "#bec8cc",
+                        "on-secondary-fixed-variant": "#034c6d",
+                        "on-background": "#001c37",
+                        "tertiary": "#006948",
+                        "on-primary": "#ffffff",
+                        "surface-container": "#e5eeff",
+                        "primary-fixed-dim": "#7ed3e7",
+                        "primary-fixed": "#a8edff",
+                        "primary": "#006576",
+                        "on-surface": "#001c37",
+                        "on-surface-variant": "#3e484b",
+                        "on-error-container": "#93000a",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-container": "#1c7f92",
+                        "tertiary-fixed-dim": "#56dea5",
+                        "inverse-primary": "#7ed3e7",
+                        "on-secondary": "#ffffff",
+                        "on-secondary-fixed": "#001e2f",
+                        "on-tertiary-fixed-variant": "#005237",
+                        "secondary-fixed-dim": "#97cdf4",
+                        "on-tertiary": "#ffffff",
+                        "surface": "#f8f9ff",
+                        "error": "#ba1a1a",
+                        "surface-container-highest": "#d2e4ff",
+                        "surface-container-high": "#dce9ff",
+                        "outline": "#6e797c"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Manrope", "sans-serif"],
+                        "display": ["Manrope", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                        "label": ["Inter", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .icon-filled {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .gradient-btn {
+            background: linear-gradient(135deg, theme('colors.primary'), theme('colors.primary-container'));
+        }
+        .premium-shadow {
+            box-shadow: 0 20px 40px -15px rgba(0, 28, 55, 0.08);
+        }
+        .ambient-shadow-primary {
+            box-shadow: 0 10px 30px -10px rgba(0, 101, 118, 0.3);
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .glow-button {
+            box-shadow: 0 0 15px rgba(0, 101, 118, 0.4);
+        }
+        .locked-item {
+            position: relative;
+            overflow: hidden;
+        }
+        .locked-item::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,1) 100%);
+            z-index: 10;
+        }
+    </style>
+</head>
+<body class="font-body antialiased min-h-screen pb-24 md:pb-0 bg-background text-on-surface flex flex-col relative overflow-x-hidden">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-surface/80 dark:bg-surface/80 backdrop-blur-xl bg-surface-container-low/50 flex justify-between items-center px-6 py-4 max-w-full mx-auto">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary dark:text-primary-fixed-dim icon-filled" style="font-size: 24px;">grid_view</span>
+<div class="flex items-center gap-2">
+<img alt="Hosteva Logo" class="h-8 w-auto" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAHnFBc887dhSQ0H1FJCeRtyw6cOwoX0T3XeBRdprqWewfA63b4XH3CvHg8aRwOPHdQQbSXSu9i_p40gWsz5ry2EwVNY3Y0PZeEj6-ScjQxo6dhtZ9NLG8vEa2axXgmv4vaNAtjXjvMI5VKkptTNTXwrOokVSvif__K01QYahJERXyTtDV3UOzxhHhoPXUrUu8YbHDcAxAH8oOnN6Wzs1McZzJqNVaJtmCo3X9IY66yKPEdp3yFXfAAAumsa0ZUGWF6EIb-903OA2E"/>
+<h1 class="text-2xl font-display font-black text-primary dark:text-primary-fixed tracking-tighter hidden sm:block">Hosteva</h1>
+</div>
+</div>
+<div class="hidden md:flex items-center gap-8">
+<a class="text-on-surface-variant font-label font-medium hover:bg-surface-container-high/50 transition-colors px-3 py-2 rounded-lg" href="#">Dashboard</a>
+<a class="text-primary font-bold font-label font-medium hover:bg-surface-container-high/50 transition-colors px-3 py-2 rounded-lg" href="#">Compliance</a>
+<a class="text-on-surface-variant font-label font-medium hover:bg-surface-container-high/50 transition-colors px-3 py-2 rounded-lg" href="#">Reports</a>
+<a class="text-on-surface-variant font-label font-medium hover:bg-surface-container-high/50 transition-colors px-3 py-2 rounded-lg" href="#">Settings</a>
+</div>
+<div class="flex items-center">
+<div class="h-10 w-10 rounded-full bg-surface-container-high overflow-hidden border border-outline-variant/30 flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant">person</span>
+</div>
+</div>
+</header>
+<main class="pt-24 px-6 max-w-4xl mx-auto space-y-8 flex-grow w-full z-10">
+<!-- Header Section -->
+<section class="space-y-4">
+<h1 class="font-display text-4xl md:text-5xl font-bold tracking-tight text-on-surface">Eligibility Audit</h1>
+<p class="text-lg text-on-surface-variant">Property: 1245 Ocean View Dr. Unit 4B</p>
+</section>
+<!-- Primary Verdict Card -->
+<section class="bg-error-container/30 rounded-xl p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden border border-error/20">
+<!-- Decorative gradient blur -->
+<div class="absolute -right-20 -top-20 w-64 h-64 bg-error opacity-20 rounded-full blur-[80px] pointer-events-none"></div>
+<div class="space-y-2 z-10">
+<div class="flex items-center gap-3 text-error">
+<span class="material-symbols-outlined text-4xl icon-filled">warning</span>
+<h2 class="font-display text-3xl font-bold tracking-tight">Violation Detected</h2>
+</div>
+<p class="text-on-surface-variant font-medium max-w-xl">Critical compliance issues found based on current local zoning regulations. Immediate action recommended to avoid penalties.</p>
+</div>
+<div class="z-10">
+<div class="inline-flex items-center justify-center px-4 py-2 rounded-full bg-error-container text-on-error-container font-bold text-sm tracking-wide border border-error/20">
+                    Risk Level: High
+                </div>
+</div>
+</section>
+<!-- Audit Teaser Checklist Bento Grid -->
+<section class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Visible Item 1 -->
+<div class="bg-surface-container-lowest rounded-xl p-6 space-y-4 border border-outline-variant/30 transition-all hover:bg-surface-container-low shadow-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-tertiary icon-filled">check_circle</span>
+<h3 class="font-display font-bold text-xl text-on-surface">Zoning Category</h3>
+</div>
+</div>
+<p class="text-on-surface-variant text-sm">Property is located within an approved R-2 residential zone permitting short-term rentals.</p>
+</div>
+<!-- Visible Item 2 -->
+<div class="bg-surface-container-lowest rounded-xl p-6 space-y-4 border border-outline-variant/30 transition-all hover:bg-surface-container-low shadow-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-error icon-filled">cancel</span>
+<h3 class="font-display font-bold text-xl text-on-surface">HOA Restrictions</h3>
+</div>
+</div>
+<p class="text-on-surface-variant text-sm">Current HOA bylaws explicitly prohibit rentals under 30 days. This conflicts with your listing type.</p>
+</div>
+<!-- Locked Item 1 -->
+<div class="bg-surface-container-lowest rounded-xl p-6 space-y-4 border border-outline-variant/30 locked-item relative shadow-sm">
+<div class="flex items-center justify-between z-0">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-outline icon-filled">help</span>
+<h3 class="font-display font-bold text-xl text-on-surface">Tax Registration Status</h3>
+</div>
+</div>
+<p class="text-on-surface-variant text-sm z-0 blur-sm select-none">You are missing 2 crucial tax registration forms required by the municipality for the current fiscal year.</p>
+<div class="absolute inset-y-0 right-6 flex items-center z-20">
+<span class="material-symbols-outlined text-3xl text-primary icon-filled">lock</span>
+</div>
+</div>
+<!-- Locked Item 2 -->
+<div class="bg-surface-container-lowest rounded-xl p-6 space-y-4 border border-outline-variant/30 locked-item relative shadow-sm">
+<div class="flex items-center justify-between z-0">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-outline icon-filled">help</span>
+<h3 class="font-display font-bold text-xl text-on-surface">Safety Permit Valid</h3>
+</div>
+</div>
+<p class="text-on-surface-variant text-sm z-0 blur-sm select-none">Fire safety inspection certificate expired 45 days ago. Renewal process takes approximately 3 weeks.</p>
+<div class="absolute inset-y-0 right-6 flex items-center z-20">
+<span class="material-symbols-outlined text-3xl text-primary icon-filled">lock</span>
+</div>
+</div>
+</section>
+<!-- Conversion Card -->
+<section class="bg-surface-container-high rounded-xl p-8 text-center space-y-6 relative overflow-hidden border border-outline-variant/30 shadow-sm mb-12">
+<!-- Ambient Glow -->
+<div class="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-primary opacity-10 rounded-full blur-[100px] pointer-events-none"></div>
+<div class="relative z-10 max-w-2xl mx-auto space-y-6">
+<span class="material-symbols-outlined text-5xl text-primary icon-filled">key</span>
+<h2 class="font-display text-3xl md:text-4xl font-bold text-on-surface tracking-tight">Unlock Your Compliance Roadmap</h2>
+<p class="text-on-surface-variant text-lg">Don't let hidden violations risk your rental income. Upgrade to reveal the full audit, access locked compliance details, and get a step-by-step resolution roadmap.</p>
+<button class="mt-8 bg-gradient-to-r from-primary to-primary-container hover:from-primary-container hover:to-primary text-on-primary font-bold py-4 px-8 rounded DEFAULT transition-all ambient-shadow-primary flex items-center justify-center gap-2 mx-auto">
+<span>Unlock Full Report</span>
+<span class="material-symbols-outlined">arrow_forward</span>
+</button>
+</div>
+</section>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-3 bg-surface/90 dark:bg-surface-dim/90 backdrop-blur-2xl rounded-t-xl bg-surface-container-low/80 shadow-[0_-4px_24px_rgba(0,28,55,0.04)]">
+<a class="flex flex-col items-center justify-center text-on-surface-variant/70 px-5 py-1.5 hover:text-primary transition-colors active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined mb-1">dashboard</span>
+<span class="font-label font-medium text-xs tracking-wide">Dashboard</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary-container/30 text-on-primary-container rounded-xl px-5 py-1.5 transition-all hover:text-primary transition-colors active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined mb-1 icon-filled">verified_user</span>
+<span class="font-label font-medium text-xs tracking-wide font-bold">Compliance</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant/70 px-5 py-1.5 hover:text-primary transition-colors active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined mb-1">analytics</span>
+<span class="font-label font-medium text-xs tracking-wide">Reports</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant/70 px-5 py-1.5 hover:text-primary transition-colors active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined mb-1">settings</span>
+<span class="font-label font-medium text-xs tracking-wide">Settings</span>
+</a>
+</nav>
+</body></html>

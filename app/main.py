@@ -29,7 +29,9 @@ load_dotenv()
 
 templates = Jinja2Templates(directory="app/templates")
 
-SHOW_DOCS = os.getenv("SHOW_DOCS", "True").lower() == "true"
+_env = os.getenv("ENVIRONMENT", "").lower()
+_show_docs_default = "false" if _env == "production" else "true"
+SHOW_DOCS = os.getenv("SHOW_DOCS", _show_docs_default).lower() == "true"
 
 def import_models():
     # Explicitly import all database models so they register on Base and relationships are mapped
@@ -183,7 +185,8 @@ def read_login(request: Request):
         name="login.html",
         context={"request": request}
     )
-    res.delete_cookie(key="access_token", path="/")
+    is_production = os.getenv("ENVIRONMENT", "").lower() == "production"
+    res.delete_cookie(key="access_token", path="/", secure=is_production, httponly=True, samesite="lax")
     return res
 
 @app.get("/register", include_in_schema=False)
@@ -305,6 +308,8 @@ def read_task_detail(task_id: str, request: Request, db: Session = Depends(get_d
 
 @app.get("/checkout-mock", name="checkout_mock")
 def read_checkout_mock(request: Request):
+    if os.getenv("ENVIRONMENT", "").lower() == "production":
+        return RedirectResponse(url="/pricing", status_code=303)
     return templates.TemplateResponse(
         request=request,
         name="checkout_mock.html",

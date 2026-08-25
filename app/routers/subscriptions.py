@@ -135,19 +135,21 @@ async def stripe_webhook(
 ):
     payload = await request.body()
     
+    IS_PRODUCTION = os.environ.get("ENVIRONMENT", "").lower() == "production"
+    if IS_PRODUCTION and not stripe_signature:
+        raise HTTPException(status_code=400, detail="Missing signature")
+        
     try:
         event = stripe.Webhook.construct_event(
             payload, stripe_signature, STRIPE_WEBHOOK_SECRET
         )
     except ValueError as e:
-        # Invalid payload
         raise HTTPException(status_code=400, detail="Invalid payload")
     except stripe.error.SignatureVerificationError as e:
-        # Invalid signature
         raise HTTPException(status_code=400, detail="Invalid signature")
     except Exception as e:
-        # Other Stripe errors
-        # During tests, we might just pass a mock JSON
+        if IS_PRODUCTION:
+            raise HTTPException(status_code=400, detail="Invalid webhook event")
         import json
         try:
             event = json.loads(payload)
