@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "profiles": {
+    "ollama:default": {
+      "type": "api_key",
+      "provider": "ollama",
+      "key": "ollama-local"
+    }
+  },
+  "mac:default": {
+    "apiKey": "ollamalocal"
+  },
+  "pc:default": {
+    "apiKey": "ollamalocal"
+  }
+}

@@ -1,0 +1,17 @@
+# Production Gap Analysis Report
+
+## 1. Falcon: Live State Mapping
+- **Home Page (`/`)**: Active. Contains Hero section, basic feature marketing ("Precision Management Tools"), and routing to other views.
+- **Compliance Wizard (`/wizard`)**: Active. Contains an "Eligibility Wizard" with an address autocomplete field. Generates "The Insight Prism" results with a basic pass/fail status and checklist.
+- **Host Dashboard (`/dashboard`)**: Active. Contains high-level metrics ("Total Portfolio Revenue", "Compliance Score", "Active Alerts"), a "License Tracker", "Document Vault", and a "Geospatial Parcel Map". Features a top navigation search bar for "Search address for eligibility...".
+
+## 2. Wasp: UI/UX Design Consistency (vs DESIGN_STATE.md)
+- **Glassmorphism Base (Failed)**: `DESIGN_STATE.md` mandates `bg-white/10 backdrop-blur-md` for containers. The live site uses `rgba(255, 255, 255, 0.7)` (`bg-white/70`) with `blur(20px)` for the main wizard panel (`.glass-panel`) and `rgba(255, 255, 255, 0.95)` with `blur(12px)` for the `.autocomplete-dropdown`. 
+- **No-Line Rule (Partial/Inconsistent)**: While borders evaluate to `0px` in the computed DOM, components are not explicitly utilizing the mandated `border-none` utility class in their markup to strictly enforce the Stitch-Design.
+- **Traffic Light UI Compliance Status (Critical Failure)**: `DESIGN_STATE.md` strictly requires status badges to use: `px-3 py-1 text-xs font-black uppercase rounded-[8px] shadow-ambient backdrop-blur-[20px] border-none` along with specific color variations (e.g., `bg-green-500/20 text-green-600`). The live Wizard returns unstyled plain text (`<p class="font-bold text-lg mb-2 text-green-600">Status: Pass</p>`).
+
+## 3. Hawkeye: Functional & Strategic Gaps (vs PROJECT_BOARD.md)
+- **FEAT-005: Automated Permit Application Generator (Missing)**: The current sprint focus is completely absent from the live site. There is no mechanism or UI to transform compliance data into a completed municipal permit application.
+- **FEAT-006: Listing Optimization Recommendation Engine (Missing)**: The secondary sprint focus is completely absent. The dashboard fails to surface any actionable recommendations for listing optimization.
+- **FEAT-004 & FEAT-002: Listing Health Metrics Visibility (Gap)**: Despite FEAT-004 being marked 'IMPLEMENTED', the Host Dashboard fails to display the synchronized Airbnb/VRBO "Listing Health metrics" as required by the FEAT-002 Acceptance Criteria.
+- **BUG-001: Address Eligibility Module (Regression/Incomplete)**: Marked 'CLOSED', but fails to display the "traffic light statuses" design tokens as intended. Furthermore, the address search bar in the Dashboard top navigation is non-functional/unwired compared to the working autocomplete in the Wizard.

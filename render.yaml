@@ -10,6 +10,17 @@ services:
         fromDatabase:
           name: hosteva-db
           property: connectionString
+      # Placeholder for required production secrets (DO NOT HARDCODE VALUES HERE)
+      # Configure these directly in the Render Dashboard:
+      # - key: ENVIRONMENT
+      #   value: production
+      # - key: JWT_SECRET_KEY
+      # - key: STRIPE_SECRET_KEY
+      # - key: STRIPE_WEBHOOK_SECRET
+      # - key: FRONTEND_URL
+      # - key: ALLOWED_ORIGINS
+      # - key: GEMINI_API_KEY
+      # - key: STRIPE_PRICE_PERMIT_FILING
 
 databases:
   - name: hosteva-db

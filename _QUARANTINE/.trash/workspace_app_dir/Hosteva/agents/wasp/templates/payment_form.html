@@ -1,0 +1,38 @@
+<form id="payment-form">
+  <input type="text" id="card-element" placeholder="Card number" required>
+  <button type="submit">Submit Payment</button>
+</form>
+
+<script>
+  // Initialize Stripe with the API key from environment variables
+  const stripe = Stripe('{{{{ os.getenv('STRIPE_API_KEY') }}}}', {
+    locale: 'auto'
+  });
+
+  // Create a payment method when the form is submitted.
+  var form = document.getElementById('payment-form');
+  form.addEventListener('submit', function(event) {
+    event.preventDefault();
+
+    stripe.createPaymentMethod({
+      type: 'card',
+      card: element
+    }).then(function(result) {
+      if (result.error) {
+        // Inform the user if there was an error.
+        alert(result.error.message);
+      } else {
+        // Send the PaymentMethod ID to your server.
+        fetch('/create-payment-intent', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ payment_method_id: result.paymentMethod.id })
+        }).then(function(response) {
+          return response.json();
+        }).then(function(data) {
+          alert('Payment successful!');
+        });
+      }
+    });
+  });
+</script>

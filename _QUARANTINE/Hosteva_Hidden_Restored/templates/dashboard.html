@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Hosteva | Dashboard</title>
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        'surface': '#f8f9ff',
+        'surface-container-low': '#eff4ff',
+        'surface-container-lowest': '#ffffff',
+        'surface-container-high': '#dce9ff',
+        'primary': '#006576',
+        'primary-container': '#1c7f92',
+        'on-surface': '#001c37',
+        'outline-variant': '#bec8cc',
+        'tertiary-fixed': '#75fbbf'
+      },
+      fontFamily: {
+        'display': ['Manrope', 'sans-serif'],
+        'headline': ['Manrope', 'sans-serif'],
+        'body': ['Inter', 'sans-serif']
+      },
+      boxShadow: {
+        'ambient': '0 20px 40px rgba(0, 28, 55, 0.08)',
+        'ambient-light': '0 20px 40px rgba(0, 28, 55, 0.04)'
+      }
+    }
+  }
+}
+</script>
+
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .property-card-clip {
+            clip-path: polygon(0 0, calc(100% - 30px) 0, 100% 30px, 100% 100%, 0 100%);
+        }
+        .sidebar-blur {
+            backdrop-filter: blur(20px);
+        }
+        [v-cloak] { display: none; }
+        .pac-container { background: #ffffff; border: 1px solid #e5e7eb; }
+        .pac-item { padding: 8px; color: #374151; cursor: pointer; }
+        .pac-item:hover { background: #f3f4f6; }
+        .pac-item-query { color: #374151; }
+        .pac-matched { color: #0d9488; }
+        .critical-pulse {
+            animation: criticalPulse 1.5s ease-in-out infinite;
+        }
+        @keyframes criticalPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            50% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+        }
+        .violation-banner {
+            background: linear-gradient(90deg, #ef4444, #dc2626);
+            animation: pulse-banner 2s ease-in-out infinite;
+        }
+        @keyframes pulse-banner {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.85; }
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.5/purify.min.js"></script>
+</head>
+<body class="bg-white/10 font-body text-gray-800 antialiased min-h-screen">
+    <aside class="hidden md:flex w-[260px] h-screen fixed left-0 top-0 bg-white/80 border-r border-slate-200/60 shadow-2xl flex-col py-8 px-4 gap-2 z-50 mobile-hidden">
+            <div class="flex flex-col justify-center items-center mb-8 px-2">
+                <img src="{{ url_for('static', filename='img/hosteva_logo.png') }}" alt="Hosteva Logo" class="h-20 w-20 object-contain" onerror="this.onerror=null; this.src='https://placehold.co/200x80/006576/ffffff?text=Hosteva';" >
+                <p class="text-[#52aecd] text-xs font-medium uppercase tracking-widest opacity-80 mt-1 font-body">Hosteva Intelligence</p>
+            </div>
+            <nav class="flex flex-col gap-1">
+                <a class="flex items-center gap-3 py-3 px-4 text-slate-600 opacity-90 hover:bg-[#52aecd]/20 hover:opacity-100 transition-all font-medium rounded-lg {% if active_page == 'home' %}bg-[#52aecd] text-white{% endif %}" href="/">
+                    <span class="material-symbols-outlined">home</span>
+                    <span>Home</span>
+                </a>
+                <a class="flex items-center gap-3 py-3 px-4 text-slate-600 opacity-90 hover:bg-[#52aecd]/20 hover:opacity-100 transition-all font-medium rounded-lg {% if active_page == 'compliance' %}bg-[#52aecd] text-white{% endif %}" href="/wizard">
+                    <span class="material-symbols-outlined">rule</span>
+                    <span>Compliance Wizard</span>
+                </a>
+                <a class="flex items-center gap-3 py-3 px-4 text-slate-600 opacity-90 hover:bg-[#52aecd]/20 hover:opacity-100 transition-all font-medium rounded-lg {% if active_page == 'dashboard' %}bg-[#52aecd] text-white{% endif %}" href="/dashboard">
+                    <span class="material-symbols-outlined">dashboard</span>
+                    <span>Host Dashboard</span>
+                </a>
+
+                <a class="flex items-center gap-3 py-3 px-4 text-slate-600 opacity-90 hover:bg-[#52aecd]/20 hover:opacity-100 transition-all font-medium rounded-lg {% if active_page == 'integrations' %}bg-[#52aecd] text-white{% endif %}" href="/integrations">
+                    <span class="material-symbols-outlined">extension</span>
+                    <span>Integrations</span>
+                </a>
+                
+                <div class="mt-8 mb-2 px-4 text-xs font-bold uppercase tracking-widest text-[#52aecd]/50">Insights</div>
+                <a class="flex items-center gap-3 py-3 px-4 text-slate-600 font-medium rounded-lg opacity-50 cursor-not-allowed" href="#">
+                    <span class="material-symbols-outlined">analytics</span>
+                    <span>Analytics</span>
+                </a>
+                
+                <div class="mt-8 mb-2 px-4 text-xs font-bold uppercase tracking-widest text-[#52aecd]/50">Recent Queries</div>
+                <div class="px-4">
+                    <ul id="dashboard-recent-queries" class="flex flex-col gap-1 max-h-32 overflow-y-auto">
+                        <li class="text-xs text-slate-400 italic">No queries yet</li>
+                    </ul>
+                </div>
+            </nav>
+            
+            <div class="mt-auto px-4">
+                <div class="bg-black/20 rounded-xl p-4 border-white/5">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="w-8 h-8 rounded-full bg-gradient-to-r from-[#75fbbf] to-[#52aecd] flex items-center justify-center font-bold text-on-surface text-sm" id="sidebar-user-initials">--</div>
+                        <div>
+                            <p class="text-sm font-bold text-slate-800" id="sidebar-user-name">Loading...</p>
+                            <p class="text-xs text-[#52aecd]" id="sidebar-user-tier">...</p>
+                        </div>
+                    </div>
+                    <button onclick="upgradeToPro()" class="w-full mt-2 px-4 py-2 bg-gradient-to-br from-primary to-primary-container text-on-surface font-bold text-xs rounded-[8px] uppercase tracking-widest hover:opacity-90 transition-opacity">Upgrade to Pro</button>
+                </div>
+            </div>
+        </aside>
+
+    <header class="md:ml-[260px] ml-0 h-16 flex items-center justify-between px-8 bg-white/10 border/50 sticky top-0 z-40">
+        <div class="flex items-center gap-4 flex-1">
+            <div class="relative w-full max-w-md">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-lg">search</span>
+                <input id="address-search" class="w-full bg-white/10 text-white rounded-[8px] pl-10 pr-24 py-2 text-sm focus:ring-1 focus:ring-teal-600 transition-all text-gray-800" placeholder="Search address for eligibility..." type="text" autocomplete="off"/>
+                <button id="search-btn" class="absolute right-2 top-1/2 -translate-y-1/2 text-xs bg-gradient-to-br from-primary to-primary-container text-on-surface font-headline tracking-tight px-3 py-1.5 rounded-[8px] font-bold hover:opacity-90 transition-opacity flex items-center gap-1">
+                    <span id="search-btn-text">Search</span>
+                    <span id="search-spinner" class="hidden material-symbols-outlined animate-spin text-sm">progress_activity</span>
+                </button>
+                <!-- Autocomplete Dropdown (No-Line Glassmorphism) -->
+                <div id="autocomplete-dropdown" class="absolute top-full left-0 w-full mt-2 rounded-[8px] bg-white/10 shadow-2xl overflow-hidden hidden z-50 text-gray-800">
+                    <!-- Dynamic suggestions will be injected here -->
+                </div>
+            </div>
+        </div>
+        <div class="flex items-center gap-6">
+            <button class="relative text-gray-500 hover:text-primary transition-colors">
+                <span class="material-symbols-outlined">notifications</span>
+                <span class="absolute top-0 right-0 w-2 h-2 bg-gradient-to-br from-primary to-primary-container rounded-full animate-pulse"></span>
+            </button>
+            <button class="text-gray-500 hover:text-primary transition-colors">
+                <span class="material-symbols-outlined">settings</span>
+            </button>
+        </div>
+    </header>
+
+    <div id="add-property-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center">
+        <div class="bg-white/10 rounded-[8px] shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
+            <div class="flex items-center justify-between px-6 py-4 bg-white/10">
+                <h3 class="text-xl font-bold text-on-surface font-headline tracking-tight uppercase italic">Add Property</h3>
+                <button onclick="closeAddPropertyModal()" class="text-gray-500 hover:text-gray-700 transition-colors">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <form id="add-property-form" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Address</label>
+                    <input type="text" name="address" required class="w-full px-4 py-2 rounded-[8px] focus:ring-2 focus:ring-teal-600 focus:border-transparent text-gray-800">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">City</label>
+                        <input type="text" name="city" required class="w-full px-4 py-2 rounded-[8px] focus:ring-2 focus:ring-teal-600 focus:border-transparent text-gray-800">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">State</label>
+                        <input type="text" name="state" required class="w-full px-4 py-2 rounded-[8px] focus:ring-2 focus:ring-teal-600 focus:border-transparent text-gray-800">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">ZIP Code</label>
+                        <input type="text" name="zip_code" class="w-full px-4 py-2 rounded-[8px] focus:ring-2 focus:ring-teal-600 focus:border-transparent text-gray-800">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Property Type</label>
+                        <input type="text" name="property_type" placeholder="e.g., Single Family" class="w-full px-4 py-2 rounded-[8px] focus:ring-2 focus:ring-teal-600 focus:border-transparent text-gray-800">
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" name="hoa_status" id="hoa_status" class="w-4 h-4 text-primary rounded-[8px] focus:ring-teal-600">
+                    <label for="hoa_status" class="text-sm font-bold text-gray-700">HOA Property</label>
+                </div>
+                <div class="flex justify-end gap-3 pt-4">
+                    <button type="button" onclick="closeAddPropertyModal()" class="px-6 py-2 bg-white/10 text-white text-on-surface font-headline tracking-tight font-bold rounded-[8px] hover:bg-gray-200 transition-colors">Cancel</button>
+                    <button type="submit" class="px-6 py-2 bg-gradient-to-br from-primary to-primary-container text-on-surface font-headline tracking-tight font-bold rounded-[8px] hover:opacity-90 transition-opacity">Add Property</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="filter-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center">
+        <div class="bg-white/10 rounded-[8px] shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+            <div class="flex items-center justify-between px-6 py-4 bg-white/10">
+                <h3 class="text-xl font-bold text-on-surface font-headline tracking-tight uppercase italic">Filter Properties</h3>
+                <button onclick="closeFilterModal()" class="text-gray-500 hover:text-gray-700 transition-colors">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Zoning Status</label>
+                    <select id="filter-status" class="w-full px-4 py-2 rounded-[8px] focus:ring-2 focus:ring-teal-600 focus:border-transparent text-gray-800">
+                        <option value="">All Statuses</option>
+                        <option value="Compliant">Compliant</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Violation">Violation</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Property Type</label>
+                    <select id="filter-type" class="w-full px-4 py-2 rounded-[8px] focus:ring-2 focus:ring-teal-600 focus:border-transparent text-gray-800">
+                        <option value="">All Types</option>
+                        <option value="Single Family">Single Family</option>
+                        <option value="Condo">Condo</option>
+                        <option value="Townhouse">Townhouse</option>
+                    </select>
+                </div>
+                <div class="flex justify-end gap-3 pt-4">
+                    <button onclick="clearFilters()" class="px-6 py-2 bg-white/10 text-white text-on-surface font-headline tracking-tight font-bold rounded-[8px] hover:bg-gray-200 transition-colors">Clear</button>
+                    <button onclick="applyFilters()" class="px-6 py-2 bg-gradient-to-br from-primary to-primary-container text-on-surface font-headline tracking-tight font-bold rounded-[8px] hover:opacity-90 transition-opacity">Apply Filters</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <main class="md:ml-[260px] ml-0 p-10">
+        <div id="search-results" class="hidden mb-8 p-6 bg-white/10 border-white/80 rounded-[8px]">
+            <div class="flex items-center gap-4 mb-4">
+                <h3 class="text-lg font-black text-on-surface font-headline tracking-tight uppercase italic">Eligibility Status</h3>
+                <span id="search-status-badge" class="px-3 py-1 text-xs font-black uppercase rounded-[8px]"></span>
+            </div>
+            <p class="text-gray-500 text-sm mb-2"><span class="text-on-surface font-headline tracking-tight font-bold">Address:</span> <span id="search-address"></span></p>
+            <p class="text-gray-500 text-sm mb-4"><span class="text-on-surface font-headline tracking-tight font-bold">Conditions:</span> <span id="search-reason"></span></p>
+            <div id="permit-link-container" class="hidden">
+                <a id="permit-link" href="#" target="_blank" class="text-sm font-bold text-primary hover:underline flex items-center gap-1">
+                    <span class="material-symbols-outlined text-sm">open_in_new</span>
+                    View Permit Requirements
+                </a>
+            </div>
+        </div>
+
+        <section class="mb-12">
+            <div class="flex justify-between items-end mb-8">
+                <div>
+                    <h2 class="text-4xl font-black tracking-tight text-on-surface font-headline uppercase italic mb-2">Systems Status</h2>
+                    <p class="text-gray-500 font-medium">Monitoring zoning compliance across property grid</p>
+                </div>
+                <div class="flex gap-4">
+                    <button onclick="openFilterModal()" class="px-6 py-2 bg-white/10 text-white text-on-surface font-headline tracking-tight font-bold rounded-[8px] hover:bg-white/10 text-white/80 transition-colors flex items-center gap-2">
+                        <span class="material-symbols-outlined text-sm">filter_list</span>
+                        Filter
+                    </button>
+                    <button onclick="openAddPropertyModal()" class="px-6 py-2 bg-gradient-to-br from-primary to-primary-container text-on-surface font-headline tracking-tight font-bold rounded-[8px] hover:opacity-90 transition-opacity flex items-center gap-2 shadow-teal-600/20 uppercase italic tracking-widest">
+                        <span class="material-symbols-outlined text-sm">add</span>
+                        Onboard
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+                <div class="col-span-1 md:col-span-2 bg-gradient-to-br from-gray-50 to-gray-100 p-8 rounded-[8px] relative overflow-hidden group">
+                    <div class="absolute right-0 top-0 w-32 h-32 bg-gradient-to-br from-primary to-primary-container/5 rounded-full -mr-16 -mt-16"></div>
+                    <p class="text-primary font-bold text-xs uppercase tracking-widest mb-4">Total Portfolio Revenue</p>
+                    <div class="flex items-baseline gap-2">
+                        <h3 class="text-5xl font-black text-on-surface font-headline tracking-tight tracking-tighter italic">$1,420,850.00</h3>
+                        <span class="text-success font-bold text-sm tracking-tighter">+12.4%</span>
+                    </div>
+                </div>
+                <div class="bg-white/10 text-white p-8 rounded-[8px]">
+                    <p class="text-gray-500 font-bold text-xs uppercase tracking-widest mb-4">Compliance Score</p>
+                    <div class="flex items-baseline gap-2">
+                        <h3 class="text-4xl font-black text-on-surface font-headline tracking-tight tracking-tighter italic compliance-score">99.1%</h3>
+                        <span class="material-symbols-outlined text-success" style="font-variation-settings: 'FILL' 1;">bolt</span>
+                    </div>
+                </div>
+                <div class="bg-white/10 text-white p-8 rounded-[8px]">
+                    <p class="text-gray-500 font-bold text-xs uppercase tracking-widest mb-4">Active Alerts</p>
+                    <div class="flex items-baseline gap-2">
+                        <h3 class="text-4xl font-black text-on-surface font-headline tracking-tight tracking-tighter italic active-alerts">01</h3>
+                        <span class="text-primary font-bold text-sm">High Priority</span>
+                    </div>
+                </div>
+            </div>
+
+            
+<template id="property-card-template">
+    <div class="group bg-white/10 text-white overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-teal-600/10 relative property-card-root">
+        <div class="violation-banner absolute top-0 left-0 right-0 z-20 px-4 py-2 flex items-center gap-2 hidden">
+            <span class="material-symbols-outlined text-white text-sm" style="font-variation-settings: 'FILL' 1;">warning</span>
+            <span class="text-white text-xs font-black uppercase tracking-widest">Critical Violation</span>
+        </div>
+        <div class="relative h-64 overflow-hidden property-card-clip property-image-container">
+            <img src="{{ url_for('static', filename='img/hosteva_logo.png') }}" alt="" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 property-image">
+            <div class="absolute top-4 left-4 property-status-badge"></div>
+            <button class="absolute top-4 right-4 p-2 bg-white/10 border/90 rounded-[8px] hover:bg-white/10 transition-colors property-export-btn" title="Export PDF">
+                <span class="material-symbols-outlined text-gray-700 text-sm">picture_as_pdf</span>
+            </button>
+            <div class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-gray-200 to-transparent">
+                <p class="text-on-surface font-headline tracking-tight font-black text-xl italic uppercase property-name"></p>
+            </div>
+        </div>
+        <div class="p-6">
+            <div class="flex justify-between items-start mb-6">
+                <div><p class="text-gray-500 text-sm font-medium property-location"></p></div>
+                <div class="text-right">
+                    <p class="text-primary font-black text-xl italic tracking-tighter property-price"></p>
+                    <p class="text-gray-500 text-[10px] uppercase font-bold tracking-tight">per night</p>
+                </div>
+            </div>
+            <div class="flex justify-between items-center pt-4 border-t border-white/5">
+                <div class="flex gap-4">
+                    <div class="flex items-center gap-1 text-gray-500 text-xs"><span class="material-symbols-outlined text-sm">bed</span> <span class="property-beds"></span></div>
+                    <div class="flex items-center gap-1 text-gray-500 text-xs"><span class="material-symbols-outlined text-sm">bathtub</span> <span class="property-baths"></span></div>
+                </div>
+                <button class="text-primary font-bold text-sm hover:underline italic uppercase tracking-widest">Access</button>
+            </div>
+            <div class="mt-4 p-4 bg-white/10 rounded-[8px] flex flex-col gap-3">
+                <div class="flex justify-between items-center">
+                    <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Compliance Engine</p>
+                    <span class="px-2 py-1 text-[10px] font-black uppercase rounded-[8px] bg-green-500/20 text-green-600 property-county"></span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Listing Sync</p>
+                    <div class="flex items-center gap-2">
+                        <!-- Airbnb sync omitted per FEAT-016-B -->
+                        <span class="px-2 py-1 text-[10px] font-black uppercase rounded-[8px] bg-white/10 text-indigo-600 flex items-center gap-1">VRBO <span class="material-symbols-outlined text-[12px] text-green-500">sync</span></span>
+                    </div>
+                </div>
+
+                <!-- FEAT-005 visible: Automated Permit Application Generator -->
+                <button class="mt-2 w-full px-4 py-2 bg-primary/10 text-primary hover:bg-primary/20 rounded-[8px] font-bold text-xs uppercase tracking-widest transition-colors flex items-center justify-center gap-2 property-permit-btn">
+                    <span class="material-symbols-outlined text-sm">description</span>
+                    Generate Permit Application
+                </button>
+
+                <!-- FEAT-006: Listing Optimization Recommendation Engine -->
+                <div class="mt-2 p-3 bg-white/10 rounded-[8px] recommendations-container">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">lightbulb</span>
+                            <p class="text-xs font-bold text-on-surface uppercase tracking-widest">Optimization Ideas</p>
+                        </div>
+                        <button class="text-primary hover:text-primary-container transition-colors property-refresh-btn" title="Refresh recommendations">
+                            <span class="material-symbols-outlined text-sm">refresh</span>
+                        </button>
+                    </div>
+                    <div class="recommendations-content">
+                        <ul class="text-xs text-gray-600 space-y-1 list-disc list-inside">
+                            <li>Loading recommendations...</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<template id="property-card-skeleton">
+    <div class="animate-pulse bg-gray-100 overflow-hidden transition-all duration-300 rounded-xl h-full flex flex-col border border-gray-200">
+        <div class="h-64 bg-gray-200 w-full relative">
+            <div class="absolute top-4 left-4 h-6 w-24 bg-gray-300 rounded-lg"></div>
+            <div class="absolute top-4 right-4 h-8 w-8 bg-gray-300 rounded-lg"></div>
+        </div>
+        <div class="p-6 flex-1 flex flex-col">
+            <div class="flex justify-between items-start mb-6">
+                <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+                <div class="text-right flex flex-col items-end">
+                    <div class="h-6 bg-gray-200 rounded w-16 mb-1"></div>
+                    <div class="h-3 bg-gray-200 rounded w-12"></div>
+                </div>
+            </div>
+            <div class="flex justify-between items-center pt-4 border-t border-gray-200">
+                <div class="flex gap-4">
+                    <div class="h-4 bg-gray-200 rounded w-12"></div>
+                    <div class="h-4 bg-gray-200 rounded w-12"></div>
+                </div>
+                <div class="h-4 bg-gray-200 rounded w-16"></div>
+            </div>
+            <div class="mt-4 p-4 bg-gray-50 rounded-lg flex flex-col gap-3 border border-gray-100">
+                <div class="flex justify-between items-center">
+                    <div class="h-3 bg-gray-200 rounded w-24"></div>
+                    <div class="h-4 bg-gray-200 rounded w-16"></div>
+                </div>
+                <div class="h-8 w-full bg-gray-200 rounded-lg mt-2"></div>
+                <div class="h-20 w-full bg-gray-200 rounded-lg mt-2"></div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<template id="system-degraded-error">
+    <div class="col-span-full bg-red-900/20 border border-red-500/50 rounded-[8px] p-8 text-center text-white">
+        <span class="material-symbols-outlined text-red-500 text-4xl mb-4">cloud_off</span>
+        <h3 class="text-xl font-bold font-headline tracking-tight uppercase italic mb-2">System Degraded</h3>
+        <p class="text-gray-400 text-sm mb-6">Unable to connect to the backend properties service.</p>
+        <button onclick="fetchProperties()" class="px-6 py-2 bg-red-500/20 text-red-500 hover:bg-red-500/30 rounded-[8px] font-bold text-xs uppercase tracking-widest transition-colors inline-flex items-center gap-2">
+            <span class="material-symbols-outlined text-sm">refresh</span>
+            Refresh Connection
+        </button>
+    </div>
+</template>
+
+            <div id="property-grid" class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+                <div class="animate-pulse bg-gray-100 border border-gray-200 h-96 rounded-xl"></div>
+                <div class="animate-pulse bg-gray-100 border border-gray-200 h-96 rounded-xl"></div>
+                <div class="animate-pulse bg-gray-100 border border-gray-200 h-96 rounded-xl"></div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+                <!-- License Tracker -->
+                <div class="bg-white/10 p-8 rounded-[8px] shadow-ambient-light">
+                    <h3 class="text-2xl font-black tracking-tight text-on-surface font-headline uppercase italic mb-6 flex items-center gap-3">
+                        <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">assignment</span>
+                        License Tracker
+                    </h3>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center p-4 bg-white/10 rounded-[8px]">
+                            <div>
+                                <p class="text-on-surface font-bold font-headline tracking-tight">Business Tax Receipt (BTR)</p>
+                                <p class="text-gray-500 text-xs">Expires: Oct 31, 2026</p>
+                            </div>
+                            <span class="px-3 py-1 text-xs font-black uppercase rounded-[8px] bg-green-500/20 text-green-600">Active</span>
+                        </div>
+                        <div class="flex justify-between items-center p-4 bg-white/10 rounded-[8px]">
+                            <div>
+                                <p class="text-on-surface font-bold font-headline tracking-tight">Florida State DBPR License</p>
+                                <p class="text-gray-500 text-xs">Expires: Dec 31, 2026</p>
+                            </div>
+                            <span class="px-3 py-1 text-xs font-black uppercase rounded-[8px] bg-green-500/20 text-green-600">Active</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Document Vault -->
+                <div class="bg-white/10 p-8 rounded-[8px] shadow-ambient-light">
+                    <h3 class="text-2xl font-black tracking-tight text-on-surface font-headline uppercase italic mb-6 flex items-center gap-3">
+                        <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">folder_secure</span>
+                        Document Vault
+                    </h3>
+                    <div class="flex gap-4 h-full max-h-[160px]">
+                        <div class="rounded-[8px] p-4 flex flex-col items-center justify-center bg-white/10 hover:bg-gray-50 transition-colors cursor-pointer flex-1">
+                            <span class="material-symbols-outlined text-4xl text-gray-400 mb-2">cloud_upload</span>
+                            <p class="text-on-surface font-bold font-headline tracking-tight text-center text-sm">Upload Documents</p>
+                        </div>
+                        <div onclick="generateCompliancePDF()" class="border-teal-200 rounded-[8px] p-4 flex flex-col items-center justify-center bg-teal-50/50 hover:bg-teal-50 transition-colors cursor-pointer flex-1">
+                            <span class="material-symbols-outlined text-4xl text-teal-600 mb-2">picture_as_pdf</span>
+                            <p class="text-on-surface font-bold font-headline tracking-tight text-center text-sm text-teal-800">Generate Compliance PDF</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-12 mb-8">
+                <h3 class="text-2xl font-black tracking-tight text-on-surface font-headline uppercase italic mb-6 flex items-center gap-3">
+                    <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">map</span>
+                    Geospatial Parcel Map
+                </h3>
+                <div id="parcel-map" class="h-96 rounded-[8px] overflow-hidden"></div>
+            </div>
+        </section>
+    </main>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        let sessionToken = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2);
+        let debounceTimer;
+
+        const searchInput = document.getElementById('address-search');
+        const dropdown = document.getElementById('autocomplete-dropdown');
+        
+        searchInput.addEventListener('input', (e) => {
+            const val = e.target.value.trim();
+            if (!val) {
+                dropdown.classList.add('hidden');
+                return;
+            }
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                fetch(`/api/eligibility/autocomplete?input=${encodeURIComponent(val)}&sessiontoken=${sessionToken}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.predictions && data.predictions.length > 0) {
+                            dropdown.innerHTML = DOMPurify.sanitize(data.predictions.map(p => `
+                                <div class="px-4 py-3 hover:bg-white/10 cursor-pointer transition-colors text-sm font-medium" 
+                                     onclick="selectPlace('${p.place_id}', '${p.description.replace(/'/g, "\'")}')">
+                                    ${p.description}
+                                </div>
+                            `).join(''));
+                            dropdown.classList.remove('hidden');
+                        } else {
+                            dropdown.classList.add('hidden');
+                        }
+                    })
+                    .catch(err => console.error('Autocomplete error:', err));
+            }, 300);
+        });
+
+        // Hide dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        function selectPlace(placeId, description) {
+            searchInput.value = description;
+            dropdown.classList.add('hidden');
+            // Refresh session token after successful selection
+            sessionToken = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2);
+            performSearch(placeId, description);
+        }
+
+        function setLoading(loading) {
+            const btnText = document.getElementById('search-btn-text');
+            const spinner = document.getElementById('search-spinner');
+            const searchBtn = document.getElementById('search-btn');
+            
+            if (loading) {
+                btnText.textContent = 'Searching...';
+                spinner.classList.remove('hidden');
+                searchBtn.disabled = true;
+                searchBtn.classList.add('opacity-70', 'cursor-not-allowed');
+            } else {
+                btnText.textContent = 'Search';
+                spinner.classList.add('hidden');
+                searchBtn.disabled = false;
+                searchBtn.classList.remove('opacity-70', 'cursor-not-allowed');
+            }
+        }
+
+        function performSearch(placeId = null, description = null) {
+            const address = description || document.getElementById('address-search').value;
+            if (!address) return;
+
+            setLoading(true);
+
+            fetch('/api/eligibility/check', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ address: address, place_id: placeId })
+            })
+            .then(r => r.json())
+            .then(data => {
+                const panel = document.getElementById('search-results');
+                const badge = document.getElementById('search-status-badge');
+
+                document.getElementById('search-address').innerText = data.address || address;
+                document.getElementById('search-reason').innerText = data.plain_english_conditions || data.conditions || data.reason || 'No details available';
+
+                const status = data.eligibility_status || data.status;
+                badge.innerText = status || 'UNKNOWN';
+                
+                // Traffic Light UI logic
+                const statusUpper = (status || '').toUpperCase();
+                if (statusUpper === 'GREEN') {
+                    badge.className = 'px-3 py-1 text-xs font-black uppercase rounded-[8px] bg-green-500/20 text-green-600';
+                } else if (statusUpper === 'YELLOW') {
+                    badge.className = 'px-3 py-1 text-xs font-black uppercase rounded-[8px] bg-yellow-500/20 text-yellow-600';
+                } else if (statusUpper === 'RED') {
+                    badge.className = 'px-3 py-1 text-xs font-black uppercase rounded-[8px] bg-red-500/20 text-red-600 animate-pulse';
+                } else {
+                    badge.className = 'px-3 py-1 text-xs font-black uppercase rounded-[8px] bg-gray-500/20 text-gray-600';
+                }
+
+                const permitLink = data.permit_application_url || data.permit_link;
+                if (permitLink) {
+                    document.getElementById('permit-link').href = permitLink;
+                    document.getElementById('permit-link-container').classList.remove('hidden');
+                } else {
+                    document.getElementById('permit-link-container').classList.add('hidden');
+                }
+
+                panel.classList.remove('hidden');
+            })
+            .catch(err => {
+                console.error('Search failed:', err);
+                alert('Search failed. Please try again.');
+            })
+            .finally(() => setLoading(false));
+        }
+
+        function openAddPropertyModal() {
+            document.getElementById('add-property-modal').classList.remove('hidden');
+        }
+
+        function closeAddPropertyModal() {
+            document.getElementById('add-property-modal').classList.add('hidden');
+            document.getElementById('add-property-form').reset();
+        }
+
+        function openFilterModal() {
+            document.getElementById('filter-modal').classList.remove('hidden');
+        }
+
+        function closeFilterModal() {
+            document.getElementById('filter-modal').classList.add('hidden');
+        }
+
+        function applyFilters() {
+            const status = document.getElementById('filter-status').value;
+            fetchProperties(status || null);
+            closeFilterModal();
+        }
+
+        function clearFilters() {
+            document.getElementById('filter-status').value = '';
+            document.getElementById('filter-type').value = '';
+        }
+
+        document.getElementById('add-property-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const form = e.target;
+            const formData = new FormData(form);
+            const data = {
+                address: formData.get('address'),
+                city: formData.get('city'),
+                state: formData.get('state'),
+                zip_code: formData.get('zip_code'),
+                property_type: formData.get('property_type'),
+                hoa_status: formData.get('hoa_status') === 'on'
+            };
+            try {
+                const response = await fetch('/api/properties/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                if (response.ok) {
+                    closeAddPropertyModal();
+                    fetchProperties();
+                } else {
+                    alert('Failed to add property. Please try again.');
+                }
+            } catch (err) {
+                console.error('Error adding property:', err);
+                alert('Failed to add property. Please try again.');
+            }
+        });
+
+        document.getElementById('address-search').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                performSearch();
+            }
+        });
+
+        document.getElementById('search-btn').addEventListener('click', () => performSearch());
+
+        let parcelMap;
+
+        function initParcelMap(properties) {
+            if (parcelMap) return;
+            
+            parcelMap = L.map('parcel-map').setView([39.0, -98.0], 4);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(parcelMap);
+            
+            properties.forEach(p => {
+                if (p.lat && p.lng) {
+                    const markerColor = p.zoning_status === 'Violation' ? '#ef4444' : 
+                                       p.zoning_status === 'Pending' ? '#f59e0b' : '#0d9488';
+                    
+                    const marker = L.circleMarker([p.lat, p.lng], {
+                        radius: 10,
+                        fillColor: markerColor,
+                        color: '#fff',
+                        weight: 2,
+                        opacity: 1,
+                        fillOpacity: 0.8
+                    }).addTo(parcelMap);
+                    
+                    marker.bindPopup(DOMPurify.sanitize(`
+                        <div class="p-2">
+                            <strong class="text-on-surface font-headline tracking-tight">${p.name}</strong><br>
+                            <span class="text-gray-500 text-sm">${p.location}</span><br>
+                            <span class="text-xs font-bold ${p.zoning_status === 'Violation' ? 'text-red-500' : p.zoning_status === 'Pending' ? 'text-yellow-500' : 'text-teal-500'}">${p.zoning_status}</span>
+                        </div>
+                    `));
+                }
+            });
+        }
+
+        async function generatePermit(event, propertyId) {
+            event.stopPropagation();
+            const button = event.target.closest('button');
+            const originalText = button.innerHTML;
+            
+            try {
+                button.disabled = true;
+                button.innerHTML = DOMPurify.sanitize('<span class="material-symbols-outlined text-sm animate-spin">progress_activity</span> Generating...');
+                
+                const response = await fetch('/api/permit-generator/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ property_id: propertyId })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to generate permit application');
+                }
+                
+                const data = await response.json();
+                
+                // Show success modal or download PDF
+                alert(`Permit Application Generated!\n\nApplication ID: ${data.application_id}\nCounty: ${data.county}\nStatus: ${data.compliance_status}\n\nRequired Documents:\n${data.required_documents.join('\n')}\n\nProcessing Time: ${data.estimated_processing_time}`);
+                
+            } catch (error) {
+                console.error('Error generating permit:', error);
+                alert('Failed to generate permit application. Please try again.');
+            } finally {
+                button.disabled = false;
+                button.innerHTML = DOMPurify.sanitize(originalText);
+            }
+        }
+
+        async function loadRecommendations(event, propertyId) {
+            if (event) event.stopPropagation();
+            
+            const container = document.querySelector(`.recommendations-container[data-property-id="${propertyId}"]`);
+            const contentDiv = container.querySelector('.recommendations-content');
+            
+            try {
+                contentDiv.innerHTML = DOMPurify.sanitize('<p class="text-xs text-gray-500 animate-pulse">Loading recommendations...</p>');
+                
+                const response = await fetch('/api/recommendation-engine/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ property_id: propertyId })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load recommendations');
+                }
+                
+                const data = await response.json();
+                
+                if (data.recommendations && data.recommendations.length > 0) {
+                    const recommendationsHTML = data.recommendations
+                        .slice(0, 3) // Show top 3 recommendations
+                        .map(rec => {
+                            const priorityColor = rec.priority === 'high' ? 'text-red-600' : 
+                                                 rec.priority === 'medium' ? 'text-yellow-600' : 'text-gray-600';
+                            return `<li class="${priorityColor}">${rec.title} ${rec.expected_impact ? `(${rec.expected_impact})` : ''}</li>`;
+                        })
+                        .join('');
+                    
+                    contentDiv.innerHTML = DOMPurify.sanitize(`
+                        <div class="mb-2">
+                            <span class="text-xs font-bold text-gray-500">Health Score: </span>
+                            <span class="text-xs font-bold text-primary">${data.overall_health_score.toFixed(1)}%</span>
+                        </div>
+                        <ul class="text-xs space-y-1 list-disc list-inside">
+                            ${recommendationsHTML}
+                        </ul>
+                        ${data.recommendations.length > 3 ? `<p class="text-xs text-gray-600 mt-2">+${data.recommendations.length - 3} more recommendations</p>` : ''}
+                    `);
+                } else {
+                    contentDiv.innerHTML = DOMPurify.sanitize('<p class="text-xs text-gray-600">No recommendations available. Property is optimized!</p>');
+                }
+                
+            } catch (error) {
+                console.error('Error loading recommendations:', error);
+                contentDiv.innerHTML = DOMPurify.sanitize('<p class="text-xs text-red-600">Failed to load recommendations</p>');
+            }
+        }
+
+        function exportPDF(propertyId) {
+            fetch(`/api/dashboard/compliance/history/${propertyId}`)
+                .then(r => r.json())
+                .then(data => {
+                    const printWindow = window.open('', '_blank');
+                    const html = `
+                        <html>
+                        <head><title>Compliance Report - ${data.property_name}</title>
+                        <style>body{font-family:system-ui;padding:40px;}h1{color:#0d9488;}</style>    <script src="https://cdnjs.cloudflare.com/ajax

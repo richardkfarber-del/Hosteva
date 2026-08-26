@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Hosteva - All Tasks</title>
+<!-- Fonts & Icons -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Manrope:wght@700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-highest": "#d2e4ff",
+                        "primary-fixed": "#a8edff",
+                        "on-secondary-fixed-variant": "#034c6d",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-fixed": "#002114",
+                        "on-primary": "#ffffff",
+                        "on-tertiary-container": "#f5fff7",
+                        "secondary": "#2a6486",
+                        "error-container": "#ffdad6",
+                        "on-surface": "#001c37",
+                        "tertiary-container": "#00855c",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-fixed-variant": "#004e5b",
+                        "background": "#f8f9ff",
+                        "on-error": "#ffffff",
+                        "inverse-surface": "#19324d",
+                        "surface-bright": "#f8f9ff",
+                        "on-secondary-container": "#225d80",
+                        "tertiary-fixed-dim": "#56dea5",
+                        "surface-variant": "#d2e4ff",
+                        "tertiary": "#006948",
+                        "primary": "#006576",
+                        "on-error-container": "#93000a",
+                        "error": "#ba1a1a",
+                        "inverse-on-surface": "#eaf1ff",
+                        "on-primary-fixed": "#001f26",
+                        "on-primary-container": "#f9fdff",
+                        "on-tertiary-fixed-variant": "#005237",
+                        "on-background": "#001c37",
+                        "secondary-fixed-dim": "#97cdf4",
+                        "primary-fixed-dim": "#7ed3e7",
+                        "primary-container": "#1c7f92",
+                        "surface-container-low": "#eff4ff",
+                        "surface-container-high": "#dce9ff",
+                        "surface-dim": "#c4dcff",
+                        "on-surface-variant": "#3e484b",
+                        "outline-variant": "#bec8cc",
+                        "surface-tint": "#006879",
+                        "outline": "#6e797c",
+                        "inverse-primary": "#7ed3e7",
+                        "secondary-fixed": "#c8e6ff",
+                        "tertiary-fixed": "#75fbbf",
+                        "surface-container": "#e5eeff",
+                        "on-secondary-fixed": "#001e2f",
+                        "surface": "#f8f9ff",
+                        "secondary-container": "#a0d5fd"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.5rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Manrope"],
+                        "display": ["Manrope"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .insight-prism {
+            border-left: 3px solid #75fbbf;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+        }
+        .glass-nav {
+            background: rgba(239, 244, 255, 0.8);
+            backdrop-filter: blur(12px);
+        }
+        .task-card-shadow {
+            box-shadow: 0 10px 30px -12px rgba(0, 28, 55, 0.06);
+        }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface min-h-screen pb-32">
+<!-- TopAppBar -->
+<header class="w-full top-0 sticky z-40 bg-surface-container-low dark:bg-surface-container-low flex justify-between items-center px-6 py-4 max-w-full">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary text-2xl cursor-pointer hover:bg-surface-container-high/50 transition-colors p-2 rounded-full">menu</span>
+<div class="flex items-center gap-2">
+<img alt="Hosteva Logo" class="h-8 w-auto" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCD7I2GotVNwjB3ttZmD-2Roz2MFbENUHkwDm4tMxWXhYX1SNkfCMRRa7eOriJq0e2QMs84UfDfHdWNwlOIxCA9IJ5n6-KawAXxyC9G19u5L2BsLcQZNjpU0AVFUvswXFtM8HCVhm6NY0kkh3Z1JWZ8zXM0cKakWTWYxuZi5FZa7C1UbqzpZK_iviTUA9cS_qj21KtW1HjWgEtlRx58TZWmkXFjoznvO5aL49n55FLXQS4h1GBSFU7JWcVGMLRe2zBv0e-NwN9qztk"/>
+<span class="text-2xl font-headline font-black tracking-tight text-primary dark:text-primary-fixed-dim">Hosteva</span>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="hidden md:flex gap-6 mr-6">
+<a class="text-primary dark:text-primary-fixed-dim font-bold text-label-md font-body" href="#">Dashboard</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container-high/50 transition-colors text-label-md font-body px-2 rounded" href="#">Compliance</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container-high/50 transition-colors text-label-md font-body px-2 rounded" href="#">Reports</a>
+</div>
+<div class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary-container">
+<img alt="User profile photo" class="w-full h-full object-cover" data-alt="A professional headshot of a friendly male property manager named Alex, set against a blurred modern office background. He is wearing a smart casual navy blue shirt, reflecting a reliable and approachable persona. The lighting is bright and natural, consistent with a clean, high-end digital concierge application aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBA3WW06rngc3OOycbb4vUTCFp7J-Gmz8XOibIlaS7FNYJLUUfPm1J65j0ELekyyin0R83rE5D-xTeOr9XCryzWqbDsNkG-c3YwUbDVsdG59JHrMtFgmc702UxeqAc-81m1-TE3vdNYhJYDgkAtN2yXVgEJXAvHZlzGmYO-8vAug-WQr7mKdHpR-1CoYIHAt6sjUKJ0oNYz4dDoWccbnKtF8dR1nqaiAYqo-cypULR2_Ts6utIQ2HbZfOj5t_msqGboP8pNJENL704"/>
+</div>
+</div>
+</header>
+<main class="max-w-5xl mx-auto px-6 py-8">
+<!-- Hero Header -->
+<div class="mb-10">
+<h1 class="text-display-lg font-headline font-bold text-on-surface tracking-tight mb-2">All Tasks</h1>
+<p class="text-on-surface-variant text-body-md max-w-lg">Manage your property obligations with precision. Your digital concierge has organized everything for you.</p>
+</div>
+<!-- Filter & Search Section -->
+<section class="flex flex-col md:flex-row gap-4 mb-12">
+<div class="flex-1 relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="w-full pl-12 pr-4 py-3 bg-surface-container-lowest rounded-lg border-none focus:ring-2 focus:ring-primary-fixed-dim transition-all shadow-sm" placeholder="Search tasks or properties..." type="text"/>
+</div>
+<div class="flex gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
+<button class="px-6 py-2 bg-primary text-on-primary rounded-full font-medium text-sm whitespace-nowrap">All</button>
+<button class="px-6 py-2 bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest transition-colors rounded-full font-medium text-sm whitespace-nowrap">Compliance</button>
+<button class="px-6 py-2 bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest transition-colors rounded-full font-medium text-sm whitespace-nowrap">Maintenance</button>
+<button class="px-6 py-2 bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest transition-colors rounded-full font-medium text-sm whitespace-nowrap">Billing</button>
+</div>
+</section>
+<!-- Task Sections -->
+<div class="space-y-12">
+<!-- Urgent Section -->
+<section>
+<div class="flex items-center gap-3 mb-6">
+<div class="w-2 h-8 bg-error rounded-full"></div>
+<h2 class="text-headline-sm font-headline font-bold text-on-surface">Urgent Actions</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Task Card 1 -->
+<div class="bg-surface-container-lowest p-6 rounded-xl task-card-shadow border border-outline-variant/15 group hover:translate-y-[-4px] transition-all duration-300">
+<div class="flex justify-between items-start mb-4">
+<span class="px-3 py-1 bg-error-container text-on-error-container text-[10px] font-bold uppercase tracking-wider rounded-full">4 Days Left</span>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors">more_vert</span>
+</div>
+<h3 class="text-lg font-headline font-bold text-on-surface mb-1">Safety Permit Renewal</h3>
+<p class="text-on-surface-variant text-sm mb-4 flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">location_on</span> Sunset Villa
+                        </p>
+<div class="flex items-center justify-between mt-6">
+<div class="flex flex-col">
+<span class="text-[10px] uppercase text-outline font-bold">Due Date</span>
+<span class="text-sm font-semibold text-on-surface">Oct 24, 2023</span>
+</div>
+<button class="bg-primary hover:opacity-90 text-on-primary px-5 py-2 rounded font-semibold text-sm transition-opacity">Complete Now</button>
+</div>
+</div>
+<!-- Task Card 2 -->
+<div class="bg-surface-container-lowest p-6 rounded-xl task-card-shadow border border-outline-variant/15 group hover:translate-y-[-4px] transition-all duration-300">
+<div class="flex justify-between items-start mb-4">
+<span class="px-3 py-1 bg-error-container text-on-error-container text-[10px] font-bold uppercase tracking-wider rounded-full">Action Required</span>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors">more_vert</span>
+</div>
+<h3 class="text-lg font-headline font-bold text-on-surface mb-1">Tax Certificate Upload</h3>
+<p class="text-on-surface-variant text-sm mb-4 flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">location_on</span> Global Portfolio
+                        </p>
+<div class="flex items-center justify-between mt-6">
+<div class="flex flex-col">
+<span class="text-[10px] uppercase text-outline font-bold">Priority</span>
+<span class="text-sm font-semibold text-error">High Priority</span>
+</div>
+<button class="bg-primary hover:opacity-90 text-on-primary px-5 py-2 rounded font-semibold text-sm transition-opacity">Upload</button>
+</div>
+</div>
+</div>
+</section>
+<!-- AI Insight Prism Component -->
+<section class="insight-prism p-6 rounded-xl task-card-shadow flex items-start gap-5">
+<div class="bg-tertiary-fixed p-3 rounded-lg text-on-tertiary-fixed">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+</div>
+<div>
+<h4 class="text-on-surface font-headline font-bold text-lg mb-1">Hosteva Intelligence</h4>
+<p class="text-on-surface-variant text-sm leading-relaxed max-w-2xl">Based on your upcoming check-ins at <strong>Sunset Villa</strong>, we recommend completing the HVAC maintenance before Friday to ensure guest comfort during the forecasted heatwave.</p>
+</div>
+</section>
+<!-- Upcoming Section -->
+<section>
+<div class="flex items-center justify-between mb-6">
+<div class="flex items-center gap-3">
+<div class="w-2 h-8 bg-secondary-fixed-dim rounded-full"></div>
+<h2 class="text-headline-sm font-headline font-bold text-on-surface">Upcoming</h2>
+</div>
+<button class="text-primary text-sm font-semibold flex items-center gap-1 hover:underline">View Calendar <span class="material-symbols-outlined text-sm">calendar_month</span></button>
+</div>
+<div class="space-y-4">
+<!-- List Item 1 -->
+<div class="bg-surface-container-low p-5 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-4 border border-transparent hover:border-outline-variant/20 transition-all">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-surface-container-lowest rounded-lg flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">build</span>
+</div>
+<div>
+<h3 class="font-bold text-on-surface">Routine Maintenance</h3>
+<p class="text-xs text-on-surface-variant">Sunset Villa • Scheduled for Oct 28</p>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="text-right hidden md:block">
+<span class="text-[10px] uppercase text-outline font-bold block">Status</span>
+<span class="text-sm font-medium text-secondary">Scheduled</span>
+</div>
+<button class="bg-surface-container-highest text-primary px-4 py-2 rounded text-sm font-bold">Manage</button>
+</div>
+</div>
+<!-- List Item 2 -->
+<div class="bg-surface-container-low p-5 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-4 border border-transparent hover:border-outline-variant/20 transition-all">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-surface-container-lowest rounded-lg flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">description</span>
+</div>
+<div>
+<h3 class="font-bold text-on-surface">Quarterly Documentation Review</h3>
+<p class="text-xs text-on-surface-variant">Internal Compliance • Due Nov 05</p>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="text-right hidden md:block">
+<span class="text-[10px] uppercase text-outline font-bold block">Status</span>
+<span class="text-sm font-medium text-secondary">Awaiting Docs</span>
+</div>
+<button class="bg-surface-container-highest text-primary px-4 py-2 rounded text-sm font-bold">Manage</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Graceful Empty State (Hidden by default, shown for demonstration logic) -->
+<section class="hidden py-16 flex flex-col items-center text-center" id="empty-state">
+<div class="w-32 h-32 bg-primary-fixed/20 rounded-full flex items-center justify-center mb-6">
+<span class="material-symbols-outlined text-5xl text-primary" style="font-variation-settings: 'FILL' 1;">task_alt</span>
+</div>
+<h2 class="text-headline-md font-headline font-bold text-on-surface mb-2">All Caught Up!</h2>
+<p class="text-on-surface-variant max-w-xs mx-auto">No pending tasks found. Your properties are operating at peak compliance.</p>
+<button class="mt-8 px-8 py-3 bg-primary text-on-primary rounded-full font-bold shadow-lg shadow-primary/20">Back to Dashboard</button>
+</section>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-3 bg-surface-container-low/80 dark:bg-surface-container-low/80 backdrop-blur-xl shadow-[0_-4px_20px_0_rgba(0,28,55,0.04)] rounded-t-xl">
+<a class="flex flex-col items-center justify-center bg-primary-container dark:bg-primary-container text-on-primary-container dark:text-on-primary-container rounded-full px-5 py-1.5 transition-all scale-95" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="text-label-sm font-body font-medium">Dashboard</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant px-5 py-1.5 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">verified_user</span>
+<span class="text-label-sm font-body font-medium">Compliance</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant px-5 py-1.5 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="text-label-sm font-body font-medium">Reports</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant px-5 py-1.5 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-label-sm font-body font-medium">Settings</span>
+</a>
+</nav>
+<!-- FAB (Suppressed based on context: Details/Tasks view usually keeps focus on task actions) -->
+<script>
+        // Simple interactivity for the 'All Caught Up' view toggle for presentation
+        // In a real app, this would be reactive to the task data array length
+        function toggleEmptyState() {
+            const sections = document.querySelectorAll('main > div > section:not(#empty-state)');
+            const emptyState = document.getElementById('empty-state');
+            
+            // This is just a helper for testing the UI
+            window.showEmpty = (show) => {
+                sections.forEach(s => s.style.display = show ? 'none' : 'block');
+                emptyState.classList.toggle('hidden', !show);
+                emptyState.classList.toggle('flex', show);
+            }
+        }
+        toggleEmptyState();
+    </script>
+</body></html>
