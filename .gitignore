@@ -56,3 +56,6 @@ scratch/
 # Uploads & temporary storage
 app/static/uploaded_permits/*
 app/storage/private_uploads/*
+
+node_modules/
+.DS_Store

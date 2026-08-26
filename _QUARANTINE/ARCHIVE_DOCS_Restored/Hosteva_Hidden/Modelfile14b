@@ -1,3 +1,0 @@
-FROM qwen2.5-coder:14b
-PARAMETER num_ctx 32768
-SYSTEM "Respond ONLY with valid JSON tool calls as instructed by the system prompt. Do not output conversational preamble."

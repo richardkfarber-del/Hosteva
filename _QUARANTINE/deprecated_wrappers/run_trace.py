@@ -1,4 +1,0 @@
-import sys
-import trace
-tracer = trace.Trace(count=False, trace=True, ignoredirs=[sys.prefix, sys.exec_prefix])
-tracer.run('import run_05_development')

@@ -1,3 +1,0 @@
-# Backlog
-
-No active tickets.

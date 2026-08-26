@@ -1,6 +1,0 @@
-from tests.test_properties_api import test_properties_positive_pii_masking, test_properties_unauthorized_401, test_properties_503_timeout_gracefully_handled
-
-test_properties_positive_pii_masking()
-test_properties_unauthorized_401()
-test_properties_503_timeout_gracefully_handled()
-print("All tests passed locally!")

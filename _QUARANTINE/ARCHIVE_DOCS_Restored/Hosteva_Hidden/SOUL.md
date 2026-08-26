@@ -1,1 +1,0 @@
-/home/rdogen/OpenClaw_Factory/projects/Hosteva/agents/nick-fury/SOUL.md
