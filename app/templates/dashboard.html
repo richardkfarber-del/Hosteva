@@ -996,6 +996,19 @@ tailwind.config = {
                     document.getElementById('permit-link-container').classList.add('hidden');
                 }
 
+                let discEl = document.getElementById('search-disclaimer');
+                if (data.local_restrictions && data.local_restrictions.disclaimer) {
+                    if (!discEl) {
+                        discEl = document.createElement('p');
+                        discEl.id = 'search-disclaimer';
+                        discEl.className = 'text-[10px] text-gray-400 italic mt-2';
+                        panel.appendChild(discEl);
+                    }
+                    discEl.innerText = data.local_restrictions.disclaimer;
+                } else if (discEl) {
+                    discEl.remove();
+                }
+
                 panel.classList.remove('hidden');
             })
             .catch(err => {
@@ -1492,6 +1505,10 @@ Processing Time: ${data.estimated_processing_time}`);
                         if (compText) compText.innerText = `${complianceScore}%`;
                     }
                     
+                    if (p.local_restrictions && p.local_restrictions.disclaimer) {
+                        compDesc.innerHTML += `<br><span class="text-[10px] text-gray-400 italic mt-1 inline-block">${p.local_restrictions.disclaimer}</span>`;
+                    }
+                    
                     if (progress) {
                         progress.setAttribute('stroke-dasharray', `${isAwaitingAudit ? 0 : complianceScore}, 100`);
                         if (isAwaitingAudit) {
@@ -1583,6 +1600,7 @@ Processing Time: ${data.estimated_processing_time}`);
                     
                     if (p.local_restrictions) {
                         for (const [key, value] of Object.entries(p.local_restrictions)) {
+                            if (key.toLowerCase() === 'disclaimer') continue;
                             let icon = 'info';
                             if (key.toLowerCase().includes('noise')) icon = 'volume_off';
                             else if (key.toLowerCase().includes('parking')) icon = 'local_parking';
@@ -1752,7 +1770,11 @@ Processing Time: ${data.estimated_processing_time}`);
                         alert('Stripe session URL not found.');
                     }
                 } else {
-                    alert('Failed to initiate checkout session.');
+                    if (response.status === 500 || response.status === 502) {
+                        alert('Payment provider unavailable. Billing may not be configured in this environment.');
+                    } else {
+                        alert('Failed to initiate checkout session.');
+                    }
                 }
             } catch (err) {
                 console.error('Error upgrading to Pro:', err);
@@ -1834,7 +1856,11 @@ Processing Time: ${data.estimated_processing_time}`);
                         alert('Checkout session URL not found.');
                     }
                 } else {
-                    alert('Failed to initiate checkout session.');
+                    if (response.status === 500 || response.status === 502) {
+                        alert('Payment provider unavailable. Billing may not be configured in this environment.');
+                    } else {
+                        alert('Failed to initiate checkout session.');
+                    }
                 }
             } catch (err) {
                 console.error('Error upgrading to Compliance Essentials:', err);

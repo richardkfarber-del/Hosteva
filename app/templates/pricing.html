@@ -64,11 +64,19 @@
                     },
                     body: JSON.stringify({ tier: tier })
                 });
-                const data = await response.json();
-                if (data.checkout_url) {
-                    window.location.href = data.checkout_url;
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.checkout_url) {
+                        window.location.href = data.checkout_url;
+                    } else {
+                        alert('Error initiating checkout');
+                    }
                 } else {
-                    alert('Error initiating checkout');
+                    if (response.status === 500 || response.status === 502) {
+                        alert('Payment provider unavailable. Billing may not be configured in this environment.');
+                    } else {
+                        alert('Error initiating checkout');
+                    }
                 }
             } catch (error) {
                 console.error('Error:', error);
