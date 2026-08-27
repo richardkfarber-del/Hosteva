@@ -1,7 +1,0 @@
-{
-  "timestamp": "2026-04-12T20:05:00Z",
-  "status": "success",
-  "http_status_code": 200,
-  "action": "soft_browser_restart",
-  "details": "Zombie headless browser and playwright processes selectively targeted. Main daemon untouched."
-}

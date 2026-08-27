@@ -1,5 +1,0 @@
-[EXECUTION REPORT]
-Agent: Hulk
-Task: 
-Details:
-Outcome:

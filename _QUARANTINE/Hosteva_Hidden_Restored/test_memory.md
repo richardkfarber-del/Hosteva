@@ -1,5 +1,0 @@
-# Main Header
-Some intro text.
-## Sub Header
-* Bullet point 1
-* Bullet point 2

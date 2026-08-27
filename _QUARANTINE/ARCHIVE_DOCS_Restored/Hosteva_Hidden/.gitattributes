@@ -1,6 +1,0 @@
-# Enforce LF line endings for WSL2 compatibility
-*.txt text eol=lf
-*.toml text eol=lf
-*.lock text eol=lf
-*.sh text eol=lf
-Dockerfile text eol=lf

@@ -1,1 +1,0 @@
-Ensure the Dockerfile contains a command to install dependencies and a CMD to run gunicorn. It must not use `pip install .` in a way that excludes templates/static.
