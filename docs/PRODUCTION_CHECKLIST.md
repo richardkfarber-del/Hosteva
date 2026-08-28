@@ -1,36 +1,58 @@
-# Production Deployment & Smoke Test Checklist
+# Hosteva Production Deployment Checklist
 
-## Required Environment Variables (Production)
-For a successful deployment in production (`ENVIRONMENT=production`), the following environment variables MUST be configured in your hosting environment (e.g., Render Dashboard):
+This document serves as the final smoke-test checklist and environment reference for deploying Hosteva to production.
 
-- `ENVIRONMENT=production`
-- `JWT_SECRET_KEY` (Must be a secure, random string)
-- `DATABASE_URL` (Often populated automatically by Render PostgreSQL)
-- `STRIPE_SECRET_KEY` (Your live Stripe secret key: `sk_live_...`)
-- `STRIPE_WEBHOOK_SECRET` (Webhook signing secret: `whsec_...`)
-- `FRONTEND_URL` (The public URL of the application)
-- `ALLOWED_ORIGINS` (CORS origins, comma-separated if multiple)
-- `GEMINI_API_KEY` or `GOOGLE_API_KEY` (Required for AI compliance audits)
-- `SHOW_DOCS=false` (Optional: defaults to false automatically when in production)
+## 1. Required Environment Variables
 
-**Stripe Prices**
-Ensure all Stripe Price IDs used by the application are provided:
-- `STRIPE_PRICE_PERMIT_FILING`
-- Additional pricing tiers if used (e.g., `STRIPE_PRICE_BASIC`, `STRIPE_PRICE_PRO`, `STRIPE_PRICE_PREMIUM`, `STRIPE_PRICE_STARTER`, `STRIPE_PRICE_GROWTH`, `STRIPE_PRICE_COMPLIANCE_ESSENTIALS`)
+When `ENVIRONMENT=production`, the application fail-closes many development mock behaviors (like mock checkouts, unsafe cookies, public API docs, and fake properties). The following variables MUST be set in the production environment (e.g. Render dashboard):
 
-## Stripe Webhook Configuration
-In your Stripe Developer Dashboard, you must register the following webhook endpoints to point to your live domain:
-- `POST /api/subscriptions/webhook`
-- `POST /api/v1/billing/webhooks`
+```bash
+# Core
+ENVIRONMENT=production
+DATABASE_URL=postgresql://...
+JWT_SECRET_KEY=your_secure_random_string
+FRONTEND_URL=https://your-production-domain.com
+ALLOWED_ORIGINS=https://your-production-domain.com
 
-## Smoke Tests (Post-Deploy)
-Perform the following tests after deploying to verify that the launch-hardening mechanisms are active:
+# Stripe Integration
+STRIPE_SECRET_KEY=sk_live_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+STRIPE_PRICE_BASIC=price_...
+STRIPE_PRICE_PRO=price_...
+STRIPE_PRICE_PREMIUM=price_...
+STRIPE_PRICE_PERMIT_FILING=price_...
 
-1. **Auth Check**: Register and login. Verify that the `access_token` cookie is set and has the `Secure` attribute (because the app is in production).
-2. **Dashboard**: Verify the main dashboard loads successfully.
-3. **Database Persistence**: Add a test property. Trigger a manual redeploy in Render. Verify the property still exists (confirming the `DELETE FROM properties` bug is fixed).
-4. **Billing Flow**: Click a checkout link for a permit or subscription. Verify that it directs you to a real Stripe Checkout URL (and does not fallback to `/checkout-mock`).
-5. **Webhook Processing**: Complete a test payment (if using test mode) or use the Stripe CLI to trigger an event, and verify the webhook activates the subscription.
-6. **Compliance Fallback**: Attempt a compliance audit without providing a valid `GEMINI_API_KEY` in the environment. Verify the `eligibility_status` returns "Pending" and displays the legal disclaimer (not "Compliant").
-7. **Documentation Security**: Visit `/docs`. Verify that it returns a 404 (not publicly available) unless you explicitly set `SHOW_DOCS=true`.
-8. **Mock Checkout Security**: Visit `/checkout-mock`. Verify that it redirects away (e.g., to `/pricing`) and does not load the mock page.
+# Third-Party APIs
+GEMINI_API_KEY=your_google_ai_key
+# OR GOOGLE_API_KEY=your_google_ai_key
+```
+
+### Optional overrides
+- `SHOW_DOCS=true` (If you explicitly want `/docs` available in production. By default, it is disabled in production).
+
+## 2. Stripe Webhook Configuration
+
+In the Stripe Dashboard, you must configure a webhook endpoint pointing to your production URL:
+
+- **Endpoint:** `https://your-production-domain.com/api/v1/billing/webhooks`
+- **Events to listen for:**
+  - `checkout.session.completed`
+  - `customer.subscription.updated`
+  - `customer.subscription.deleted`
+
+*Note: The older `https://your-production-domain.com/api/subscriptions/webhook` is also present for legacy routes, but it is recommended to use the `v1/billing` webhook.*
+
+## 3. Post-Deployment Smoke Tests
+
+After deploying to production, perform these manual verifications to ensure all environments switches engaged correctly:
+
+1. **Authentication & Cookies:** Register a test account and log in. Inspect the `access_token` cookie. It MUST have `Secure=true`, `HttpOnly=true`, and `SameSite=lax`.
+2. **Docs Lockdown:** Navigate to `/docs` and `/redoc`. These should return a `404 Not Found`.
+3. **Property Data:** Navigate to the Dashboard. The properties list should be empty or reflect actual DB data (no more "123 Ocean Drive" mock data).
+4. **Billing Failure:** Attempt to click a pricing tier on the `/pricing` page (without setting real Stripe keys first) or check out a permit. You should see a safe `502 Payment provider unavailable` or `500 Billing not configured` error, rather than a successful mock checkout.
+5. **Real Billing:** Add live Stripe keys and a valid Price ID. Verify you are redirected to a real Stripe Checkout session (not a local mock).
+6. **Compliance Search:** Go to the Compliance page and search for "Florida". The "Florida State (Sample)" mock ordinance should no longer appear in the search results.
+
+## 4. Troubleshooting
+- If checkout redirects to `/checkout-mock` in production, check that `ENVIRONMENT` is exactly `production` (case-insensitive).
+- If you receive `403 Forbidden` on compliance routes, it's expected for some mock seeding endpoints like `/api/compliance/seed-miami` which are disabled in production.
