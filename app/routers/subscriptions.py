@@ -77,7 +77,7 @@ async def create_checkout_session(
     Stripe checkout session endpoint.
     """
     tier_lower = request.tier.lower()
-    if tier_lower not in ["basic", "pro", "premium"]:
+    if tier_lower not in ["basic", "pro", "premium", "compliance_essentials", "starter", "growth", "enterprise", "free"]:
         raise HTTPException(status_code=400, detail="Invalid tier selected")
     
     IS_PRODUCTION = os.environ.get("ENVIRONMENT", "").lower() == "production"
@@ -85,7 +85,11 @@ async def create_checkout_session(
     price_ids = {
         "basic": os.environ.get("STRIPE_PRICE_BASIC", "price_mock_basic" if not IS_PRODUCTION else None),
         "pro": os.environ.get("STRIPE_PRICE_PRO", "price_mock_pro" if not IS_PRODUCTION else None),
-        "premium": os.environ.get("STRIPE_PRICE_PREMIUM", "price_mock_premium" if not IS_PRODUCTION else None)
+        "premium": os.environ.get("STRIPE_PRICE_PREMIUM", "price_mock_premium" if not IS_PRODUCTION else None),
+        "compliance_essentials": os.environ.get("STRIPE_PRICE_COMPLIANCE_ESSENTIALS") or os.environ.get("STRIPE_PRICE_BASIC", "price_mock_compliance_essentials" if not IS_PRODUCTION else None),
+        "starter": os.environ.get("STRIPE_PRICE_STARTER") or os.environ.get("STRIPE_PRICE_BASIC", "price_mock_starter" if not IS_PRODUCTION else None),
+        "growth": os.environ.get("STRIPE_PRICE_GROWTH") or os.environ.get("STRIPE_PRICE_PRO", "price_mock_growth" if not IS_PRODUCTION else None),
+        "enterprise": os.environ.get("STRIPE_PRICE_ENTERPRISE") or os.environ.get("STRIPE_PRICE_PREMIUM", "price_mock_enterprise" if not IS_PRODUCTION else None)
     }
     
     if IS_PRODUCTION:

@@ -1423,7 +1423,10 @@ Processing Time: ${data.estimated_processing_time}`);
                 // Fetch checklist items for all properties in parallel to compute dynamic compliance scores
                 const checklistPromises = properties.map((p, idx) => 
                     fetch(`/api/v1/compliance/checklist-items/${p.id}`, { headers })
-                        .then(res => res.ok ? res.json() : [])
+                        .then(res => {
+                            if (res.status === 403) return { error: 'upgrade_required' };
+                            return res.ok ? res.json() : [];
+                        })
                         .then(data => {
                             p.checklist = data;
                             return data;
@@ -1437,7 +1440,28 @@ Processing Time: ${data.estimated_processing_time}`);
                     const clone = template.content.cloneNode(true);
                     
                     const p = properties[0];
-                    const checklistItems = propertiesChecklists[0] || [];
+                    let checklistItems = propertiesChecklists[0] || [];
+                    
+                    if (checklistItems && checklistItems.error === 'upgrade_required') {
+                        const taskContainer = clone.getElementById('dashboard-pending-tasks');
+                        if (taskContainer) {
+                            taskContainer.innerHTML = `
+                                <div class="text-center py-10 bg-surface-container-lowest rounded-2xl border border-surface-container border-dashed">
+                                    <span class="material-symbols-outlined text-4xl text-on-surface-variant mb-2 opacity-50">lock</span>
+                                    <h3 class="text-lg font-bold text-on-surface mb-2">Compliance Tasks Locked</h3>
+                                    <p class="text-on-surface-variant max-w-xs mx-auto mb-4">You must be on the Essentials or Pro tier to view and act on specific compliance checklist tasks.</p>
+                                    <button onclick="upgradeToComplianceEssentials()" class="px-6 py-2 bg-primary text-white font-bold rounded-xl shadow-sm hover:shadow transition-all">Upgrade to Essentials</button>
+                                </div>
+                            `;
+                        }
+                        const progress = clone.querySelector('.single-compliance-progress');
+                        const compText = clone.querySelector('.single-compliance-text');
+                        const compDesc = clone.querySelector('.single-compliance-desc');
+                        if (progress) progress.setAttribute('stroke-dasharray', '0, 100');
+                        if (compText) compText.innerText = 'LOCKED';
+                        if (compDesc) compDesc.innerText = 'Upgrade to view';
+                        checklistItems = [];
+                    }
                     
                     // Welcome greeting name
                     const userNameSpan = clone.querySelector('.single-user-name');

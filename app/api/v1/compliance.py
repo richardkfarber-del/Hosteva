@@ -190,12 +190,26 @@ async def audit_document(
         }
     }
 
+from app.core.security import get_current_user
 @router.get("/checklist-items/{property_id}")
-def get_checklist_items(property_id: str, db: Session = Depends(get_db)) -> List[Dict[str, Any]]:
+def get_checklist_items(property_id: str, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)) -> List[Dict[str, Any]]:
     """
     GET /api/v1/compliance/checklist-items/{property_id}
     Retrieves all compliance tasks/checklist items for a given property.
     """
+    from app.models.host import Host
+    from app.db_models import Subscription
+    
+    host = db.query(Host).filter(Host.username == current_user.get("username")).first()
+    sub_tier = "FREE"
+    if host:
+        sub = db.query(Subscription).filter(Subscription.user_id == host.id).first()
+        if sub and sub.status == "active":
+            sub_tier = sub.tier.upper()
+            
+    if sub_tier == "FREE":
+        raise HTTPException(status_code=403, detail="Free tier accounts cannot view the full compliance task list. Please upgrade to Essentials or higher.")
+        
     items = db.query(PropertyCompliance).filter(PropertyCompliance.property_id == property_id).all()
     return [
         {

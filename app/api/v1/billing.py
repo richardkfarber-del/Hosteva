@@ -115,47 +115,15 @@ async def create_checkout_session(
                 "warning": f"Mock fallback triggered: {e}"
             }
     
-    # Otherwise it's a subscription checkout
-    price_ids = {
-        "FREE": os.getenv("STRIPE_PRICE_FREE") or ("price_mock_free" if not IS_PRODUCTION else None),
-        "STARTER": os.getenv("STRIPE_PRICE_STARTER") or ("price_mock_starter" if not IS_PRODUCTION else None),
-        "BASIC": os.getenv("STRIPE_PRICE_BASIC") or ("price_mock_starter" if not IS_PRODUCTION else None),
-        "GROWTH": os.getenv("STRIPE_PRICE_GROWTH") or ("price_mock_growth" if not IS_PRODUCTION else None),
-        "PRO": os.getenv("STRIPE_PRICE_PRO") or ("price_mock_growth" if not IS_PRODUCTION else None),
-        "COMPLIANCE_ESSENTIALS": os.getenv("STRIPE_PRICE_COMPLIANCE_ESSENTIALS") or os.getenv("STRIPE_PRICE_BASIC") or ("price_mock_compliance_essentials" if not IS_PRODUCTION else None),
-        "ENTERPRISE": os.getenv("STRIPE_PRICE_ENTERPRISE") or ("price_mock_enterprise" if not IS_PRODUCTION else None),
-        "PREMIUM": os.getenv("STRIPE_PRICE_PREMIUM") or ("price_mock_enterprise" if not IS_PRODUCTION else None)
-    }
-
-    selected_price = price_ids.get(tier_val, price_ids["STARTER"])
-    if IS_PRODUCTION and not selected_price:
-        raise HTTPException(status_code=500, detail="Billing not configured")
-    
+    # Otherwise it's a subscription checkout, fallback to subscriptions.py logic
     try:
-        checkout_session = stripe.checkout.Session.create(
-            payment_method_types=['card'],
-            line_items=[
-                {
-                    'price': selected_price,
-                    'quantity': 1,
-                },
-            ],
-            mode='subscription',
-            success_url=FRONTEND_URL + '/dashboard?payment=success&session_id={CHECKOUT_SESSION_ID}',
-            cancel_url=FRONTEND_URL + '/dashboard?payment=cancelled',
-            client_reference_id=client_reference_id,
-            metadata={
-                "type": "subscription",
-                "tier": tier_val
-            }
-        )
-        return {
-            "status": "pending",
-            "checkout_url": checkout_session.url,
-            "session_id": checkout_session.id
-        }
+        from app.routers.subscriptions import create_checkout_session as sub_checkout
+        from app.routers.subscriptions import SubscriptionRequest
+        sub_req = SubscriptionRequest(tier=tier_val.lower())
+        return await sub_checkout(request=sub_req, current_host=host)
     except Exception as e:
         if IS_PRODUCTION:
+            logging.error(f"Billing checkout error: {e}")
             raise HTTPException(
                 status_code=502,
                 detail="Payment provider unavailable. Please try again shortly.",

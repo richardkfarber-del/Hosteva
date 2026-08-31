@@ -108,9 +108,21 @@ def serve_sw():
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    # Log full traceback server-side; never expose it to clients in production
+    import traceback
     traceback.print_exc()
+    
+    from starlette.exceptions import HTTPException as StarletteHTTPException
+    if isinstance(exc, StarletteHTTPException):
+        from fastapi.responses import JSONResponse
+        return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+        
+    from fastapi.exceptions import RequestValidationError
+    if isinstance(exc, RequestValidationError):
+        from fastapi.responses import JSONResponse
+        return JSONResponse(status_code=422, content={"detail": exc.errors()})
+        
     detail = str(traceback.format_exc()) if os.getenv("ENVIRONMENT") != "production" else "Internal server error"
+    from fastapi.responses import PlainTextResponse
     return PlainTextResponse(detail, status_code=500)
 
 app.include_router(listings.router)
