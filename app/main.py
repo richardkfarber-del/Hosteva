@@ -52,7 +52,8 @@ import_models()
 app = FastAPI(
     title="Hosteva Zoning and Compliance Engine",
     docs_url="/docs" if SHOW_DOCS else None,
-    redoc_url="/redoc" if SHOW_DOCS else None
+    redoc_url="/redoc" if SHOW_DOCS else None,
+    openapi_url="/openapi.json" if SHOW_DOCS else None
 )
 
 # Vibranium Habit: Strictly lock down Cross-Origin Resource Sharing (CORS)

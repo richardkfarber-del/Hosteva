@@ -230,6 +230,10 @@ def list_compliance_rules(zoning_id: str, db: Session = Depends(get_db)):
 
 @router.post("/seed-miami")
 def seed_miami_data(db: Session = Depends(get_db)):
+    IS_PRODUCTION = os.getenv("ENVIRONMENT", "").lower() == "production"
+    if IS_PRODUCTION:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=403, detail="Not available in production")
     existing = db.query(Region).filter(
         Region.locality == "Miami",
         Region.admin_area == "FL"

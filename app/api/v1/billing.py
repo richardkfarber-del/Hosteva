@@ -42,11 +42,9 @@ async def create_checkout_session(
 ):
     # 1. Fetch host profile
     host = db.query(Host).filter(Host.username == current_user.get("username")).first()
-    if not host:
-        raise HTTPException(status_code=404, detail="Host profile not found")
+    client_reference_id = host.id if host else current_user.get("username", "user_mock_123")
 
     tier_val = checkout_data.tier.upper()
-    client_reference_id = host.id
 
     # If it's a permit filing payment
     if tier_val == "PERMIT_FILING":
@@ -124,7 +122,7 @@ async def create_checkout_session(
         "BASIC": os.getenv("STRIPE_PRICE_BASIC") or ("price_mock_starter" if not IS_PRODUCTION else None),
         "GROWTH": os.getenv("STRIPE_PRICE_GROWTH") or ("price_mock_growth" if not IS_PRODUCTION else None),
         "PRO": os.getenv("STRIPE_PRICE_PRO") or ("price_mock_growth" if not IS_PRODUCTION else None),
-        "COMPLIANCE_ESSENTIALS": os.getenv("STRIPE_PRICE_COMPLIANCE_ESSENTIALS") or ("price_mock_compliance_essentials" if not IS_PRODUCTION else None),
+        "COMPLIANCE_ESSENTIALS": os.getenv("STRIPE_PRICE_COMPLIANCE_ESSENTIALS") or os.getenv("STRIPE_PRICE_BASIC") or ("price_mock_compliance_essentials" if not IS_PRODUCTION else None),
         "ENTERPRISE": os.getenv("STRIPE_PRICE_ENTERPRISE") or ("price_mock_enterprise" if not IS_PRODUCTION else None),
         "PREMIUM": os.getenv("STRIPE_PRICE_PREMIUM") or ("price_mock_enterprise" if not IS_PRODUCTION else None)
     }
