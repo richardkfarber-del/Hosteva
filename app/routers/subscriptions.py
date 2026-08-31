@@ -108,8 +108,20 @@ async def create_checkout_session(
                 },
             ],
             mode='subscription',
-            success_url=os.environ.get("FRONTEND_URL", "http://localhost:3000") + '/success?session_id={CHECKOUT_SESSION_ID}',
-            cancel_url=os.environ.get("FRONTEND_URL", "http://localhost:3000") + '/cancel',
+            success_url=(
+                f"{os.environ.get('FRONTEND_URL', '').rstrip('/')}/dashboard?payment=success&session_id={{CHECKOUT_SESSION_ID}}"
+                if (IS_PRODUCTION and os.environ.get('FRONTEND_URL', '').startswith("https://"))
+                else "https://hosteva.onrender.com/dashboard?payment=success&session_id={CHECKOUT_SESSION_ID}"
+                if IS_PRODUCTION
+                else f"{os.environ.get('FRONTEND_URL', 'http://localhost:3000').rstrip('/')}/success?session_id={{CHECKOUT_SESSION_ID}}"
+            ),
+            cancel_url=(
+                f"{os.environ.get('FRONTEND_URL', '').rstrip('/')}/dashboard?payment=cancelled"
+                if (IS_PRODUCTION and os.environ.get('FRONTEND_URL', '').startswith("https://"))
+                else "https://hosteva.onrender.com/dashboard?payment=cancelled"
+                if IS_PRODUCTION
+                else f"{os.environ.get('FRONTEND_URL', 'http://localhost:3000').rstrip('/')}/cancel"
+            ),
             client_reference_id=client_reference_id,
         )
         return {

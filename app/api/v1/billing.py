@@ -69,8 +69,20 @@ async def create_checkout_session(
                     },
                 ],
                 mode='payment',
-                success_url=FRONTEND_URL + '/dashboard?payment=success&session_id={CHECKOUT_SESSION_ID}',
-                cancel_url=FRONTEND_URL + '/dashboard?payment=cancelled',
+                success_url=(
+                    f"{FRONTEND_URL.rstrip('/')}/dashboard?payment=success&session_id={{CHECKOUT_SESSION_ID}}"
+                    if (IS_PRODUCTION and FRONTEND_URL.startswith("https://"))
+                    else "https://hosteva.onrender.com/dashboard?payment=success&session_id={CHECKOUT_SESSION_ID}"
+                    if IS_PRODUCTION
+                    else f"{FRONTEND_URL.rstrip('/')}/dashboard?payment=success&session_id={{CHECKOUT_SESSION_ID}}"
+                ),
+                cancel_url=(
+                    f"{FRONTEND_URL.rstrip('/')}/dashboard?payment=cancelled"
+                    if (IS_PRODUCTION and FRONTEND_URL.startswith("https://"))
+                    else "https://hosteva.onrender.com/dashboard?payment=cancelled"
+                    if IS_PRODUCTION
+                    else f"{FRONTEND_URL.rstrip('/')}/dashboard?payment=cancelled"
+                ),
                 client_reference_id=client_reference_id,
                 metadata={
                     "type": "permit_filing",

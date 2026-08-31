@@ -239,6 +239,13 @@ def read_integrations(request: Request):
         context={"request": request, "active_page": "integrations"}
     )
 
+@app.get("/success", include_in_schema=False)
+def legacy_success_redirect(request: Request, session_id: Optional[str] = None):
+    url = "/dashboard?payment=success"
+    if session_id:
+        url += f"&session_id={session_id}"
+    return RedirectResponse(url=url, status_code=303)
+
 @app.get("/dashboard", name="dashboard")
 def read_dashboard(request: Request, address: Optional[str] = None):
     # Verify cookie-based JWT access token to protect dashboard from 500 errors
