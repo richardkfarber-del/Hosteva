@@ -9,6 +9,8 @@ from unittest.mock import patch, MagicMock
 # Force SQLite test URL globally
 os.environ["DATABASE_URL"] = "sqlite:///./test_billing_v1.db"
 os.environ["INTERNAL_DATABASE_URL"] = "sqlite:///./test_billing_v1.db"
+# Success-path checkout tests opt in; kill-switch defaults OFF in prod.
+os.environ["BILLING_ENABLED"] = "true"
 
 from app.main import app as fastapi_app
 from app.database import Base, get_db
@@ -118,6 +120,26 @@ def auth_header():
 def test_checkout_unauthorized():
     response = client.post("/api/v1/billing/checkout", json={"tier": "STARTER"})
     assert response.status_code == 401
+
+def test_checkout_kill_switch_off_returns_503(auth_header, monkeypatch):
+    monkeypatch.setenv("BILLING_ENABLED", "false")
+    with patch("stripe.checkout.Session.create") as mock_session_create:
+        response = client.post(
+            "/api/subscriptions/checkout",
+            json={"tier": "pro"},
+        )
+        assert response.status_code == 503
+        assert "Billing temporarily unavailable" in response.json().get("detail", "")
+        mock_session_create.assert_not_called()
+
+        response2 = client.post(
+            "/api/v1/billing/checkout",
+            json={"tier": "STARTER"},
+            headers=auth_header,
+        )
+        assert response2.status_code == 503
+        mock_session_create.assert_not_called()
+
 
 def test_checkout_subscription_success(auth_header):
     # Mock stripe session creation

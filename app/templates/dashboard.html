@@ -189,10 +189,10 @@ tailwind.config = {
                         </div>
                     </div>
                     <div id="sidebar-subscription-cta">
-                        <button onclick="upgradeToComplianceEssentials()" class="w-full py-2.5 px-3 bg-gradient-to-r from-primary to-primary-container text-white font-bold text-xs rounded-xl shadow-sm hover:shadow transition-all flex items-center justify-center gap-1.5">
-                            <span class="material-symbols-outlined text-sm">bolt</span>
-                            <span>Upgrade to Essentials</span>
-                        </button>
+                        <div class="w-full py-2.5 px-3 bg-slate-100 border border-slate-200 text-slate-600 font-semibold text-xs rounded-xl flex items-center justify-center gap-1.5 text-center">
+                            <span class="material-symbols-outlined text-sm">pause_circle</span>
+                            <span>Billing temporarily unavailable</span>
+                        </div>
                     </div>
                     <button onclick="logout()" class="w-full text-center text-xs font-semibold text-on-surface-variant hover:text-red-600 transition-colors mt-2.5 pt-2 border-t border-outline-variant/10 flex items-center justify-center gap-1" id="sidebar-logout-btn">
                         <span class="material-symbols-outlined text-sm">logout</span>
@@ -1450,7 +1450,7 @@ Processing Time: ${data.estimated_processing_time}`);
                                     <span class="material-symbols-outlined text-4xl text-on-surface-variant mb-2 opacity-50">lock</span>
                                     <h3 class="text-lg font-bold text-on-surface mb-2">Compliance Tasks Locked</h3>
                                     <p class="text-on-surface-variant max-w-xs mx-auto mb-4">You must be on the Essentials or Pro tier to view and act on specific compliance checklist tasks.</p>
-                                    <button onclick="upgradeToComplianceEssentials()" class="px-6 py-2 bg-primary text-white font-bold rounded-xl shadow-sm hover:shadow transition-all">Upgrade to Essentials</button>
+                                    <button disabled aria-disabled="true" class="px-6 py-2 bg-slate-300 text-slate-600 font-bold rounded-xl cursor-not-allowed">Billing temporarily unavailable</button>
                                 </div>
                             `;
                         }
@@ -1780,30 +1780,8 @@ Processing Time: ${data.estimated_processing_time}`);
         }
 
         async function upgradeToPro() {
-            try {
-                const response = await fetch('/api/v1/billing/checkout', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', ...headers },
-                    body: JSON.stringify({ tier: 'GROWTH' })
-                });
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.checkout_url) {
-                        window.location.href = data.checkout_url;
-                    } else {
-                        alert('Stripe session URL not found.');
-                    }
-                } else {
-                    if (response.status === 500 || response.status === 502) {
-                        alert('Payment provider unavailable. Billing may not be configured in this environment.');
-                    } else {
-                        alert('Failed to initiate checkout session.');
-                    }
-                }
-            } catch (err) {
-                console.error('Error upgrading to Pro:', err);
-                alert('An error occurred during checkout initialization.');
-            }
+            alert('Billing temporarily unavailable. Paid checkout is disabled until auth-bound Stripe is ready.');
+            return;
         }
 
         function logout() {
@@ -1846,10 +1824,10 @@ Processing Time: ${data.estimated_processing_time}`);
                         tierEl.innerText = "Free Tier";
                         if (ctaContainer) {
                             ctaContainer.innerHTML = `
-                                <button onclick="upgradeToComplianceEssentials()" class="w-full py-2.5 px-3 bg-gradient-to-r from-primary to-primary-container text-white font-bold text-xs rounded-xl shadow-sm hover:shadow transition-all flex items-center justify-center gap-1.5">
-                                    <span class="material-symbols-outlined text-sm">bolt</span>
-                                    <span>Upgrade ($9.99/mo)</span>
-                                </button>
+                                <div class="w-full py-2.5 px-3 bg-slate-100 border border-slate-200 text-slate-600 font-semibold text-xs rounded-xl flex items-center justify-center gap-1.5 text-center">
+                                    <span class="material-symbols-outlined text-sm">pause_circle</span>
+                                    <span>Billing temporarily unavailable</span>
+                                </div>
                             `;
                         }
                     }
@@ -1866,30 +1844,8 @@ Processing Time: ${data.estimated_processing_time}`);
         }
 
         async function upgradeToComplianceEssentials() {
-            try {
-                const response = await fetch('/api/v1/billing/checkout', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', ...headers },
-                    body: JSON.stringify({ tier: 'COMPLIANCE_ESSENTIALS' })
-                });
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.checkout_url) {
-                        window.location.href = data.checkout_url;
-                    } else {
-                        alert('Checkout session URL not found.');
-                    }
-                } else {
-                    if (response.status === 500 || response.status === 502) {
-                        alert('Payment provider unavailable. Billing may not be configured in this environment.');
-                    } else {
-                        alert('Failed to initiate checkout session.');
-                    }
-                }
-            } catch (err) {
-                console.error('Error upgrading to Compliance Essentials:', err);
-                alert('An error occurred during checkout initialization.');
-            }
+            alert('Billing temporarily unavailable. Paid checkout is disabled until auth-bound Stripe is ready.');
+            return;
         }
         window.upgradeToComplianceEssentials = upgradeToComplianceEssentials;
         window.upgradeToPro = upgradeToComplianceEssentials;

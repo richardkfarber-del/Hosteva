@@ -10,6 +10,8 @@ services:
         fromDatabase:
           name: hosteva-db
           property: connectionString
+      - key: BILLING_ENABLED
+        value: "false"
       # Placeholder for required production secrets (DO NOT HARDCODE VALUES HERE)
       # Configure these directly in the Render Dashboard:
       # - key: ENVIRONMENT

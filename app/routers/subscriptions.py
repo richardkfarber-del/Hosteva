@@ -76,6 +76,9 @@ async def create_checkout_session(
     """
     Stripe checkout session endpoint.
     """
+    from app.core.billing_gate import require_billing_enabled
+    require_billing_enabled()
+
     tier_lower = request.tier.lower()
     if tier_lower not in ["basic", "pro", "premium", "compliance_essentials", "starter", "growth", "enterprise", "free"]:
         raise HTTPException(status_code=400, detail="Invalid tier selected")
@@ -96,7 +99,12 @@ async def create_checkout_session(
         if not price_ids["basic"] or not price_ids["pro"] or not price_ids["premium"]:
             raise HTTPException(status_code=500, detail="Billing not configured")
 
-    client_reference_id = current_host.id if current_host else "user_mock_123"
+    if not current_host or not getattr(current_host, "id", None):
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication required for checkout",
+        )
+    client_reference_id = str(current_host.id)
 
     try:
         checkout_session = stripe.checkout.Session.create(

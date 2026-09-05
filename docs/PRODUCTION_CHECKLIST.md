@@ -56,3 +56,12 @@ After deploying to production, perform these manual verifications to ensure all 
 ## 4. Troubleshooting
 - If checkout redirects to `/checkout-mock` in production, check that `ENVIRONMENT` is exactly `production` (case-insensitive).
 - If you receive `403 Forbidden` on compliance routes, it's expected for some mock seeding endpoints like `/api/compliance/seed-miami` which are disabled in production.
+
+## Billing kill-switch (P0 — 2026-09-05)
+
+`BILLING_ENABLED` defaults to **false**. Until auth-bound Stripe ships, Checkout Session creation returns **503 Billing temporarily unavailable** on:
+- `POST /api/subscriptions/checkout`
+- `POST /api/v1/billing/checkout`
+- legacy `POST .../create-checkout-session`
+
+Do **not** set `BILLING_ENABLED=true` in production until checkout requires a real Host id (never `user_mock_123`) and is verified.

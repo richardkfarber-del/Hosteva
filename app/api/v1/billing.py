@@ -40,9 +40,17 @@ async def create_checkout_session(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    # 1. Fetch host profile
+    from app.core.billing_gate import require_billing_enabled
+    require_billing_enabled()
+
+    # 1. Fetch host profile — never fall back to user_mock_123
     host = db.query(Host).filter(Host.username == current_user.get("username")).first()
-    client_reference_id = host.id if host else current_user.get("username", "user_mock_123")
+    if not host or not getattr(host, "id", None):
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication required for checkout",
+        )
+    client_reference_id = str(host.id)
 
     tier_val = checkout_data.tier.upper()
 
