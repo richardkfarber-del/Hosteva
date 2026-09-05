@@ -207,10 +207,13 @@ def get_checklist_items(property_id: str, db: Session = Depends(get_db), current
     from app.models.host import Host
     from app.core.billing_gate import host_has_active_essentials, require_active_essentials
 
-    host = db.query(Host).filter(Host.username == current_user.get("username")).first()
-    # US-006: Active Essentials (status==active AND tier in ESSENTIALS/+aliases)
+    try:
+        host = db.query(Host).filter(Host.username == current_user.get("username")).first()
+    except Exception:
+        host = None
+    # US-006: Active Essentials — must 403 (never 500) when Free
     require_active_essentials(db, host)
-        
+
     items = db.query(PropertyCompliance).filter(PropertyCompliance.property_id == property_id).all()
     # Prefetch municipal source URLs for checklist citation (US-003)
     mc_ids = {item.municipal_code_id for item in items if item.municipal_code_id}
@@ -390,8 +393,11 @@ def get_compliance_task(
     from app.core.billing_gate import require_active_essentials
     import uuid
 
-    host = db.query(Host).filter(Host.username == current_user.get("username")).first()
-    # US-006: Tier 1 task depth is Essentials-gated (expand beyond checklist-items 403)
+    try:
+        host = db.query(Host).filter(Host.username == current_user.get("username")).first()
+    except Exception:
+        host = None
+    # US-006: Tier 1 task depth — 403 when Free (never 500)
     require_active_essentials(db, host)
 
     try:
