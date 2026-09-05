@@ -451,31 +451,86 @@ def create_property(
     }
 
 
+def _map_compliance_label_to_zoning(status_label: str) -> str:
+    """Align property zoning_status with /api/v1/compliance truth (BUG-PL-05).
+
+    Never maps to Compliant for Restricted / Pending / Under Review / checklist-required.
+    """
+    label = (status_label or "").strip().upper()
+    if label == "RESTRICTED":
+        return "Violation"
+    if label in ("UNDER_REVIEW", "PENDING"):
+        return "Pending"
+    if label == "ALLOWED_WITH_CHECKLIST":
+        # Allowed only after checklist — not a Compliant green light
+        return "Action Required"
+    if label == "COMPLIANT":
+        # Evaluate must not invent Compliant from a bare label
+        return "Action Required"
+    return "Pending"
+
+
 @router.post("/{property_id}/evaluate")
 def evaluate_compliance(
     property_id: str,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    """Re-evaluate zoning against municipal compliance truth — never false Compliant."""
     host = db.query(Host).filter(Host.username == current_user.get("username")).first()
     if not host:
         raise HTTPException(status_code=404, detail="Host profile not found")
-        
+
     property_item = db.query(Property).filter(Property.id == property_id, Property.user_id == host.id).first()
     if not property_item:
         raise HTTPException(status_code=404, detail="Property not found")
-        
+
     old_status = property_item.zoning_status
-    new_status = "Compliant"
-    
-    # Simple logic
+    full_address = ", ".join(
+        p for p in [
+            property_item.address,
+            property_item.city,
+            f"{property_item.state or ''} {property_item.zip_code or ''}".strip(),
+        ] if p
+    )
+
+    compliance_status = "UNDER_REVIEW"
+    try:
+        from app.api.v1.compliance import get_compliance_by_address
+        result = get_compliance_by_address(address=full_address, db=db)
+        compliance_status = (
+            getattr(result, "status", None)
+            or (
+                "UNDER_REVIEW" if getattr(result, "is_under_review", False)
+                else ("RESTRICTED" if not getattr(result, "is_compliant", True) else "ALLOWED_WITH_CHECKLIST")
+            )
+        )
+        new_status = _map_compliance_label_to_zoning(compliance_status)
+    except Exception:
+        # Fail closed: never invent Compliant when compliance lookup fails
+        preserved = (old_status or "").strip()
+        if preserved and preserved.lower() not in ("compliant", "green"):
+            new_status = preserved
+        else:
+            new_status = "Pending"
+        compliance_status = "LOOKUP_FAILED"
+
+    # Hard guard: this endpoint must never claim Compliant
+    if (new_status or "").strip().lower() == "compliant":
+        new_status = "Action Required"
+
     property_item.zoning_status = new_status
     db.commit()
-    
+
     if new_status == "Violation":
         dispatch_email_alert(host.email, property_id, old_status, new_status)
-        
-    return {"message": "Property evaluated", "status": new_status}
+
+    return {
+        "message": "Property evaluated",
+        "status": new_status,
+        "compliance_status": compliance_status,
+        "previous_status": old_status,
+    }
 
 
 @router.post("/{property_id}/upload-vision")
