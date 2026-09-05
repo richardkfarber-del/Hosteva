@@ -63,20 +63,26 @@ def test_features_page_200():
     response = client.get("/features", follow_redirects=False)
     assert response.status_code == 200
     assert "Florida checklist depth" in response.text
-    assert "HostReady/PermitGuard" in response.text
+    assert "built for hosts, not for busywork" in response.text
     assert "operations engine" in response.text.lower()  # mentioned as NOT live
     assert "multi-channel" in response.text.lower()
-    # Guesty only as negative frame (not primary PMS alternative pitch)
-    assert "anti-Guesty" in response.text or "not as an anti-Guesty" in response.text
+    assert "Under Review" in response.text
+    assert "$9.99" in response.text
+    # BUG-PL-04: no competitor brand names on Features
+    for name in ("HostReady", "PermitGuard", "Guesty", "Lodge Compliance", "Hostaway"):
+        assert name not in response.text
 
 
 def test_about_page_200():
     response = client.get("/about", follow_redirects=False)
     assert response.status_code == 200
     assert "About Hosteva" in response.text
-    assert "HostReady/PermitGuard" in response.text
-    assert "HostReady Bubble" in response.text  # scrub acknowledgment: not used in customer materials
+    assert "other compliance tools" in response.text
     assert "operations engine" in response.text.lower()
+    assert "Under Review" in response.text
+    # BUG-PL-04: no competitor brand names / Bubble aside on About
+    for name in ("HostReady", "PermitGuard", "Guesty", "Lodge Compliance", "Hostaway"):
+        assert name not in response.text
 
 def test_waitlist_submission_success():
     payload = {
