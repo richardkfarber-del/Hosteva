@@ -112,6 +112,32 @@ def main():
         except Exception as col_err:
             print(f"Warning: Could not check/add columns to municipal_codes: {col_err}")
 
+
+        # Ensure subscriptions columns for Essentials entitlement (US-006 simulate/webhook)
+        try:
+            sub_cols = [c["name"] for c in inspector.get_columns("subscriptions")]
+            for col_name, col_type in [
+                ("tier", "VARCHAR(100)"),
+                ("plan_details", "VARCHAR"),
+                ("stripe_customer_id", "VARCHAR"),
+                ("stripe_subscription_id", "VARCHAR(255)"),
+                ("status", "VARCHAR"),
+                ("user_id", "VARCHAR"),
+            ]:
+                if col_name not in sub_cols:
+                    with engine.connect() as conn:
+                        if "sqlite" in str(engine.url):
+                            conn.execute(text(f"ALTER TABLE subscriptions ADD COLUMN {col_name} {col_type};"))
+                        else:
+                            conn.execute(text(f"ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS {col_name} {col_type};"))
+                        conn.commit()
+                    print(f"Added {col_name} column to subscriptions table.")
+                    sub_cols.append(col_name)
+                else:
+                    print(f"{col_name} column already exists in subscriptions table.")
+        except Exception as sub_col_err:
+            print(f"Warning: Could not check/add subscriptions columns: {sub_col_err}")
+
         # Auto-seed GTM rules database if empty
         try:
             import sys
