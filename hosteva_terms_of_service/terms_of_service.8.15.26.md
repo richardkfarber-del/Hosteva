@@ -4,7 +4,7 @@ Markdown
 
 **Last Updated:** August 15, 2026
 
-Welcome to Hosteva (https://hosteva.onrender.com/). These Terms of Service ("Terms") govern your access to and use of the website, software applications, compliance tools, and services provided by Hosteva ("Hosteva," "we," "our," or "us"). By creating an account, searching an address, or subscribing to our services, you agree to be bound by these Terms.
+Welcome to Hosteva (https://gethosteva.com/). These Terms of Service ("Terms") govern your access to and use of the website, software applications, compliance tools, and services provided by Hosteva ("Hosteva," "we," "our," or "us"). By creating an account, searching an address, or subscribing to our services, you agree to be bound by these Terms.
 
 ---
 
@@ -69,7 +69,7 @@ Markdown
 
 **Last Updated:** August 15, 2026
 
-Hosteva ("Hosteva," "we," "our," or "us") respects your privacy and is committed to protecting the personal information you share with us. This Privacy Policy explains how we collect, use, disclose, and safeguard your data when you visit our website (https://hosteva.onrender.com/) or use our compliance software.
+Hosteva ("Hosteva," "we," "our," or "us") respects your privacy and is committed to protecting the personal information you share with us. This Privacy Policy explains how we collect, use, disclose, and safeguard your data when you visit our website (https://gethosteva.com/) or use our compliance software.
 
 ---
 
@@ -79,7 +79,7 @@ We collect information that identifies or relates to you, including:
 - **Property Data:** Physical addresses, parcel numbers, rental types (e.g., entire home, condo), unit numbers, and jurisdictional metadata.
 - **Billing Information:** Payment transactions and subscription states. All payment card details are processed directly by our PCI-DSS compliant payment processor (Stripe). Hosteva does not store raw credit card numbers.
 - **Usage and Device Data:** IP addresses, browser types, operating systems, referring URLs, access timestamps, and page interaction logs.
-- **AI Query Logs:** Questions submitted to our "Chat with AI" compliance assistant to provide contextual answers regarding municipal rules.
+- **Support Correspondence:** Messages you send to Hosteva support about your account or compliance research results.
 
 ---
 
@@ -95,7 +95,7 @@ We use your data for the following legitimate business purposes:
 
 ### 3. Data Privacy and AI Processing
 - **No Selling of Personal Data:** Hosteva does NOT sell, rent, or monetize your personal information or property data to third-party advertisers or data brokers.
-- **AI Model Training Protections:** Information submitted to our "Chat with AI" tool or document processing pipelines is processed via enterprise API agreements that prohibit using your proprietary property data to train foundational artificial intelligence models.
+- **Phase I Scope:** Phase I does not include an AI chat assistant. Property addresses and related research inputs are used to generate municipal compliance checklists and are not sold for advertising.
 
 ---
 
@@ -136,7 +136,7 @@ We may update this Privacy Policy periodically. If we make material changes, we 
 ### 8. Contact Us
 For questions or privacy requests:
 **Email:** privacy@hosteva.com  
-**Website:** https://hosteva.onrender.com/
+**Website:** https://gethosteva.com/
 Part 3: Copy-Paste Response for Antigravity
 Copy and paste the following block directly into Antigravity:
 

@@ -15,6 +15,7 @@ from app.core.billing_gate import (
     require_checkout_host,
     checkout_client_reference_id,
     resolve_essentials_price_id,
+    essentials_checkout_custom_text,
 )
 
 def update_subscription_status(db: Session, client_reference_id: str, stripe_customer_id: str, subscription_id: str):
@@ -124,6 +125,7 @@ async def create_checkout_session(
                 else f"{os.environ.get('FRONTEND_URL', 'http://localhost:3000').rstrip('/')}/cancel"
             ),
             client_reference_id=client_reference_id,
+            custom_text=essentials_checkout_custom_text(),
             metadata={
                 "type": "subscription",
                 "tier": "ESSENTIALS",

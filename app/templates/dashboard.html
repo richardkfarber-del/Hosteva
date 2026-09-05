@@ -626,14 +626,14 @@ tailwind.config = {
                         </div>
                     </div>
                 </div>
-                <!-- AI Insight Card -->
-                <div class="md:col-span-4 bg-surface-container-lowest p-8 rounded-xl shadow-[0_20px_40px_rgba(0,28,55,0.04)] border-l-4 border-tertiary-fixed relative">
-                    <div class="flex items-center gap-2 mb-4 text-tertiary">
-                        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
-                        <span class="text-xs font-bold uppercase tracking-widest">Concierge AI</span>
+                <!-- Phase I research note (no Concierge AI / OTA listing theater) -->
+                <div class="md:col-span-4 bg-surface-container-lowest p-8 rounded-xl shadow-[0_20px_40px_rgba(0,28,55,0.04)] border-l-4 border-primary relative">
+                    <div class="flex items-center gap-2 mb-4 text-primary">
+                        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">menu_book</span>
+                        <span class="text-xs font-bold uppercase tracking-widest">Phase I Research</span>
                     </div>
-                    <h3 class="font-headline text-lg font-bold mb-3 leading-tight multi-insight-title">Revenue Opportunity</h3>
-                    <p class="text-body-md text-on-surface-variant mb-6 multi-insight-desc">Your properties are fully optimized today. No current rate optimizations required.</p>
+                    <h3 class="font-headline text-lg font-bold mb-3 leading-tight multi-insight-title">Florida STR compliance</h3>
+                    <p class="text-body-md text-on-surface-variant mb-6 multi-insight-desc">Municipal checklists, .gov portal links, and fee notes when available. Not legal advice. Listing optimization and Airbnb/VRBO connect are not part of Phase I.</p>
                     <button onclick="openAddPropertyModal()" class="w-full py-3 bg-gradient-to-r from-primary to-primary-container text-white font-bold rounded-lg hover:shadow-lg active:scale-[0.98] transition-all">Add Property</button>
                 </div>
             </section>
@@ -1814,9 +1814,9 @@ Processing Time: ${data.estimated_processing_time}`);
                     clone.querySelector('.multi-active-assets').innerText = `${properties.length} Properties`;
                     clone.querySelector('.multi-portfolio-sub').innerText = `Managing ${properties.length} locations`;
                     
-                    // Concierge AI card description (Neutral message for listing integration)
-                    clone.querySelector('.multi-insight-title').innerText = 'Listing Optimization';
-                    clone.querySelector('.multi-insight-desc').innerText = 'Connect your Airbnb/VRBO accounts to unlock rate recommendations and occupancy forecasting.';
+                    // Phase I honesty: compliance research only (BUG-LAUNCH-03)
+                    clone.querySelector('.multi-insight-title').innerText = 'Florida STR compliance';
+                    clone.querySelector('.multi-insight-desc').innerText = 'Municipal checklists, .gov portal links, and fee notes when available. Not legal advice. Listing optimization and Airbnb/VRBO connect are not part of Phase I.';
                     
                     dynamicContent.appendChild(clone);
                 }
