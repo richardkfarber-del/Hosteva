@@ -225,6 +225,7 @@ def test_simulate_entitlement_non_prod(as_free):
 
 def test_simulate_entitlement_blocked_in_production(as_free, monkeypatch):
     monkeypatch.setenv("ENVIRONMENT", "production")
+    monkeypatch.setenv("ALLOW_BILLING_SIMULATION", "false")
     import app.api.v1.billing as billing_mod
     monkeypatch.setattr(billing_mod, "IS_PRODUCTION", True)
     r = client.post("/api/v1/billing/simulate-entitlement", headers=as_free)
