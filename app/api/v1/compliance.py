@@ -205,17 +205,11 @@ def get_checklist_items(property_id: str, db: Session = Depends(get_db), current
     Retrieves all compliance tasks/checklist items for a given property.
     """
     from app.models.host import Host
-    from app.db_models import Subscription
-    
+    from app.core.billing_gate import host_has_active_essentials, require_active_essentials
+
     host = db.query(Host).filter(Host.username == current_user.get("username")).first()
-    sub_tier = "FREE"
-    if host:
-        sub = db.query(Subscription).filter(Subscription.user_id == host.id).first()
-        if sub and sub.status == "active":
-            sub_tier = sub.tier.upper()
-            
-    if sub_tier == "FREE":
-        raise HTTPException(status_code=403, detail="Free tier accounts cannot view the full compliance task list. Please upgrade to Essentials or higher.")
+    # US-006: Active Essentials (status==active AND tier in ESSENTIALS/+aliases)
+    require_active_essentials(db, host)
         
     items = db.query(PropertyCompliance).filter(PropertyCompliance.property_id == property_id).all()
     # Prefetch municipal source URLs for checklist citation (US-003)
@@ -385,10 +379,21 @@ def get_compliance_by_address(address: str, db: Session = Depends(get_db)):
 
 
 @router.get("/tasks/{task_id}")
-def get_compliance_task(task_id: str, db: Session = Depends(get_db)):
+def get_compliance_task(
+    task_id: str,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
     from app.models.compliance import PropertyCompliance, MunicipalCode
     from app.models.property import Property
+    from app.models.host import Host
+    from app.core.billing_gate import require_active_essentials
     import uuid
+
+    host = db.query(Host).filter(Host.username == current_user.get("username")).first()
+    # US-006: Tier 1 task depth is Essentials-gated (expand beyond checklist-items 403)
+    require_active_essentials(db, host)
+
     try:
         task_uuid = uuid.UUID(task_id)
     except ValueError:
@@ -482,6 +487,11 @@ def download_private_document(
     # BUG-008: require auth — unauthenticated downloads forbidden
     if not current_user:
         raise HTTPException(status_code=401, detail="Authentication required")
+    # US-006: gated docs require active Essentials
+    from app.models.host import Host
+    from app.core.billing_gate import require_active_essentials
+    host = db.query(Host).filter(Host.username == current_user.get("username")).first()
+    require_active_essentials(db, host)
     safe_filename = os.path.basename(filename)
     candidates = [
         os.path.join("app/storage/private_uploads", safe_filename),
@@ -832,13 +842,24 @@ def compliance_task_chat(
     prefill_data = {}
     
     if prop:
+        # SP-002 / BUG-010: real host data or honest N/A — never invent parcel ids / owner names
+        host_for_prefill = None
+        try:
+            from app.models.host import Host as _Host
+            if getattr(prop, "user_id", None):
+                host_for_prefill = db.query(_Host).filter(_Host.id == prop.user_id).first()
+        except Exception:
+            host_for_prefill = None
+        owner = None
+        if host_for_prefill is not None:
+            owner = getattr(host_for_prefill, "username", None) or getattr(host_for_prefill, "email", None)
         prefill_data = {
-            "owner_name": "Richard Farber",
+            "owner_name": owner or "Unknown Host",
             "property_address": prop.address,
             "city": prop.city,
             "state": prop.state,
             "zip_code": prop.zip_code,
-            "parcel_id": "55-23-19-0000-00100-0020"
+            "parcel_id": getattr(prop, "parcel_id", None) or "N/A",
         }
     
     if "pasco conditional" in task_name.lower():
@@ -1092,7 +1113,7 @@ def fill_permit_form(
             }
         }
         
-    host_name = getattr(host_obj, "owner_name", None) or host_obj.username or "Richard Farber"
+    host_name = getattr(host_obj, "owner_name", None) or host_obj.username or "Unknown Host"
     property_address = property_obj.address
     host_email = host_obj.email or "host@example.com"
     tax_id = f"TX-ID-{mc.state}-{id[:8].upper()}"

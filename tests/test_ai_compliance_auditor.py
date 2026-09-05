@@ -16,6 +16,7 @@ from app.database import Base, get_db
 from app.models.compliance import MunicipalCode, PropertyCompliance, Region
 from app.models.property import Property
 from app.models.host import Host
+from app.db_models import Subscription
 import app.db_models
 
 SQLAlchemy_DATABASE_URL = "sqlite:///./test_ai_compliance_auditor.db"
@@ -54,6 +55,15 @@ def setup_test_db():
             password_hash="mocked_hash"
         )
         db.add(host)
+        # US-006: checklist-items require active Essentials
+        db.add(Subscription(
+            user_id="host_1",
+            status="active",
+            tier="ESSENTIALS",
+            plan_details="Compliance Essentials",
+            stripe_subscription_id="sub_auditor_seed",
+            stripe_customer_id="cus_auditor_seed",
+        ))
         
         # Seed property
         prop = Property(
@@ -98,7 +108,20 @@ def setup_test_db():
     if os.path.exists("test_ai_compliance_auditor.db"):
         os.remove("test_ai_compliance_auditor.db")
 
+
 client = TestClient(fastapi_app)
+
+from app.core.security import get_current_user
+
+def _auditor_user():
+    return {"username": "test_owner", "role": "host"}
+
+@pytest.fixture(autouse=True)
+def _auth_as_owner():
+    fastapi_app.dependency_overrides[get_current_user] = _auditor_user
+    yield
+    fastapi_app.dependency_overrides.pop(get_current_user, None)
+
 
 def test_audit_document_success():
     """

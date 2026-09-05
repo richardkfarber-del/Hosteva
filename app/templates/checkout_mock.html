@@ -33,7 +33,7 @@
                 <div class="flex flex-col gap-1">
                     <span class="text-xs uppercase text-slate-400 font-bold tracking-wider">Subscribe to</span>
                     <h2 id="summary-title" class="text-3xl font-extrabold text-slate-800 font-display">Hosteva Growth Plan</h2>
-                    <p id="summary-description" class="text-slate-500 text-sm mt-2 leading-relaxed">Unlock advanced zoning auditor tools, priority document reviews, and 24/7 compliance alerts.</p>
+                    <p id="summary-description" class="text-slate-500 text-sm mt-2 leading-relaxed">Unlock the full interactive Florida municipal checklist, official .gov portal links, and fee schedules when available.</p>
                 </div>
             </div>
             
@@ -71,7 +71,7 @@
                     
                     <div>
                         <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Name on card</label>
-                        <input type="text" id="name-field" value="Richard Farber" class="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition-colors">
+                        <input type="text" id="name-field" value="" placeholder="Your name" class="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition-colors">
                     </div>
                 </div>
             </div>
@@ -115,7 +115,7 @@
                 // Subscription
                 if (tier === 'STARTER') {
                     titleEl.innerText = "Hosteva Starter Plan";
-                    descEl.innerText = "Standard short-term rental compliance monitoring and email notification alerts.";
+                    descEl.innerText = "Compliance Essentials — interactive checklist, .gov links, and fee notes when in data.";
                     priceEl.innerText = "$49.00";
                 } else if (tier === 'ENTERPRISE') {
                     titleEl.innerText = "Hosteva Enterprise Plan";
@@ -123,7 +123,7 @@
                     priceEl.innerText = "$499.00";
                 } else {
                     titleEl.innerText = "Hosteva Growth Plan";
-                    descEl.innerText = "Unlock advanced zoning auditor tools, priority document reviews, and 24/7 compliance alerts.";
+                    descEl.innerText = "Unlock the full interactive Florida municipal checklist, official .gov portal links, and fee schedules when available.";
                     priceEl.innerText = "$249.00";
                 }
                 intervalEl.innerText = "/ month";

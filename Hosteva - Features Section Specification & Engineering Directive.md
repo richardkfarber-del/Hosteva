@@ -17,7 +17,7 @@ Includes basic address lookup and preliminary zoning risk assessment.
 
 ### Tier 1 — Compliance Essentials ($9.99/mo or $99/yr)
 
-Includes full interactive compliance checklists, direct government portal links, municipal fee schedules, AI chat assistant, and ordinance/renewal alerts.
+Includes full interactive compliance checklists, direct government portal links, and municipal fee schedules when available. Phase I Essentials does not include AI chat or real-time ordinance/renewal alerts.
 
 ### Coming Soon (Phase II Pipeline)
 

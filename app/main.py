@@ -356,7 +356,9 @@ def read_billing(request: Request):
 @app.get("/users/me")
 @app.get("/api/v1/users/me")
 def get_current_active_user_proxy(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    """BUG-002: stable 200 JSON for Bearer auth — never 500 on missing subscription rel."""
+    """BUG-002 + US-006: stable 200 JSON with Essentials entitlement fields."""
+    from app.core.billing_gate import me_entitlement_fields
+
     username = current_user.get("username") or current_user.get("sub")
     if not username:
         raise HTTPException(status_code=401, detail="Could not validate credentials")
@@ -374,33 +376,27 @@ def get_current_active_user_proxy(current_user: dict = Depends(get_current_user)
             "full_name": username or "Guest",
             "tier": "Free Tier",
             "has_active_subscription": False,
+            "subscription_tier": "FREE",
+            "subscription_status": "inactive",
         }
 
-    sub_tier = "Free Tier"
-    has_active_sub = False
     try:
-        sub = getattr(host, "subscription", None)
-        if sub is not None and getattr(sub, "status", None) == "active":
-            has_active_sub = True
-            plan = getattr(sub, "plan_details", None) or "Compliance Essentials"
-            if isinstance(plan, str):
-                pl = plan.lower()
-                if any(k in pl for k in ("compliance", "essential", "starter", "growth", "pro", "basic")):
-                    sub_tier = "Compliance Essentials"
-                else:
-                    sub_tier = plan.capitalize() + " Host"
-            else:
-                sub_tier = "Compliance Essentials"
+        ent = me_entitlement_fields(db, host)
     except Exception:
         logging.exception("users/me subscription read failed; defaulting Free Tier")
+        ent = {
+            "tier": "Free Tier",
+            "has_active_subscription": False,
+            "subscription_tier": "FREE",
+            "subscription_status": "inactive",
+        }
 
     return {
         "id": str(host.id) if getattr(host, "id", None) is not None else None,
         "username": host.username,
         "email": getattr(host, "email", "") or "",
         "full_name": host.username,
-        "tier": sub_tier,
-        "has_active_subscription": has_active_sub,
+        **ent,
     }
 
 if __name__ == "__main__":
