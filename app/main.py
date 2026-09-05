@@ -234,7 +234,19 @@ def read_privacy(request: Request):
 
 @app.get("/features", include_in_schema=False)
 def read_features(request: Request):
-    return RedirectResponse(url="/#features", status_code=302)
+    return templates.TemplateResponse(
+        request=request,
+        name="features.html",
+        context={"request": request},
+    )
+
+@app.get("/about", include_in_schema=False)
+def read_about(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="about.html",
+        context={"request": request},
+    )
 
 @app.get("/integrations", include_in_schema=False)
 def read_integrations(request: Request):

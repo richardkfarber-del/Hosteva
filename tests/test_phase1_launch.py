@@ -43,7 +43,7 @@ def test_terms_of_service_page():
     assert response.status_code == 200
     assert "Hosteva Terms of Service" in response.text
     assert "NOT LEGAL, TAX, OR PROFESSIONAL ADVICE" in response.text
-    assert "Hosteva is an automated compliance research and management tool" in response.text
+    assert "Hosteva is an automated compliance research tool" in response.text
 
 def test_privacy_policy_page():
     response = client.get("/privacy")
@@ -52,10 +52,24 @@ def test_privacy_policy_page():
     assert "No Selling of Personal Data" in response.text
     assert "AI Model Training Protections" in response.text
 
-def test_features_redirect():
+def test_features_page_200():
     response = client.get("/features", follow_redirects=False)
-    assert response.status_code == 302
-    assert response.headers["location"] == "/#features"
+    assert response.status_code == 200
+    assert "Florida checklist depth" in response.text
+    assert "HostReady/PermitGuard" in response.text
+    assert "operations engine" in response.text.lower()  # mentioned as NOT live
+    assert "multi-channel" in response.text.lower()
+    # Guesty only as negative frame (not primary PMS alternative pitch)
+    assert "anti-Guesty" in response.text or "not as an anti-Guesty" in response.text
+
+
+def test_about_page_200():
+    response = client.get("/about", follow_redirects=False)
+    assert response.status_code == 200
+    assert "About Hosteva" in response.text
+    assert "HostReady/PermitGuard" in response.text
+    assert "HostReady Bubble" in response.text  # scrub acknowledgment: not used in customer materials
+    assert "operations engine" in response.text.lower()
 
 def test_waitlist_submission_success():
     payload = {
@@ -82,12 +96,14 @@ def test_waitlist_submission_invalid_email():
 def test_landing_page_compliance_tiers_and_disclaimer():
     response = client.get("/")
     assert response.status_code == 200
-    assert "Transparent Compliance Tiers" in response.text
+    assert "Know the Florida rules" in response.text
+    assert 'href="/features"' in response.text
+    assert 'href="/about"' in response.text
     assert "Compliance Essentials" in response.text
     assert "$9.99" in response.text
     assert "Automation Suite" in response.text
     assert "Join Phase II Waitlist" in response.text
-    assert "Hosteva is an automated compliance research and management tool" in response.text
+    assert "Hosteva is an automated compliance research tool" in response.text
 
 @patch("app.api.v1.compliance.geocode_address")
 def test_compliance_address_under_review_flag(mock_geocode):

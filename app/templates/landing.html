@@ -100,7 +100,8 @@
             <img alt="Hosteva Logo" class="h-10 w-auto max-w-full object-contain" src="{{ url_for('static', path='img/CleanLogo.png') }}?v=20260522"/>
         </div>
         <div class="hidden md:flex items-center space-x-8">
-            <a class="text-on-surface-variant hover:text-primary transition-colors font-medium" href="#features">Features</a>
+            <a class="text-on-surface-variant hover:text-primary transition-colors font-medium" href="/features">Features</a>
+            <a class="text-on-surface-variant hover:text-primary transition-colors font-medium" href="/about">About</a>
             <a class="text-on-surface-variant hover:text-primary transition-colors font-medium" href="/wizard">Compliance</a>
             <a class="text-on-surface-variant hover:text-primary transition-colors font-medium" href="/pricing">Pricing</a>
             <div class="h-6 w-px bg-outline-variant/30"></div>
@@ -114,7 +115,8 @@
     </div>
     <!-- Mobile Menu Drawer -->
     <div id="mobile-menu" class="hidden md:hidden px-6 py-4 bg-surface border-t border-outline-variant/20 flex flex-col gap-4">
-        <a class="text-on-surface-variant hover:text-primary font-medium" href="#features" onclick="toggleMobileMenu()">Features</a>
+        <a class="text-on-surface-variant hover:text-primary font-medium" href="/features" onclick="toggleMobileMenu()">Features</a>
+        <a class="text-on-surface-variant hover:text-primary font-medium" href="/about" onclick="toggleMobileMenu()">About</a>
         <a class="text-on-surface-variant hover:text-primary font-medium" href="/wizard">Compliance</a>
         <hr class="border-outline-variant/20"/>
         <a class="text-on-surface-variant hover:text-primary font-medium" href="/login">Sign In</a>
@@ -364,10 +366,10 @@
         <div>
             <h4 class="font-headline font-bold text-on-surface mb-6">Product</h4>
             <ul class="space-y-4">
-                <li><a class="text-on-surface-variant hover:text-primary transition-colors text-body-sm" href="#features">Features</a></li>
+                <li><a class="text-on-surface-variant hover:text-primary transition-colors text-body-sm" href="/features">Features</a></li>
+                <li><a class="text-on-surface-variant hover:text-primary transition-colors text-body-sm" href="/about">About</a></li>
                 <li><a class="text-on-surface-variant hover:text-primary transition-colors text-body-sm" href="/pricing">Pricing</a></li>
                 <li><a class="text-on-surface-variant hover:text-primary transition-colors text-body-sm" href="/wizard">Compliance Hub</a></li>
-                <li><a class="text-on-surface-variant hover:text-primary transition-colors text-body-sm" href="#features">Pricing</a></li>
             </ul>
         </div>
         <div>
@@ -398,7 +400,7 @@
     <div class="border-t border-outline-variant/10 px-8 py-8 max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
         <p class="text-on-surface-variant text-body-sm font-body tracking-wide">© 2026 Hosteva AI. All rights reserved.</p>
         <p class="text-xs text-on-surface-variant max-w-xl text-center md:text-right">
-            Hosteva is an automated compliance research and management tool. Hosteva does not provide legal advice, and hosts are responsible for final municipal filings.
+            Hosteva is an automated compliance research tool. Hosteva does not provide legal advice, and hosts are responsible for final municipal filings.
         </p>
         <div class="flex gap-6">
             <a class="text-on-surface-variant hover:text-primary transition-colors text-body-sm underline-offset-4 hover:underline" href="/privacy">Privacy Policy</a>

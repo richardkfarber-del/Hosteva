@@ -178,7 +178,7 @@ CONFIRMED: Streamlined 2-Step Flow (Register -> Instant Stripe Checkout)
 CONFIRMED: Option A (Dedicated `/terms` and `/privacy` views inheriting from base.html)
 - Deploy dedicated routes `GET /terms` and `GET /privacy` rendering styled views.
 - Ensure the mandatory disclaimer banner is placed in footers and wizard results:
-  "Hosteva is an automated compliance research and management tool. Hosteva does not provide legal advice, and hosts are responsible for final municipal filings."
+  "Hosteva is an automated compliance research tool. Hosteva does not provide legal advice, and hosts are responsible for final municipal filings."
 - Full legal markdown copy for both `/terms` and `/privacy` is available in the updated `Hosteva - Features Section Specification & Engineering Directive.md` (v2.0) in the project root.
 
 --------------------------------------------------------------------------------

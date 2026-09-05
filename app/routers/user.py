@@ -59,35 +59,49 @@ def login_user(response: Response, form_data: OAuth2PasswordRequestForm = Depend
 
 @router.get("/me")
 def get_me(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Mirror /api/v1/users/me: never swallow auth/host misses into Guest."""
+    import logging
+    from app.core.billing_gate import me_entitlement_fields
+
+    username = current_user.get("username") or current_user.get("sub")
+    if not username:
+        raise HTTPException(status_code=401, detail="Could not validate credentials")
+
     try:
-        username = current_user.get("username") if current_user else "Guest"
-        host = db.query(Host).filter(Host.username == username).first() if username != "Guest" else None
-        if not host:
-            return {
-                "id": "guest_id",
-                "username": "Guest",
-                "email": "",
-                "full_name": "Guest",
-                "tier": "Free Tier"
-            }
-            
-        from app.core.billing_gate import me_entitlement_fields
-        ent = me_entitlement_fields(db, host)
-        return {
-            "id": host.id,
-            "username": host.username,
-            "email": host.email,
-            "full_name": host.username,
-            **ent,
-        }
+        host = db.query(Host).filter(Host.username == username).first()
     except Exception:
+        logging.exception("api/user/me host lookup failed")
+        host = None
+
+    if not host:
         return {
-            "id": "guest_id",
-            "username": "Guest",
+            "username": username,
             "email": "",
-            "full_name": "Guest",
-            "tier": "Free Tier"
+            "full_name": username,
+            "tier": "Free Tier",
+            "has_active_subscription": False,
+            "subscription_tier": "FREE",
+            "subscription_status": "inactive",
         }
+
+    try:
+        ent = me_entitlement_fields(db, host)
+    except Exception:
+        logging.exception("api/user/me subscription read failed; defaulting Free Tier")
+        ent = {
+            "tier": "Free Tier",
+            "has_active_subscription": False,
+            "subscription_tier": "FREE",
+            "subscription_status": "inactive",
+        }
+
+    return {
+        "id": str(host.id) if getattr(host, "id", None) is not None else None,
+        "username": host.username,
+        "email": getattr(host, "email", "") or "",
+        "full_name": host.username,
+        **ent,
+    }
 
 @router.get("/analytics")
 def get_user_analytics(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
