@@ -17,6 +17,18 @@ from app.models.host import Host
 
 
 BILLING_UNAVAILABLE_DETAIL = "Billing temporarily unavailable"
+
+# Phase I Compliance Essentials — Stripe Product / Checkout honesty (BUG-LAUNCH-01 / SP-002 Option A)
+ESSENTIALS_PRODUCT_DESCRIPTION = (
+    "Florida STR compliance research: municipal checklists, .gov links, and "
+    "fee notes when available. Not legal advice."
+)
+
+
+def essentials_checkout_custom_text() -> dict:
+    """Checkout Session custom_text so submit area shows Phase I copy even if Dashboard Product is stale."""
+    return {"submit": {"message": ESSENTIALS_PRODUCT_DESCRIPTION}}
+
 FORBIDDEN_REFERENCE_IDS = frozenset({"user_mock_123", "mock", "anonymous", "guest"})
 
 # Legacy / alias tiers → Essentials monthly

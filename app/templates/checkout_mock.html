@@ -115,16 +115,17 @@
                 // Subscription
                 if (tier === 'STARTER') {
                     titleEl.innerText = "Hosteva Starter Plan";
-                    descEl.innerText = "Compliance Essentials — interactive checklist, .gov links, and fee notes when in data.";
+                    descEl.innerText = "Florida STR compliance research: municipal checklists, .gov links, and fee notes when available. Not legal advice.";
                     priceEl.innerText = "$49.00";
                 } else if (tier === 'ENTERPRISE') {
                     titleEl.innerText = "Hosteva Enterprise Plan";
                     descEl.innerText = "Full multi-property automated zoning updates, custom SLA audits, and dedicated concierge support.";
                     priceEl.innerText = "$499.00";
                 } else {
-                    titleEl.innerText = "Hosteva Growth Plan";
-                    descEl.innerText = "Unlock the full interactive Florida municipal checklist, official .gov portal links, and fee schedules when available.";
-                    priceEl.innerText = "$249.00";
+                    // Phase I Compliance Essentials (default / ESSENTIALS / GROWTH aliases)
+                    titleEl.innerText = "Hosteva Compliance Essentials";
+                    descEl.innerText = "Florida STR compliance research: municipal checklists, .gov links, and fee notes when available. Not legal advice.";
+                    priceEl.innerText = "$9.99";
                 }
                 intervalEl.innerText = "/ month";
                 payBtn.innerText = `Subscribe to ${tier}`;

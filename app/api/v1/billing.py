@@ -17,6 +17,7 @@ from app.core.billing_gate import (
     resolve_essentials_price_id,
     normalize_essentials_tier,
     host_has_active_essentials,
+    essentials_checkout_custom_text,
 )
 from app.core.security import get_current_user
 from app.db_models import Subscription, PermitTransaction
@@ -164,6 +165,7 @@ async def create_checkout_session(
                 else f"{FRONTEND_URL.rstrip('/')}/dashboard?payment=cancelled"
             ),
             client_reference_id=client_reference_id,
+            custom_text=essentials_checkout_custom_text(),
             metadata={
                 "type": "subscription",
                 "tier": "ESSENTIALS",
