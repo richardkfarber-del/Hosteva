@@ -152,11 +152,9 @@ def main():
         raise e
 
 if __name__ == "__main__":
-
-try:
-    from app.scripts.purge_sample_ordinances import purge_sample_ordinances
-    purge_sample_ordinances()
-except Exception as _purge_err:
-    print(f"Sample ordinance purge hook skipped: {_purge_err}")
-
+    try:
+        from app.scripts.purge_sample_ordinances import purge_sample_ordinances
+        purge_sample_ordinances()
+    except Exception as _purge_err:
+        print(f"Sample ordinance purge hook skipped: {_purge_err}")
     main()
