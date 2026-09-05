@@ -475,6 +475,7 @@ tailwind.config = {
                     <div class="bg-surface-container-lowest rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 relative">
                         <div class="relative h-[400px] overflow-hidden">
                             <img class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700 single-prop-image" src=""/>
+                            <div class="absolute top-4 left-4 hidden z-10 single-prop-image-placeholder-label bg-black/65 text-white text-xs font-semibold tracking-wide px-3 py-1.5 rounded-full shadow-sm backdrop-blur-sm" role="status">Street View unavailable</div>
                             <div class="absolute inset-0 bg-gradient-to-t from-on-surface/80 via-transparent to-transparent"></div>
                             <div class="absolute bottom-8 left-8 right-8 flex justify-between items-end">
                                 <div>
@@ -659,6 +660,7 @@ tailwind.config = {
             <div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-[0_20px_40px_rgba(0,28,55,0.04)] group hover:translate-y-[-4px] transition-all duration-300">
                 <div class="h-56 relative overflow-hidden">
                     <img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 property-card-img" src=""/>
+                    <div class="absolute top-4 left-4 hidden z-10 property-card-image-placeholder-label bg-black/65 text-white text-[10px] font-semibold tracking-wide px-2.5 py-1 rounded-full shadow-sm backdrop-blur-sm" role="status">Street View unavailable</div>
                     <div class="absolute top-4 right-4 property-card-badge px-3 py-1 rounded-full text-xs font-black flex items-center gap-1 shadow-sm">
                         <!-- Status badge content -->
                     </div>
@@ -1508,18 +1510,26 @@ Processing Time: ${data.estimated_processing_time}`);
                     clone.querySelector('.single-prop-location').innerText = p.location;
                     
                     const img = clone.querySelector('.single-prop-image');
-                    console.log("DEBUG: Single property image_url:", p.image_url);
+                    const placeholderLabel = clone.querySelector('.single-prop-image-placeholder-label');
+                    const showPlaceholderLabel = () => {
+                        if (placeholderLabel) placeholderLabel.classList.remove('hidden');
+                        if (img) img.classList.add('opacity-80', 'grayscale');
+                    };
+                    const isPlaceholder = !!(p.image_is_placeholder || !p.image_url || (p.image_url && p.image_url.includes('fallback_house.jpg')));
+                    console.log("DEBUG: Single property image_url:", p.image_url, "placeholder:", isPlaceholder);
                     if (p.image_url) {
                         const separator = p.image_url.includes('?') ? '&' : '?';
                         img.src = `${p.image_url}${separator}t=${Date.now()}`;
                     } else {
-                        const imgIndex = p.id.charCodeAt(0) % 5 + 1;
-                        img.src = `/static/img/property_${imgIndex}.jpg`;
+                        img.src = '/static/img/fallback_house.jpg';
+                        showPlaceholderLabel();
                     }
+                    if (isPlaceholder) showPlaceholderLabel();
                     img.onerror = () => {
-                        console.log("DEBUG: Image load failed, falling back to /static/img/fallback_house.jpg");
+                        console.log("DEBUG: Image load failed, falling back to labeled /static/img/fallback_house.jpg");
                         img.onerror = null;
                         img.src = '/static/img/fallback_house.jpg';
+                        showPlaceholderLabel();
                     };
                     
                     // Compliance details
@@ -1745,18 +1755,26 @@ Processing Time: ${data.estimated_processing_time}`);
                         cardClone.querySelector('.property-card-occupancy').innerText = '0%';
                         
                         const img = cardClone.querySelector('.property-card-img');
-                        console.log("DEBUG: Multi property image_url:", p.image_url);
+                        const placeholderLabel = cardClone.querySelector('.property-card-image-placeholder-label');
+                        const showPlaceholderLabel = () => {
+                            if (placeholderLabel) placeholderLabel.classList.remove('hidden');
+                            if (img) img.classList.add('opacity-80', 'grayscale');
+                        };
+                        const isPlaceholder = !!(p.image_is_placeholder || !p.image_url || (p.image_url && p.image_url.includes('fallback_house.jpg')));
+                        console.log("DEBUG: Multi property image_url:", p.image_url, "placeholder:", isPlaceholder);
                         if (p.image_url) {
                             const separator = p.image_url.includes('?') ? '&' : '?';
                             img.src = `${p.image_url}${separator}t=${Date.now()}`;
                         } else {
-                            const imgIndex = p.id.charCodeAt(0) % 5 + 1;
-                            img.src = `/static/img/property_${imgIndex}.jpg`;
+                            img.src = '/static/img/fallback_house.jpg';
+                            showPlaceholderLabel();
                         }
+                        if (isPlaceholder) showPlaceholderLabel();
                         img.onerror = () => {
-                            console.log("DEBUG: Multi-image load failed, falling back to /static/img/fallback_house.jpg");
+                            console.log("DEBUG: Multi-image load failed, falling back to labeled /static/img/fallback_house.jpg");
                             img.onerror = null;
                             img.src = '/static/img/fallback_house.jpg';
+                            showPlaceholderLabel();
                         };
                         
                         // Compute dynamic compliance score
