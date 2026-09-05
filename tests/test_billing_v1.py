@@ -122,11 +122,25 @@ def test_checkout_unauthorized():
     assert response.status_code == 401
 
 def test_checkout_kill_switch_off_returns_503(auth_header, monkeypatch):
+    """Unauth → 401 (auth first). Auth + BILLING_ENABLED=false → 503, no Session.create."""
     monkeypatch.setenv("BILLING_ENABLED", "false")
+    # Ensure unauth path: clear any leftover auth override for this call
+    fastapi_app.dependency_overrides.pop(get_current_user, None)
     with patch("stripe.checkout.Session.create") as mock_session_create:
+        unauth = client.post(
+            "/api/subscriptions/checkout",
+            json={"tier": "pro"},
+        )
+        assert unauth.status_code == 401
+        mock_session_create.assert_not_called()
+
+        # Re-apply auth override for authenticated kill-switch checks
+        fastapi_app.dependency_overrides[get_current_user] = override_get_current_user
+
         response = client.post(
             "/api/subscriptions/checkout",
             json={"tier": "pro"},
+            headers=auth_header,
         )
         assert response.status_code == 503
         assert "Billing temporarily unavailable" in response.json().get("detail", "")
@@ -158,6 +172,12 @@ def test_checkout_subscription_success(auth_header):
         data = response.json()
         assert data["session_id"] == "cs_test_sub_123"
         assert "checkout_url" in data
+        assert data.get("client_reference_id") == "host_billing_test"
+        mock_session_create.assert_called_once()
+        kwargs = mock_session_create.call_args.kwargs
+        assert kwargs.get("client_reference_id") == "host_billing_test"
+        assert "user_mock_123" not in str(kwargs)
+        assert kwargs.get("metadata", {}).get("tier") == "ESSENTIALS"
 
 def test_checkout_permit_filing_success(auth_header):
     with patch("stripe.checkout.Session.create") as mock_session_create:

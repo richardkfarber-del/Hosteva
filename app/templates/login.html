@@ -232,7 +232,21 @@
                     localStorage.setItem('token', data.access_token);
                     localStorage.setItem('access_token', data.access_token);
                     sessionStorage.setItem('token', data.access_token);
-                    window.location.href = '/dashboard';
+                    const q = new URLSearchParams(window.location.search);
+                    let next = q.get('next');
+                    const checkout = q.get('checkout');
+                    // Only allow relative same-site paths
+                    if (next && next.startsWith('/') && !next.startsWith('//')) {
+                        if (checkout) {
+                            const sep = next.includes('?') ? '&' : '?';
+                            next = `${next}${sep}checkout=${encodeURIComponent(checkout)}`;
+                        }
+                        window.location.href = next;
+                    } else if (checkout) {
+                        window.location.href = `/dashboard?checkout=${encodeURIComponent(checkout)}`;
+                    } else {
+                        window.location.href = '/dashboard';
+                    }
                 } else {
                     errorMsg.textContent = data.detail || 'Login failed. Please try again.';
                     alertBox.classList.remove('hidden');

@@ -8,8 +8,13 @@ import json
 import logging
 
 from app.database import get_db
-from app.core.security import get_current_user
 from app.models.host import Host
+from app.core.billing_gate import (
+    require_billing_enabled,
+    require_checkout_host,
+    checkout_client_reference_id,
+    resolve_essentials_price_id,
+)
 from app.db_models import Subscription, PermitTransaction
 from app.models.compliance import PropertyCompliance
 
@@ -31,26 +36,20 @@ router = APIRouter(
 )
 
 class CheckoutRequest(BaseModel):
-    tier: str  # "STARTER", "GROWTH", "ENTERPRISE", or "PERMIT_FILING"
+    tier: str  # "ESSENTIALS", legacy STARTER/BASIC/PRO/PREMIUM/ENTERPRISE, or "PERMIT_FILING"
+    interval: Optional[str] = None  # monthly | yearly
     property_id: Optional[str] = None
 
 @router.post("/checkout")
 async def create_checkout_session(
     checkout_data: CheckoutRequest,
-    current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    host: Host = Depends(require_checkout_host),
+    db: Session = Depends(get_db),
 ):
-    from app.core.billing_gate import require_billing_enabled
+    # Auth enforced by require_checkout_host (401). Kill-switch before Session.create.
     require_billing_enabled()
 
-    # 1. Fetch host profile — never fall back to user_mock_123
-    host = db.query(Host).filter(Host.username == current_user.get("username")).first()
-    if not host or not getattr(host, "id", None):
-        raise HTTPException(
-            status_code=401,
-            detail="Authentication required for checkout",
-        )
-    client_reference_id = str(host.id)
+    client_reference_id = checkout_client_reference_id(host)
 
     tier_val = checkout_data.tier.upper()
 
@@ -59,8 +58,7 @@ async def create_checkout_session(
         if not checkout_data.property_id:
             raise HTTPException(status_code=400, detail="property_id is required for permit filing checkout")
         
-        # Define mock or real price ID
-        IS_PRODUCTION = os.getenv("ENVIRONMENT", "").lower() == "production"
+        # Define mock or real price ID (IS_PRODUCTION is module-level)
         price_id = os.getenv("STRIPE_PRICE_PERMIT_FILING") or (
             "price_mock_permit_filing" if not IS_PRODUCTION else None
         )
@@ -135,12 +133,48 @@ async def create_checkout_session(
                 "warning": f"Mock fallback triggered: {e}"
             }
     
-    # Otherwise it's a subscription checkout, fallback to subscriptions.py logic
+    # Subscription tiers → Phase I Compliance Essentials (direct Stripe session)
+    price_id, billing_interval = resolve_essentials_price_id(tier_val, checkout_data.interval)
     try:
-        from app.routers.subscriptions import create_checkout_session as sub_checkout
-        from app.routers.subscriptions import SubscriptionRequest
-        sub_req = SubscriptionRequest(tier=tier_val.lower())
-        return await sub_checkout(request=sub_req, current_host=host)
+        checkout_session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=[
+                {
+                    'price': price_id,
+                    'quantity': 1,
+                },
+            ],
+            mode='subscription',
+            success_url=(
+                f"{FRONTEND_URL.rstrip('/')}/dashboard?payment=success&session_id={{CHECKOUT_SESSION_ID}}"
+                if (IS_PRODUCTION and FRONTEND_URL.startswith("https://"))
+                else "https://hosteva.onrender.com/dashboard?payment=success&session_id={CHECKOUT_SESSION_ID}"
+                if IS_PRODUCTION
+                else f"{FRONTEND_URL.rstrip('/')}/dashboard?payment=success&session_id={{CHECKOUT_SESSION_ID}}"
+            ),
+            cancel_url=(
+                f"{FRONTEND_URL.rstrip('/')}/dashboard?payment=cancelled"
+                if (IS_PRODUCTION and FRONTEND_URL.startswith("https://"))
+                else "https://hosteva.onrender.com/dashboard?payment=cancelled"
+                if IS_PRODUCTION
+                else f"{FRONTEND_URL.rstrip('/')}/dashboard?payment=cancelled"
+            ),
+            client_reference_id=client_reference_id,
+            metadata={
+                "type": "subscription",
+                "tier": "ESSENTIALS",
+                "host_id": client_reference_id,
+                "interval": billing_interval,
+            },
+        )
+        return {
+            "status": "pending",
+            "checkout_url": checkout_session.url,
+            "session_id": checkout_session.id,
+            "client_reference_id": client_reference_id,
+        }
+    except HTTPException:
+        raise
     except Exception as e:
         if IS_PRODUCTION:
             logging.error(f"Billing checkout error: {e}")
@@ -151,9 +185,10 @@ async def create_checkout_session(
         mock_session_id = f"cs_test_sub_{client_reference_id[:8]}"
         return {
             "status": "pending",
-            "checkout_url": f"/checkout-mock?session_id={mock_session_id}&type=subscription&tier={tier_val}",
+            "checkout_url": f"/checkout-mock?session_id={mock_session_id}&type=subscription&tier=ESSENTIALS&client_ref={client_reference_id}",
             "session_id": mock_session_id,
-            "warning": f"Mock fallback triggered: {e}"
+            "client_reference_id": client_reference_id,
+            "warning": f"Mock fallback triggered: {e}",
         }
 
 @router.post("/webhooks")
