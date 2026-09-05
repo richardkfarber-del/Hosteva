@@ -27,8 +27,18 @@ def override_get_db():
     finally:
         db.close()
 
-# Apply dependency override
-app.dependency_overrides[get_db] = override_get_db
+@pytest.fixture(autouse=True)
+def _properties_db_override():
+    # Re-apply each test: other modules overwrite dependency_overrides at import.
+    original = app.dependency_overrides.get(get_db)
+    app.dependency_overrides[get_db] = override_get_db
+    from app.database import SessionLocal
+    SessionLocal.configure(bind=engine)
+    yield
+    if original is not None:
+        app.dependency_overrides[get_db] = original
+    else:
+        app.dependency_overrides.pop(get_db, None)
 
 @pytest.fixture(scope="module", autouse=True)
 def setup_test_db():

@@ -28,13 +28,19 @@ def override_get_db():
     finally:
         db.close()
 
-app.dependency_overrides[get_db] = override_get_db
-
-@pytest.fixture(scope="session", autouse=True)
-def setup_test_db():
+@pytest.fixture(autouse=True)
+def _phase1_db_override():
+    # Re-apply each test: later test modules overwrite app.dependency_overrides at import.
+    original = app.dependency_overrides.get(get_db)
+    app.dependency_overrides[get_db] = override_get_db
+    from app.database import SessionLocal
+    SessionLocal.configure(bind=engine)
     Base.metadata.create_all(bind=engine)
     yield
-    Base.metadata.drop_all(bind=engine)
+    if original is not None:
+        app.dependency_overrides[get_db] = original
+    else:
+        app.dependency_overrides.pop(get_db, None)
 
 client = TestClient(app)
 
@@ -50,7 +56,8 @@ def test_privacy_policy_page():
     assert response.status_code == 200
     assert "Hosteva Privacy Policy" in response.text
     assert "No Selling of Personal Data" in response.text
-    assert "AI Model Training Protections" in response.text
+    # Copy updated (Phase I scope); retain No Selling + title asserts above
+    assert "Phase I Scope" in response.text or "Phase I does not include an AI chat assistant" in response.text
 
 def test_features_page_200():
     response = client.get("/features", follow_redirects=False)
@@ -124,7 +131,9 @@ def test_compliance_address_under_review_flag(mock_geocode):
     assert data.get("status") in (None, "UNDER_REVIEW") or data.get("status") == "UNDER_REVIEW"
     assert "checklist" in data
 
-def test_user_profile_and_sidebar_widget_flow():
+def test_user_profile_and_sidebar_widget_flow(monkeypatch):
+    # CI baseline keeps BILLING_ENABLED=false (prod-like); enable only for this checkout assert.
+    monkeypatch.setenv("BILLING_ENABLED", "true")
     # 1. Register a new user
     reg_payload = {
         "username": "widget_qa_host",
@@ -148,11 +157,17 @@ def test_user_profile_and_sidebar_widget_flow():
     assert me_data["has_active_subscription"] is False
 
     # 4. Test /api/v1/billing/checkout with COMPLIANCE_ESSENTIALS tier
-    checkout_resp = client.post(
-        "/api/v1/billing/checkout",
-        headers={"Authorization": f"Bearer {token}"},
-        json={"tier": "COMPLIANCE_ESSENTIALS"}
-    )
-    assert checkout_resp.status_code == 200
-    checkout_data = checkout_resp.json()
-    assert "checkout_url" in checkout_data
+    from unittest.mock import MagicMock
+    with patch("stripe.checkout.Session.create") as mock_session_create:
+        mock_session = MagicMock()
+        mock_session.id = "cs_test_phase1"
+        mock_session.url = "https://checkout.stripe.com/pay/cs_test_phase1"
+        mock_session_create.return_value = mock_session
+        checkout_resp = client.post(
+            "/api/v1/billing/checkout",
+            headers={"Authorization": f"Bearer {token}"},
+            json={"tier": "COMPLIANCE_ESSENTIALS"}
+        )
+        assert checkout_resp.status_code == 200
+        checkout_data = checkout_resp.json()
+        assert "checkout_url" in checkout_data

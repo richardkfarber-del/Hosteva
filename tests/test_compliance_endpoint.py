@@ -215,14 +215,16 @@ def test_search_compliance_fallback_on_exception():
 
 def test_get_compliance_by_address_state_fallback():
     """
-    Test that an address that does not match any seeded city/county
-    successfully falls back to returning the State of Florida compliance regulations.
+    Address with no city/county seed falls back to State of Florida rules.
+    US-004: state fallback for a real city is under review — never Compliant/GREEN.
     """
     response = client.get("/api/v1/compliance", params={"address": "Orlando Address"})
     assert response.status_code == 200
     data = response.json()
-    assert data["is_compliant"] is True
     assert data["municipal_code"]["municipality_name"] == "State of Florida"
+    assert data.get("is_under_review") is True
+    assert data["is_compliant"] is False
+    assert data.get("status") == "UNDER_REVIEW"
     assert len(data["checklist"]) == 1
     assert data["checklist"][0]["task_name"] == "Florida DBPR License"
 
