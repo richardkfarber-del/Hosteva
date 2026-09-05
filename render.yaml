@@ -22,6 +22,12 @@ services:
       # - key: FRONTEND_URL
       # - key: ALLOWED_ORIGINS
       # - key: GEMINI_API_KEY
+      # EPIC-AUTH (set in Render Dashboard; do not commit values):
+      # - key: RESEND_API_KEY
+      # - key: EMAIL_FROM   (alias RESEND_FROM)
+      # - key: APP_BASE_URL
+      # - key: EMAIL_SINK   (optional; production forces resend)
+      # - key: PASSWORD_RESET_TTL_MINUTES  (optional; default 60)
       # - key: STRIPE_PRICE_PERMIT_FILING
 
 databases:

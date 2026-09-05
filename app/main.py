@@ -18,6 +18,7 @@ from app.api.v1.compliance import router as compliance_v1_router
 from app.api.v1.billing import router as billing_v1_router
 from app.api.v1.operations import router as operations_v1_router
 from app.api.v1.inbox import router as inbox_v1_router
+from app.api.v1.users import router as users_v1_router
 
 
 
@@ -46,6 +47,7 @@ def import_models():
     import app.models.compliance
     import app.models.swarm
     import app.models.oauth
+    import app.models.password_reset
     import app.integrations.ota_models
 
 # Register models to ensure mapping metadata is configured correctly
@@ -121,7 +123,8 @@ async def global_exception_handler(request: Request, exc: Exception):
     from fastapi.exceptions import RequestValidationError
     if isinstance(exc, RequestValidationError):
         from fastapi.responses import JSONResponse
-        return JSONResponse(status_code=422, content={"detail": exc.errors()})
+        from app.core.password_policy import redact_validation_errors
+        return JSONResponse(status_code=422, content={"detail": redact_validation_errors(exc.errors())})
         
     detail = str(traceback.format_exc()) if os.getenv("ENVIRONMENT") != "production" else "Internal server error"
     from fastapi.responses import PlainTextResponse
@@ -158,6 +161,7 @@ app.include_router(compliance_v1_router)
 app.include_router(billing_v1_router)
 app.include_router(operations_v1_router)
 app.include_router(inbox_v1_router)
+app.include_router(users_v1_router)
 
 
 
@@ -206,6 +210,42 @@ def read_login(request: Request):
     is_production = os.getenv("ENVIRONMENT", "").lower() == "production"
     res.delete_cookie(key="access_token", path="/", secure=is_production, httponly=True, samesite="lax")
     return res
+
+
+@app.get("/settings", include_in_schema=False)
+def read_settings(request: Request):
+    token = request.cookies.get("access_token")
+    if not token:
+        return RedirectResponse(url="/login?next=/settings", status_code=303)
+    try:
+        from app.core.security import SECRET_KEY, ALGORITHM
+        from jose import jwt
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        if payload.get("sub") is None:
+            return RedirectResponse(url="/login?next=/settings", status_code=303)
+    except Exception:
+        return RedirectResponse(url="/login?next=/settings", status_code=303)
+    return templates.TemplateResponse(
+        request=request,
+        name="settings.html",
+        context={"request": request, "active_page": "settings"},
+    )
+
+@app.get("/forgot-password", include_in_schema=False)
+def read_forgot_password(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="forgot_password.html",
+        context={"request": request},
+    )
+
+@app.get("/reset-password", include_in_schema=False)
+def read_reset_password(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="reset_password.html",
+        context={"request": request},
+    )
 
 @app.get("/register", include_in_schema=False)
 def read_register(request: Request):

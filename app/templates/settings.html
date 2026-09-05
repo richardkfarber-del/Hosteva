@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Account settings | Hosteva</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries&v=20260522"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+</head>
+<body class="bg-[#f8f9ff] text-[#001c37] min-h-screen flex flex-col">
+    <header class="px-6 py-4 flex items-center justify-between">
+        <a href="/dashboard" class="font-semibold text-xl tracking-tight" style="font-family:Manrope,sans-serif">Hosteva</a>
+        <a href="/dashboard" class="text-sm font-semibold text-[#006576] hover:underline">Dashboard</a>
+    </header>
+    <main class="flex-grow flex items-center justify-center px-6 pb-16">
+        <div class="w-full max-w-md bg-white p-8 rounded-xl shadow border border-slate-100">
+            <h1 class="text-2xl font-bold mb-2" style="font-family:Manrope,sans-serif">Account settings</h1>
+            <p class="text-sm text-slate-600 mb-6">Change your password. At least 8 characters, not numbers only (max 128).</p>
+            <div id="success-alert" class="hidden mb-6 p-4 rounded-lg bg-emerald-50 border border-emerald-100 text-emerald-800 text-sm">Password updated.</div>
+            <div id="error-alert" class="hidden mb-6 p-4 rounded-lg bg-red-50 border border-red-100 text-red-700 text-sm"></div>
+            <form id="change-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold mb-2" for="current_password">Current password</label>
+                    <input class="w-full px-4 py-3 bg-slate-50 rounded-lg text-sm" id="current_password" type="password" required autocomplete="current-password"/>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-2" for="new_password">New password</label>
+                    <input class="w-full px-4 py-3 bg-slate-50 rounded-lg text-sm" id="new_password" type="password" required autocomplete="new-password"/>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-2" for="confirm_password">Confirm new password</label>
+                    <input class="w-full px-4 py-3 bg-slate-50 rounded-lg text-sm" id="confirm_password" type="password" required autocomplete="new-password"/>
+                </div>
+                <button class="w-full py-3 rounded-lg text-white font-bold" style="background:linear-gradient(135deg,#006576,#1c7f92)" type="submit">Update password</button>
+            </form>
+        </div>
+    </main>
+    <script>
+    function authHeader() {
+        const token = localStorage.getItem('access_token') || localStorage.getItem('token') || sessionStorage.getItem('token') || '';
+        return token ? { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
+    }
+    document.getElementById('change-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const error = document.getElementById('error-alert');
+        const ok = document.getElementById('success-alert');
+        error.classList.add('hidden');
+        ok.classList.add('hidden');
+        const payload = {
+            current_password: document.getElementById('current_password').value,
+            new_password: document.getElementById('new_password').value,
+            confirm_password: document.getElementById('confirm_password').value
+        };
+        if (payload.new_password !== payload.confirm_password) {
+            error.textContent = 'New password and confirmation do not match.';
+            error.classList.remove('hidden');
+            return;
+        }
+        try {
+            const response = await fetch('/api/v1/users/me/password', {
+                method: 'POST',
+                headers: authHeader(),
+                body: JSON.stringify(payload)
+            });
+            const data = await response.json();
+            if (response.status === 401 && (data.detail === 'Not authenticated' || data.detail === 'Could not validate credentials')) {
+                window.location.href = '/login?next=/settings';
+                return;
+            }
+            if (response.ok) {
+                ok.classList.remove('hidden');
+                document.getElementById('change-form').reset();
+            } else {
+                error.textContent = (typeof data.detail === 'string') ? data.detail : 'Unable to change password.';
+                error.classList.remove('hidden');
+            }
+        } catch (err) {
+            error.textContent = 'A network error occurred. Please try again.';
+            error.classList.remove('hidden');
+        }
+    });
+    </script>
+</body>
+</html>

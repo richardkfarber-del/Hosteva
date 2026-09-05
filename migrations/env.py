@@ -26,6 +26,7 @@ import app.models.job
 import app.models.memory
 import app.models.swarm
 import app.models.oauth
+import app.models.password_reset
 import app.integrations.ota_models
 
 target_metadata = Base.metadata

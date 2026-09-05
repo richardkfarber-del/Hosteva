@@ -6,31 +6,35 @@ from app.models.host import Host
 from app.schemas.host import HostCreate, HostResponse
 from app.dependencies import get_api_key
 from app.core.security import get_password_hash
+from app.core.password_policy import validate_password, PasswordPolicyError
 import uuid
 
 router = APIRouter(prefix="/api/hosts", tags=["Hosts"], dependencies=[Depends(get_api_key)])
 
 @router.post("/", response_model=HostResponse, status_code=status.HTTP_201_CREATED)
 def create_host(request: HostCreate, db: Session = Depends(get_db)):
-    # Check if host exists
     existing_host = db.query(Host).filter((Host.username == request.username) | (Host.email == request.email)).first()
     if existing_host:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username or email already exists")
-    
-    # Hash password
+
+    try:
+        validate_password(request.password)
+    except PasswordPolicyError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
     hashed_password = get_password_hash(request.password)
-    
+
     new_host = Host(
         id=str(uuid.uuid4()),
         username=request.username,
         email=request.email,
         password_hash=hashed_password
     )
-    
+
     db.add(new_host)
     db.commit()
     db.refresh(new_host)
-    
+
     return new_host
 
 @router.get("/", response_model=List[HostResponse])

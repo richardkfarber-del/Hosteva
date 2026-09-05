@@ -20,6 +20,7 @@ def main():
         import app.models.compliance
         import app.models.swarm
         import app.models.oauth
+        import app.models.password_reset
         import app.integrations.ota_models
         
         # Enable PostgreSQL extensions if PostgreSQL
@@ -137,6 +138,18 @@ def main():
                     print(f"{col_name} column already exists in subscriptions table.")
         except Exception as sub_col_err:
             print(f"Warning: Could not check/add subscriptions columns: {sub_col_err}")
+
+        try:
+            tables = inspector.get_table_names()
+            if "password_reset_tokens" not in tables:
+                from app.models.password_reset import PasswordResetToken
+                PasswordResetToken.__table__.create(bind=engine, checkfirst=True)
+                print("Created password_reset_tokens table.")
+            else:
+                print("password_reset_tokens table already exists.")
+        except Exception as prt_err:
+            print(f"Warning: Could not ensure password_reset_tokens: {prt_err}")
+
 
         # Auto-seed GTM rules database if empty
         try:
