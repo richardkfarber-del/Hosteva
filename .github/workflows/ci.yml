@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  unit:
+    name: Unit / regression
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: sqlite:///./test_ci.db
+      INTERNAL_DATABASE_URL: sqlite:///./test_ci.db
+      ENVIRONMENT: testing
+      JWT_SECRET_KEY: TEST_SECRET_KEY
+      # Valid Fernet key (32 zero bytes, urlsafe b64) — not a production secret
+      VIBRANIUM_ENCRYPTION_KEY: MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA=
+      # Prod-like default; individual tests enable billing when they need checkout
+      BILLING_ENABLED: "false"
+      ALLOW_BILLING_SIMULATION: "false"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest httpx
+
+      - name: Run pytest
+        run: python -m pytest tests/ app/tests/ -q --tb=short
+
+  smoke_live:
+    name: Live smoke (manual)
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    env:
+      LIVE_BASE_URL: https://gethosteva.com
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Auth-less live GETs
+        run: bash scripts/smoke_live.sh

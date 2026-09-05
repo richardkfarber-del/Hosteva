@@ -155,7 +155,8 @@ def test_checkout_kill_switch_off_returns_503(auth_header, monkeypatch):
         mock_session_create.assert_not_called()
 
 
-def test_checkout_subscription_success(auth_header):
+def test_checkout_subscription_success(auth_header, monkeypatch):
+    monkeypatch.setenv("BILLING_ENABLED", "true")
     # Mock stripe session creation
     with patch("stripe.checkout.Session.create") as mock_session_create:
         mock_session = MagicMock()
@@ -179,7 +180,8 @@ def test_checkout_subscription_success(auth_header):
         assert "user_mock_123" not in str(kwargs)
         assert kwargs.get("metadata", {}).get("tier") == "ESSENTIALS"
 
-def test_checkout_permit_filing_success(auth_header):
+def test_checkout_permit_filing_success(auth_header, monkeypatch):
+    monkeypatch.setenv("BILLING_ENABLED", "true")
     with patch("stripe.checkout.Session.create") as mock_session_create:
         mock_session = MagicMock()
         mock_session.id = "cs_test_permit_123"
