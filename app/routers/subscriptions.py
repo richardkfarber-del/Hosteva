@@ -10,6 +10,12 @@ from app.models.host import Host
 from app.db_models import Subscription
 from jose import jwt
 from app.core.security import SECRET_KEY, ALGORITHM
+from app.core.billing_gate import (
+    require_billing_enabled,
+    require_checkout_host,
+    checkout_client_reference_id,
+    resolve_essentials_price_id,
+)
 
 def update_subscription_status(db: Session, client_reference_id: str, stripe_customer_id: str, subscription_id: str):
     """Updates the user's subscription status in the database."""
@@ -67,51 +73,38 @@ if IS_PRODUCTION:
 
 class SubscriptionRequest(BaseModel):
     tier: str
+    interval: Optional[str] = None  # monthly | yearly
 
 @router.post("/checkout")
 async def create_checkout_session(
-    request: SubscriptionRequest, 
-    current_host: Optional[Host] = Depends(get_current_user_optional)
+    request: SubscriptionRequest,
+    host: Host = Depends(require_checkout_host),
 ):
     """
-    Stripe checkout session endpoint.
+    Auth-bound Stripe checkout. Auth via Depends first; kill-switch before Session.create.
+    Phase I: all paid tiers map to Compliance Essentials (monthly or yearly).
     """
-    from app.core.billing_gate import require_billing_enabled
+    # Auth already enforced by require_checkout_host (401 if missing).
     require_billing_enabled()
 
-    tier_lower = request.tier.lower()
-    if tier_lower not in ["basic", "pro", "premium", "compliance_essentials", "starter", "growth", "enterprise", "free"]:
-        raise HTTPException(status_code=400, detail="Invalid tier selected")
-    
-    IS_PRODUCTION = os.environ.get("ENVIRONMENT", "").lower() == "production"
-    # Map tiers to Stripe Price IDs (using environment variables or hardcoded mocks for tests)
-    price_ids = {
-        "basic": os.environ.get("STRIPE_PRICE_BASIC", "price_mock_basic" if not IS_PRODUCTION else None),
-        "pro": os.environ.get("STRIPE_PRICE_PRO", "price_mock_pro" if not IS_PRODUCTION else None),
-        "premium": os.environ.get("STRIPE_PRICE_PREMIUM", "price_mock_premium" if not IS_PRODUCTION else None),
-        "compliance_essentials": os.environ.get("STRIPE_PRICE_COMPLIANCE_ESSENTIALS") or os.environ.get("STRIPE_PRICE_BASIC", "price_mock_compliance_essentials" if not IS_PRODUCTION else None),
-        "starter": os.environ.get("STRIPE_PRICE_STARTER") or os.environ.get("STRIPE_PRICE_BASIC", "price_mock_starter" if not IS_PRODUCTION else None),
-        "growth": os.environ.get("STRIPE_PRICE_GROWTH") or os.environ.get("STRIPE_PRICE_PRO", "price_mock_growth" if not IS_PRODUCTION else None),
-        "enterprise": os.environ.get("STRIPE_PRICE_ENTERPRISE") or os.environ.get("STRIPE_PRICE_PREMIUM", "price_mock_enterprise" if not IS_PRODUCTION else None)
+    tier_lower = (request.tier or "").lower()
+    allowed = {
+        "basic", "pro", "premium", "compliance_essentials", "essentials",
+        "starter", "growth", "enterprise", "free",
     }
-    
-    if IS_PRODUCTION:
-        if not price_ids["basic"] or not price_ids["pro"] or not price_ids["premium"]:
-            raise HTTPException(status_code=500, detail="Billing not configured")
+    if tier_lower not in allowed:
+        raise HTTPException(status_code=400, detail="Invalid tier selected")
 
-    if not current_host or not getattr(current_host, "id", None):
-        raise HTTPException(
-            status_code=401,
-            detail="Authentication required for checkout",
-        )
-    client_reference_id = str(current_host.id)
+    IS_PRODUCTION = os.environ.get("ENVIRONMENT", "").lower() == "production"
+    price_id, billing_interval = resolve_essentials_price_id(tier_lower, request.interval)
+    client_reference_id = checkout_client_reference_id(host)
 
     try:
         checkout_session = stripe.checkout.Session.create(
             payment_method_types=['card'],
             line_items=[
                 {
-                    'price': price_ids[tier_lower],
+                    'price': price_id,
                     'quantity': 1,
                 },
             ],
@@ -131,12 +124,22 @@ async def create_checkout_session(
                 else f"{os.environ.get('FRONTEND_URL', 'http://localhost:3000').rstrip('/')}/cancel"
             ),
             client_reference_id=client_reference_id,
+            metadata={
+                "type": "subscription",
+                "tier": "ESSENTIALS",
+                "host_id": client_reference_id,
+                "interval": billing_interval,
+            },
         )
         return {
             "status": "pending",
             "checkout_url": checkout_session.url,
+            "session_id": checkout_session.id,
+            "client_reference_id": client_reference_id,
             "message": "Transaction initiated.",
         }
+    except HTTPException:
+        raise
     except Exception as e:
         if IS_PRODUCTION:
             raise HTTPException(
@@ -146,7 +149,9 @@ async def create_checkout_session(
         # Dev/test only
         return {
             "status": "pending",
-            "checkout_url": f"/checkout-mock?session_id=session_12345&type=subscription&tier={request.tier}&client_ref={client_reference_id}",
+            "checkout_url": f"/checkout-mock?session_id=session_12345&type=subscription&tier=ESSENTIALS&client_ref={client_reference_id}",
+            "session_id": "session_12345",
+            "client_reference_id": client_reference_id,
             "message": "Transaction initiated (Mock).",
             "error_caught": str(e)
         }
