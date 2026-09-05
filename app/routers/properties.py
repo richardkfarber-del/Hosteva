@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from app.database import get_db
 import sys
 import os
+import logging
 import requests
 import urllib.parse
 import json
@@ -20,6 +21,49 @@ router = APIRouter(prefix="/api/properties", tags=["Properties"])
 
 
 FALLBACK_PROPERTY_IMAGE_URL = "/static/img/fallback_house.jpg"
+logger = logging.getLogger("app.routers.properties")
+
+
+def _empty_geocode_result() -> dict:
+    return {
+        "city": "",
+        "county": "",
+        "state": "",
+        "address_components": [],
+        "formatted_address": "",
+        "lat": None,
+        "lng": None,
+    }
+
+
+def _as_location_str(value) -> str:
+    """Coerce geocode/SV location fields to str so retry never TypeErrors."""
+    if value is None:
+        return ""
+    if isinstance(value, str):
+        return value
+    return str(value)
+
+
+def _fallback_audit_results(city: str) -> dict:
+    return {
+        "legal_subdivision_name": city or "Unknown Subdivision",
+        "hoa_detected": False,
+        "hoa_rules_available": False,
+        "eligibility_status": "Pending",
+        "required_permits": [
+            "Manual review required: automated compliance audit unavailable",
+            "DBPR Condominium/Cooperative/Apartment License",
+            "Florida Dept of Revenue Sales Tax Registration",
+            "County Tourist Development Tax Account",
+        ],
+        "local_restrictions": {
+            "disclaimer": (
+                "Hosteva automated compliance results are informational only "
+                "and do not constitute legal advice."
+            ),
+        },
+    }
 
 
 def is_fallback_property_image(url: str | None) -> bool:
@@ -120,9 +164,16 @@ def fetch_real_property_image(address: str, geocoded: dict | None = None) -> str
 
     BUG-PL-02: a metadata miss on the raw address must not silent-stock without
     retrying geocode-normalized formatted_address and lat,lng.
+    BUG-PL-07: never raise — always degrade to labeled placeholder.
     """
-    import logging
-    logger = logging.getLogger("app.routers.properties")
+    try:
+        return _fetch_real_property_image_inner(address, geocoded)
+    except Exception:
+        logger.exception("BUG-PL-07: fetch_real_property_image failed for %r; using placeholder", address)
+        return FALLBACK_PROPERTY_IMAGE_URL
+
+
+def _fetch_real_property_image_inner(address: str, geocoded: dict | None = None) -> str:
     logger.info("DEBUG: fetch_real_property_image starting for address: %s", address)
     print(f"DEBUG: fetch_real_property_image starting for address: {address}", flush=True)
 
@@ -144,16 +195,20 @@ def fetch_real_property_image(address: str, geocoded: dict | None = None) -> str
     geo = geocoded if isinstance(geocoded, dict) else None
     if not geo or not (geo.get("formatted_address") or geo.get("lat") is not None):
         geo = geocode_address(address)
+        if not isinstance(geo, dict):
+            geo = _empty_geocode_result()
 
-    formatted = (geo or {}).get("formatted_address") or ""
+    formatted = _as_location_str((geo or {}).get("formatted_address"))
     lat = (geo or {}).get("lat")
     lng = (geo or {}).get("lng")
     latlng = f"{lat},{lng}" if lat is not None and lng is not None else ""
 
-    tried = {address.strip().lower()} if address else set()
+    addr_key = _as_location_str(address).strip().lower()
+    tried = {addr_key} if addr_key else set()
     for loc in (formatted, latlng):
         if not loc:
             continue
+        loc = _as_location_str(loc)
         key = loc.strip().lower()
         if key in tried:
             continue
@@ -164,7 +219,7 @@ def fetch_real_property_image(address: str, geocoded: dict | None = None) -> str
         if saved:
             return saved
 
-    if formatted and formatted.strip().lower() not in {address.strip().lower()}:
+    if formatted and formatted.strip().lower() not in tried:
         saved = _try_places_photo(formatted, api_key, logger)
         if saved:
             return saved
@@ -174,20 +229,23 @@ def fetch_real_property_image(address: str, geocoded: dict | None = None) -> str
     return FALLBACK_PROPERTY_IMAGE_URL
 
 
+def resolve_property_create_image(full_address: str, geocoded: dict | None = None) -> str:
+    """Create-path image helper — never raises (BUG-PL-07)."""
+    try:
+        url = fetch_real_property_image(full_address, geocoded=geocoded)
+        if url:
+            return url
+    except Exception:
+        logger.exception("BUG-PL-07: resolve_property_create_image raised for %r", full_address)
+    return FALLBACK_PROPERTY_IMAGE_URL
+
+
 def geocode_address(address: str) -> dict:
     """
     Geocodes an address to identify locality (City), administrative_area_level_2 (County),
     and administrative_area_level_1 (State), plus formatted_address / lat / lng for image retry.
     """
-    empty = {
-        "city": "",
-        "county": "",
-        "state": "",
-        "address_components": [],
-        "formatted_address": "",
-        "lat": None,
-        "lng": None,
-    }
+    empty = _empty_geocode_result()
     api_key = os.getenv("GOOGLE_MAPS_API_KEY") or os.getenv("Maps_API_KEY")
     if not api_key:
         print("Geocoding address WARNING: GOOGLE_MAPS_API_KEY or Maps_API_KEY is not configured.")
@@ -215,7 +273,7 @@ def geocode_address(address: str) -> dict:
                     elif "administrative_area_level_1" in types:
                         state = c.get("short_name", "")
                 loc = (result0.get("geometry") or {}).get("location") or {}
-                formatted = result0.get("formatted_address") or ""
+                formatted = _as_location_str(result0.get("formatted_address"))
                 lat = loc.get("lat")
                 lng = loc.get("lng")
                 print(
@@ -361,56 +419,12 @@ def get_properties(
     return result
 
 
-@router.post("/", response_model=Dict[str, Any], status_code=status.HTTP_201_CREATED)
-def create_property(
-    property_data: PropertyCreate,
-    current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    host = db.query(Host).filter(Host.username == current_user.get("username")).first()
-    if not host:
-        raise HTTPException(status_code=404, detail="Host profile not found")
-        
-    # Jurisdiction-Aware Geocoding first so Street View can retry normalized location (BUG-PL-02)
-    full_address = f"{property_data.address}, {property_data.city}, {property_data.state} {property_data.zip_code}".strip()
-    geocoded = geocode_address(full_address)
-    image_url = fetch_real_property_image(full_address, geocoded=geocoded)
-    city_name = geocoded.get("city") or property_data.city
-    county_name = geocoded.get("county") or (f"{city_name} County" if city_name else "Unknown County")
-    state_name = geocoded.get("state") or property_data.state
-
-    # Execute Gemini Compliance Audit
-    audit_results = run_gemini_audit(
-        city=city_name,
-        county=county_name,
-        state=state_name,
-        address=full_address,
-        address_components=geocoded.get("address_components")
-    )
-
-    db_property = Property(
-        user_id=host.id,
-        address=property_data.address,
-        city=city_name,
-        state=state_name,
-        zip_code=property_data.zip_code,
-        property_type=property_data.property_type,
-        hoa_status=audit_results.get("hoa_detected", False),
-        zoning_status=audit_results.get("eligibility_status", "Pending"),
-        image_url=image_url,
-        required_permits=json.dumps(audit_results.get("required_permits", [])),
-        local_restrictions=json.dumps(audit_results.get("local_restrictions", {}))
-    )
-    db.add(db_property)
-    db.commit()
-    db.refresh(db_property)
-
-    # Seed checklist items in property_compliance
-    import uuid
+def _seed_create_checklist(db, db_property, city_name, county_name, state_name):
+    """Best-effort checklist / scraper enqueue. Caller swallows failures (BUG-PL-07)."""
     from app.models.compliance import PropertyCompliance, MunicipalCode
     from app.tasks.scraper import run_agent_compliance_scraper
-    
-    # 1. Look up matched municipal code
+
+    # 1. Look up matched municipal code (retry without state if seed row has NULL state)
     municipal_code = None
     if city_name:
         municipal_code = db.query(MunicipalCode).filter(
@@ -418,7 +432,12 @@ def create_property(
             MunicipalCode.jurisdiction_type.ilike("City"),
             MunicipalCode.state.ilike(state_name)
         ).first()
-        
+        if not municipal_code:
+            municipal_code = db.query(MunicipalCode).filter(
+                MunicipalCode.municipality_name.ilike(city_name),
+                MunicipalCode.jurisdiction_type.ilike("City"),
+            ).first()
+    
     if not municipal_code and county_name:
         clean_county = county_name.replace(" County", "").strip()
         municipal_code = db.query(MunicipalCode).filter(
@@ -427,17 +446,25 @@ def create_property(
             MunicipalCode.jurisdiction_type.ilike("County"),
             MunicipalCode.state.ilike(state_name)
         ).first()
-        
-    valid_period = '[2026-06-04 00:00:00, 2027-06-04 00:00:00]'
+        if not municipal_code:
+            municipal_code = db.query(MunicipalCode).filter(
+                (MunicipalCode.municipality_name.ilike(county_name)) |
+                (MunicipalCode.municipality_name.ilike(clean_county)),
+                MunicipalCode.jurisdiction_type.ilike("County"),
+            ).first()
     
+    valid_period = '[2026-06-04 00:00:00, 2027-06-04 00:00:00]'
+
     if municipal_code:
         # Match found! Use pre-compiled rules
         tasks = []
         if municipal_code.requires_permit:
             tasks.append(f"{city_name} Short-Term Rental Permit")
-        if municipal_code.tax_rate_registration_fee and ("tax" in municipal_code.tax_rate_registration_fee.lower() or municipal_code.tax_rate):
+        fee = municipal_code.tax_rate_registration_fee
+        fee_l = fee.lower() if isinstance(fee, str) else ""
+        if fee_l and ("tax" in fee_l or municipal_code.tax_rate):
             tasks.append(f"{state_name} Transient Occupancy Tax Registration")
-            
+        
         # Add Florida defaults if FL
         if state_name.upper() == "FL":
             if "DBPR Vacation Rental License" not in tasks:
@@ -446,17 +473,17 @@ def create_property(
                 tasks.append("Florida Dept of Revenue Sales Tax Registration")
             if "County Tourist Development Tax Account" not in tasks:
                 tasks.append("County Tourist Development Tax Account")
-                
+            
         # If tasks list is still empty, default to required permits from audit results
         if not tasks:
             try:
                 tasks = json.loads(db_property.required_permits) if db_property.required_permits else []
             except:
                 tasks = []
-                
+            
         if not tasks:
             tasks = ["DBPR Vacation Rental License", "Florida Dept of Revenue Sales Tax Registration", "County Tourist Development Tax Account"]
-            
+        
         for task_name in tasks:
             item = PropertyCompliance(
                 property_id=db_property.id,
@@ -486,7 +513,7 @@ def create_property(
         db.add(temp_mc)
         db.commit()
         db.refresh(temp_mc)
-        
+    
         # Create temporary check task
         task_name = "Zoning Rules Under Manual Curation"
         item = PropertyCompliance(
@@ -500,30 +527,112 @@ def create_property(
         )
         db.add(item)
         db.commit()
-        
-        # Trigger scraper Celery task
+    
+        # Trigger scraper Celery task (must not 500 the HTTP create)
         db_property.zoning_status = "Pending"
         db.commit()
-        run_agent_compliance_scraper.delay(
-            str(db_property.id),
-            city_name,
-            county_name,
-            state_name
-        )
+        try:
+            run_agent_compliance_scraper.delay(
+                str(db_property.id),
+                city_name,
+                county_name,
+                state_name
+            )
+        except Exception:
+            logger.exception("BUG-PL-07: scraper.delay failed for property %s", db_property.id)
 
-    return {
-        "id": db_property.id,
-        "address": db_property.address,
-        "location": f"{db_property.city}, {db_property.state}",
-        "zoning_status": db_property.zoning_status,
-        "beds": 3,
-        "baths": 2,
-        "price": 249,
-        "image_url": db_property.image_url or "",
-        "image_is_placeholder": is_fallback_property_image(db_property.image_url),
-        "required_permits": json.loads(db_property.required_permits) if db_property.required_permits else [],
-        "local_restrictions": json.loads(db_property.local_restrictions) if db_property.local_restrictions else {}
-    }
+
+
+@router.post("/", response_model=Dict[str, Any], status_code=status.HTTP_201_CREATED)
+def create_property(
+    property_data: PropertyCreate,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    host = db.query(Host).filter(Host.username == current_user.get("username")).first()
+    if not host:
+        raise HTTPException(status_code=404, detail="Host profile not found")
+        
+    # Jurisdiction-Aware Geocoding first so Street View can retry normalized location (BUG-PL-02)
+    # BUG-PL-07: geocode / image / audit must never 500 the create.
+    full_address = f"{property_data.address}, {property_data.city}, {property_data.state} {property_data.zip_code}".strip()
+    try:
+        geocoded = geocode_address(full_address)
+        if not isinstance(geocoded, dict):
+            geocoded = _empty_geocode_result()
+    except Exception:
+        logger.exception("BUG-PL-07: geocode_address raised for %r", full_address)
+        geocoded = _empty_geocode_result()
+    image_url = resolve_property_create_image(full_address, geocoded=geocoded)
+    city_name = geocoded.get("city") or property_data.city
+    county_name = geocoded.get("county") or (f"{city_name} County" if city_name else "Unknown County")
+    state_name = geocoded.get("state") or property_data.state
+
+    # Execute Gemini Compliance Audit
+    try:
+        audit_results = run_gemini_audit(
+            city=city_name,
+            county=county_name,
+            state=state_name,
+            address=full_address,
+            address_components=geocoded.get("address_components")
+        )
+        if not isinstance(audit_results, dict):
+            audit_results = _fallback_audit_results(city_name)
+    except Exception:
+        logger.exception("BUG-PL-07: run_gemini_audit raised for %r", full_address)
+        audit_results = _fallback_audit_results(city_name)
+
+    db_property = Property(
+        user_id=host.id,
+        address=property_data.address,
+        city=city_name,
+        state=state_name,
+        zip_code=property_data.zip_code,
+        property_type=property_data.property_type,
+        hoa_status=audit_results.get("hoa_detected", False),
+        zoning_status=audit_results.get("eligibility_status", "Pending"),
+        image_url=image_url,
+        required_permits=json.dumps(audit_results.get("required_permits", [])),
+        local_restrictions=json.dumps(audit_results.get("local_restrictions", {}))
+    )
+    db.add(db_property)
+    db.commit()
+    db.refresh(db_property)
+
+    def _create_payload(prop):
+        return {
+            "id": prop.id,
+            "address": prop.address,
+            "location": f"{prop.city}, {prop.state}",
+            "zoning_status": prop.zoning_status,
+            "beds": 3,
+            "baths": 2,
+            "price": 249,
+            "image_url": prop.image_url or "",
+            "image_is_placeholder": is_fallback_property_image(prop.image_url),
+            "required_permits": json.loads(prop.required_permits) if prop.required_permits else [],
+            "local_restrictions": json.loads(prop.local_restrictions) if prop.local_restrictions else {},
+        }
+
+    payload = _create_payload(db_property)
+
+    # Seed checklist items in property_compliance (must not 500 after the row is saved)
+    try:
+        _seed_create_checklist(db, db_property, city_name, county_name, state_name)
+        db.refresh(db_property)
+        payload = _create_payload(db_property)
+    except Exception:
+        logger.exception(
+            "BUG-PL-07: post-create municipal seed/scraper failed; property %s still returned",
+            payload["id"],
+        )
+        try:
+            db.rollback()
+        except Exception:
+            pass
+
+    return payload
 
 
 def _map_compliance_label_to_zoning(status_label: str) -> str:

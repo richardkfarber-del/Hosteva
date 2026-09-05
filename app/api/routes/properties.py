@@ -110,9 +110,10 @@ def create_property(
     from app.models.host import Host
     from app.models.property import Property
     from app.routers.properties import (
-        fetch_real_property_image,
+        FALLBACK_PROPERTY_IMAGE_URL,
         geocode_address,
         is_fallback_property_image,
+        resolve_property_create_image,
     )
     import json
     import uuid
@@ -126,9 +127,11 @@ def create_property(
     full_address = f"{property_data.address.address}, {property_data.address.city}, {property_data.address.state} {property_data.address.zip_code}".strip()
     try:
         geocoded_for_image = geocode_address(full_address)
+        if not isinstance(geocoded_for_image, dict):
+            geocoded_for_image = None
     except Exception:
         geocoded_for_image = None
-    image_url = fetch_real_property_image(full_address, geocoded=geocoded_for_image)
+    image_url = resolve_property_create_image(full_address, geocoded=geocoded_for_image) or FALLBACK_PROPERTY_IMAGE_URL
 
     # 3. Initialize compliance data details
     comp = property_data.compliance_data
