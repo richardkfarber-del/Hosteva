@@ -91,7 +91,7 @@ tailwind.config = {
             </nav>
             
             <div class="mt-auto px-4">
-                <div class="bg-surface-container-low rounded-2xl p-4 border border-outline-variant/20 shadow-sm" id="sidebar-profile-card">
+                <div class="bg-surface-container-low rounded-2xl p-4 border border-outline-variant/20 shadow-sm hidden" id="sidebar-profile-card">
                     <div class="flex items-center gap-3 mb-3" id="sidebar-user-container">
                         <div class="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold text-sm shadow-inner" id="sidebar-user-initials">
                             <span class="material-symbols-outlined text-lg">person</span>
@@ -150,46 +150,85 @@ tailwind.config = {
     <script>
     document.addEventListener("DOMContentLoaded", async function() {
         try {
-            const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+            // Same token keys as dashboard (BUG-PL-01: wizard must not show Guest when logged in)
+            const token = localStorage.getItem("token")
+                || localStorage.getItem("access_token")
+                || sessionStorage.getItem("token")
+                || sessionStorage.getItem("access_token");
             let userName = "Guest";
             let userTier = "Free Tier";
             let userInitials = "G";
+            let authenticated = false;
             
             const profileCard = document.getElementById("sidebar-profile-card");
             const authButtons = document.getElementById("sidebar-auth-buttons");
             const headerAuthButtons = document.getElementById("header-auth-buttons");
+            const headerLogout = document.getElementById("header-logout-btn");
 
             window.logout = function() {
                 localStorage.removeItem("token");
                 localStorage.removeItem("access_token");
                 sessionStorage.removeItem("token");
+                sessionStorage.removeItem("access_token");
                 document.cookie = "access_token=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
                 window.location.href = "/";
             };
 
+            function applySidebarChrome(isAuthed) {
+                if (isAuthed) {
+                    if (profileCard) profileCard.classList.remove("hidden");
+                    if (authButtons) authButtons.classList.add("hidden");
+                    if (headerAuthButtons) headerAuthButtons.classList.add("hidden");
+                    if (headerLogout) headerLogout.classList.remove("hidden");
+                } else {
+                    if (profileCard) profileCard.classList.add("hidden");
+                    if (authButtons) authButtons.classList.remove("hidden");
+                    if (headerAuthButtons) headerAuthButtons.classList.remove("hidden");
+                    if (headerLogout) headerLogout.classList.add("hidden");
+                }
+            }
+
+            async function fetchMe(bearer) {
+                const headers = { "Authorization": `Bearer ${bearer}` };
+                // Prefer v1; fall back to /api/user/me (dashboard parity)
+                let response = await fetch("/api/v1/users/me", { headers });
+                if (!response.ok && response.status !== 401) {
+                    response = await fetch("/api/user/me", { headers });
+                }
+                return response;
+            }
+
             if (token) {
-                if (profileCard) profileCard.classList.remove("hidden");
-                if (authButtons) authButtons.classList.add("hidden");
-                if (headerAuthButtons) headerAuthButtons.classList.add("hidden");
-                
-                const response = await fetch("/api/v1/users/me", {
-                    headers: { "Authorization": `Bearer ${token}` }
-                });
+                // Optimistic host chrome — never label as Guest while Bearer is present
+                authenticated = true;
+                userName = "Host";
+                userInitials = "H";
+                applySidebarChrome(true);
+
+                const response = await fetchMe(token);
                 if (response.ok) {
                     const data = await response.json();
-                    userName = data.full_name || data.username || "User";
+                    const resolved = data.full_name || data.username || data.email || "Host";
+                    // Never accept literal Guest from API when token validates
+                    userName = (resolved && String(resolved).toLowerCase() !== "guest") ? resolved : "Host";
                     userTier = data.tier || "Free Tier";
-                    userInitials = userName.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
+                    userInitials = userName.split(/\s+/).map(n => n[0]).filter(Boolean).join("").substring(0, 2).toUpperCase() || "H";
+                } else if (response.status === 401) {
+                    authenticated = false;
+                    userName = "Guest";
+                    userTier = "Free Tier";
+                    userInitials = "G";
+                    applySidebarChrome(false);
                 }
+                // Non-401 failure: keep Host chrome, not Guest
             } else {
-                if (profileCard) profileCard.classList.add("hidden");
-                if (authButtons) authButtons.classList.remove("hidden");
-                if (headerAuthButtons) headerAuthButtons.classList.remove("hidden");
+                applySidebarChrome(false);
             }
             
             if (document.getElementById("sidebar-user-name")) document.getElementById("sidebar-user-name").textContent = userName;
             if (document.getElementById("sidebar-user-tier")) document.getElementById("sidebar-user-tier").textContent = userTier;
-            if (document.getElementById("sidebar-user-initials")) document.getElementById("sidebar-user-initials").textContent = userInitials;
+            const initialsEl = document.getElementById("sidebar-user-initials");
+            if (initialsEl) initialsEl.textContent = userInitials;
         } catch (e) {
             console.error("Authentication setup failed:", e);
         }

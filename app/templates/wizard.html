@@ -72,13 +72,14 @@
 
 {% block content %}
 
-<div class="max-w-4xl mx-auto glass-panel rounded-2xl overflow-hidden border border-white/50 flex flex-col md:flex-row min-h-[600px] relative">
+<div class="max-w-5xl mx-auto relative">
+<div class="glass-panel rounded-2xl border border-white/50 flex flex-col lg:flex-row min-h-[600px] relative overflow-hidden">
     
     <!-- Decorative background element inside card -->
     <div class="absolute top-0 right-0 w-96 h-96 bg-primary-container opacity-5 rounded-full blur-[80px] pointer-events-none"></div>
 
     <!-- Left Panel: Input -->
-    <div class="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center relative z-10 bg-white/40">
+    <div class="w-full lg:w-5/12 shrink-0 p-8 md:p-10 flex flex-col justify-center relative z-10 bg-white/40 border-b lg:border-b-0 lg:border-r border-white/40">
         <div class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-white shadow-sm text-primary mb-6 border border-outline-variant/20">
             <span class="material-symbols-outlined">shield_with_house</span>
         </div>
@@ -106,7 +107,7 @@
     </div>
 
     <!-- Right Panel: Results (The Insight Prism) -->
-    <div class="w-full md:w-1/2 bg-surface/50 border-t md:border-l md:border-t-0 border-white/40 p-8 md:p-12 flex flex-col justify-center relative overflow-hidden z-10" id="resultsPanel">
+    <div class="w-full lg:w-7/12 min-w-0 bg-surface/50 p-6 md:p-10 flex flex-col justify-start relative overflow-y-auto overflow-x-hidden z-10" id="resultsPanel">
         
         <!-- Default State -->
         <div id="defaultState" class="text-center">
@@ -117,7 +118,7 @@
         </div>
 
         <!-- Loading State (Skeleton Screens) -->
-        <div id="loadingState" class="hidden flex-col gap-6">
+        <div id="loadingState" class="hidden flex flex-col gap-6 w-full min-w-0">
             <div class="flex items-center justify-between animate-pulse">
                 <div class="h-6 bg-slate-200 rounded w-1/3"></div>
                 <div class="h-6 bg-slate-200 rounded-full w-20"></div>
@@ -149,7 +150,7 @@
         </div>
 
         <!-- Error State -->
-        <div id="errorState" class="hidden flex-col items-center text-center p-6 bg-red-50/80 border border-red-200/50 rounded-2xl relative shadow-sm">
+        <div id="errorState" class="hidden flex flex-col items-center text-center p-6 bg-red-50/80 border border-red-200/50 rounded-2xl relative shadow-sm w-full min-w-0">
             <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-4 text-red-600 border border-red-200">
                 <span class="material-symbols-outlined">warning</span>
             </div>
@@ -161,7 +162,7 @@
         </div>
 
         <!-- Result State -->
-        <div id="dataState" class="hidden flex-col h-full pl-6">
+        <div id="dataState" class="hidden flex flex-col h-full w-full min-w-0 gap-2">
             <!-- Dynamic Verdict Banner -->
             <div id="verdictBannerContainer"></div>
 
@@ -191,8 +192,9 @@
             </button>
         </div>
     </div>
-    <!-- Legal Disclaimer Banner -->
-    <div class="mt-6 p-4 rounded-xl bg-surface-container-low border border-outline-variant/15 text-center text-xs text-on-surface-variant leading-relaxed max-w-4xl mx-auto">
+</div>
+    <!-- Legal Disclaimer Banner (outside flex row so it never becomes a third column) -->
+    <div class="mt-6 p-4 rounded-xl bg-surface-container-low border border-outline-variant/15 text-center text-xs text-on-surface-variant leading-relaxed w-full">
         <p><strong>Legal Disclaimer:</strong> Hosteva is an automated compliance research tool. Hosteva does not provide legal advice, and hosts are responsible for final municipal filings.</p>
     </div>
 </div>
@@ -262,10 +264,24 @@
     // Existing Audit Logic
     // Helper to hide all states in results panel
     function hideAllResultsStates() {
-        document.getElementById('defaultState').classList.add('hidden');
-        document.getElementById('loadingState').classList.add('hidden');
-        document.getElementById('dataState').classList.add('hidden');
-        document.getElementById('errorState').classList.add('hidden');
+        ['defaultState', 'loadingState', 'dataState', 'errorState'].forEach((id) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.classList.add('hidden');
+            if (id !== 'defaultState') {
+                el.classList.remove('flex');
+            }
+        });
+    }
+
+    function showResultsState(id) {
+        hideAllResultsStates();
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.classList.remove('hidden');
+        if (id !== 'defaultState') {
+            el.classList.add('flex');
+        }
     }
 
     // Submit handler logic
@@ -295,13 +311,15 @@
         }
 
         // UI Transitions
-        hideAllResultsStates();
-        document.getElementById('loadingState').classList.remove('hidden');
+        showResultsState('loadingState');
         document.getElementById('auditBtn').disabled = true;
 
         try {
             // Check auth token for user authorization header
-            const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+            const token = localStorage.getItem("token")
+                || localStorage.getItem("access_token")
+                || sessionStorage.getItem("token")
+                || sessionStorage.getItem("access_token");
             const headers = {};
             if (token) {
                 headers["Authorization"] = `Bearer ${token}`;
@@ -329,13 +347,13 @@
             let bannerHtml = '';
             if (data.is_under_review || (!data.municipal_code && !(data.checklist && data.checklist.length))) {
                 bannerHtml = `
-                <div class="bg-amber-50 rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative overflow-hidden border border-amber-200 mb-6 shadow-sm">
-                    <div class="space-y-1 z-10 text-left">
-                        <div class="flex items-center gap-2 text-amber-800">
-                            <span class="material-symbols-outlined icon-filled">hourglass_top</span>
-                            <h3 class="font-display font-bold text-lg">Under Review</h3>
+                <div class="bg-amber-50 rounded-2xl p-5 sm:p-6 flex flex-col gap-3 relative border border-amber-200 mb-6 shadow-sm w-full min-w-0">
+                    <div class="space-y-2 z-10 text-left min-w-0">
+                        <div class="flex items-center gap-2 text-amber-800 flex-wrap">
+                            <span class="material-symbols-outlined icon-filled shrink-0">hourglass_top</span>
+                            <h3 class="font-display font-bold text-lg break-words">Under Review</h3>
                         </div>
-                        <p class="text-on-surface-variant text-sm font-medium">We do not have a curated, expert-verified determination for this address yet. This is not a Compliant / GREEN result. Not legal advice.</p>
+                        <p class="text-on-surface-variant text-sm font-medium leading-relaxed break-words whitespace-normal">We do not have a curated, expert-verified determination for this address yet. This is not a Compliant / GREEN result. Not legal advice.</p>
                     </div>
                     <div class="z-10 shrink-0">
                         <span class="inline-flex items-center justify-center px-3 py-1 rounded-full bg-amber-100 text-amber-900 font-bold text-xs tracking-wide border border-amber-200">
@@ -345,24 +363,24 @@
                 </div>`;
             } else if (!data.is_compliant) {
                 bannerHtml = `
-                <div class="bg-error-container/30 rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative overflow-hidden border border-error/20 mb-6 shadow-sm">
-                    <div class="space-y-1 z-10 text-left">
-                        <div class="flex items-center gap-2 text-error">
-                            <span class="material-symbols-outlined icon-filled">warning</span>
-                            <h3 class="font-display font-bold text-lg">Restrictions Likely</h3>
+                <div class="bg-error-container/30 rounded-2xl p-5 sm:p-6 flex flex-col gap-3 relative border border-error/20 mb-6 shadow-sm w-full min-w-0">
+                    <div class="space-y-2 z-10 text-left min-w-0">
+                        <div class="flex items-center gap-2 text-error flex-wrap">
+                            <span class="material-symbols-outlined icon-filled shrink-0">warning</span>
+                            <h3 class="font-display font-bold text-lg break-words">Restrictions Likely</h3>
                         </div>
-                        <p class="text-on-surface-variant text-sm font-medium">Curated municipal or HOA rules indicate STR may be restricted or prohibited. Review checklist items below. Not legal advice.</p>
+                        <p class="text-on-surface-variant text-sm font-medium leading-relaxed break-words whitespace-normal">Curated municipal or HOA rules indicate STR may be restricted or prohibited. Review checklist items below. Not legal advice.</p>
                     </div>
                 </div>`;
             } else {
                 bannerHtml = `
-                <div class="bg-tertiary-container/10 rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative overflow-hidden border border-tertiary/20 mb-6 shadow-sm">
-                    <div class="space-y-1 z-10 text-left">
-                        <div class="flex items-center gap-2 text-tertiary">
-                            <span class="material-symbols-outlined icon-filled">checklist</span>
-                            <h3 class="font-display font-bold text-lg">Checklist Available</h3>
+                <div class="bg-tertiary-container/10 rounded-2xl p-5 sm:p-6 flex flex-col gap-3 relative border border-tertiary/20 mb-6 shadow-sm w-full min-w-0">
+                    <div class="space-y-2 z-10 text-left min-w-0">
+                        <div class="flex items-center gap-2 text-tertiary flex-wrap">
+                            <span class="material-symbols-outlined icon-filled shrink-0">checklist</span>
+                            <h3 class="font-display font-bold text-lg break-words">Checklist Available</h3>
                         </div>
-                        <p class="text-on-surface-variant text-sm font-medium">Curated Florida municipal rules found. Complete checklist items (permits/taxes may apply). Not a legal determination.</p>
+                        <p class="text-on-surface-variant text-sm font-medium leading-relaxed break-words whitespace-normal">Curated Florida municipal rules found. Complete checklist items (permits/taxes may apply). Not a legal determination.</p>
                     </div>
                 </div>`;
             }
@@ -405,14 +423,14 @@
                     </a>` : `<span class="text-on-surface-variant text-xs italic mt-2 inline-block">Source pending</span>`;
 
                 const municipalCard = document.createElement('div');
-                municipalCard.className = 'bg-white rounded-2xl p-5 border border-outline-variant/15 hover:bg-surface-container-low/30 transition-all shadow-sm flex items-start gap-4 text-left';
+                municipalCard.className = 'bg-white rounded-2xl p-5 border border-outline-variant/15 hover:bg-surface-container-low/30 transition-all shadow-sm flex items-start gap-4 text-left w-full min-w-0';
                 municipalCard.innerHTML = `
                     <span class="material-symbols-outlined ${allowedClass} icon-filled shrink-0" style="font-size: 24px;">
                         ${allowedIcon}
                     </span>
                     <div class="space-y-2 flex-grow">
-                        <h4 class="font-headline font-bold text-base text-on-surface">Municipal Code: ${mc.municipality_name} (${mc.jurisdiction_type})</h4>
-                        <div class="text-on-surface-variant text-xs space-y-1 leading-relaxed">
+                        <h4 class="font-headline font-bold text-base text-on-surface break-words">Municipal Code: ${mc.municipality_name} (${mc.jurisdiction_type})</h4>
+                        <div class="text-on-surface-variant text-xs space-y-1 leading-relaxed break-words whitespace-normal">
                             <p class="${allowedClass} font-semibold">${allowedText}</p>
                             <p>${permitText}</p>
                             <p>${stayText}</p>
@@ -608,14 +626,12 @@
             }
 
             // Show Results
-            hideAllResultsStates();
-            document.getElementById('dataState').classList.remove('hidden');
+            showResultsState('dataState');
 
         } catch (err) {
             console.error('Audit execution error:', err);
-            hideAllResultsStates();
             document.getElementById('errorMessage').innerText = 'Audit failed: ' + err.message;
-            document.getElementById('errorState').classList.remove('hidden');
+            showResultsState('errorState');
         } finally {
             document.getElementById('auditBtn').disabled = false;
         }
@@ -629,8 +645,7 @@
 
     // Bind retry button
     document.getElementById('retryBtn').addEventListener('click', () => {
-        hideAllResultsStates();
-        document.getElementById('defaultState').classList.remove('hidden');
+        showResultsState('defaultState');
     });
 
     // Check URL parameters on mount/load

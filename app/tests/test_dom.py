@@ -78,3 +78,33 @@ def test_dashboard_sidebar_dom_elements():
     
     # Verify basic layout components (sidebar logout, notifications, main container)
     assert "sidebar-logout-btn" in element_ids or "header-logout-btn" in element_ids
+
+
+def test_wizard_disclaimer_outside_flex_row_pl01():
+    """BUG-PL-01: Legal disclaimer must not be a third flex column that truncates results."""
+    response = client.get("/wizard")
+    assert response.status_code == 200
+    html = response.text
+    assert "outside flex row" in html or "Legal Disclaimer" in html
+    # Disclaimer comment / structure: glass panel closes before disclaimer
+    glass_idx = html.find("glass-panel")
+    disc_idx = html.find("Legal Disclaimer")
+    assert glass_idx != -1 and disc_idx != -1
+    # Results panel must not use overflow-hidden (clips Checklist Available)
+    assert 'id="resultsPanel"' in html
+    results_snip = html[html.find('id="resultsPanel"')-120:html.find('id="resultsPanel"')+180]
+    assert "overflow-hidden" not in results_snip
+    assert "overflow-y-auto" in results_snip or "min-w-0" in results_snip
+    # dataState uses flex + min-w-0 for readable cards
+    assert 'id="dataState"' in html
+    assert "showResultsState" in html
+    # Auth token pattern includes access_token (sidebar Guest fix)
+    assert "access_token" in html
+
+
+def test_base_sidebar_auth_uses_access_token_pl01():
+    response = client.get("/wizard")
+    html = response.text
+    assert 'localStorage.getItem("access_token")' in html or "localStorage.getItem('access_token')" in html
+    assert "/api/v1/users/me" in html
+    assert "/api/user/me" in html
