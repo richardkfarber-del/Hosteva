@@ -302,13 +302,20 @@ async def simulate_entitlement(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Non-prod only: activate Essentials for the current Host (Widow / local QA).
+    """Activate Essentials for the current Host without Stripe charge (QA only).
 
-    Prefer POST /api/v1/billing/webhooks with a simulated checkout.session.completed
-    payload in automated tests. This route is a convenience for manual probes when
-    ENVIRONMENT != production. Does not charge Stripe.
+    Allowed when ENVIRONMENT != production, OR when Render env
+    ALLOW_BILLING_SIMULATION=true (Fury flips for Widow live probes, then off).
+
+    Prefer webhook simulation in automated tests:
+    POST /api/v1/billing/webhooks with checkout.session.completed,
+    client_reference_id=<host.id>, metadata.tier=ESSENTIALS (valid Stripe sig in prod).
     """
-    if IS_PRODUCTION or os.getenv("ENVIRONMENT", "").lower() == "production":
+    allow_sim = os.getenv("ALLOW_BILLING_SIMULATION", "false").strip().lower() in (
+        "1", "true", "yes", "on",
+    )
+    is_prod = IS_PRODUCTION or os.getenv("ENVIRONMENT", "").lower() == "production"
+    if is_prod and not allow_sim:
         raise HTTPException(status_code=404, detail="Not found")
 
     username = (current_user or {}).get("username")

@@ -196,26 +196,38 @@ def subscription_is_active_essentials(sub: Any) -> bool:
 
 
 def get_host_subscription(db: Session, host: Host):
-    """Load Subscription for host (relationship or query)."""
-    if host is None:
+    """Load Subscription for host via explicit query only.
+
+    Never touch host.subscription relationship — lazy-load failures on Render
+    were turning Free checklist/tasks into HTTP 500 instead of 403 (BUG_US006).
+    """
+    if host is None or db is None:
         return None
-    sub = getattr(host, "subscription", None)
-    if sub is not None:
-        return sub
     from app.db_models import Subscription
 
-    return db.query(Subscription).filter(Subscription.user_id == host.id).first()
+    try:
+        return db.query(Subscription).filter(Subscription.user_id == host.id).first()
+    except Exception:
+        # Fail closed as non-entitled rather than 500 the gate
+        return None
 
 
 def host_has_active_essentials(db: Session, host: Optional[Host]) -> bool:
     if host is None:
         return False
-    return subscription_is_active_essentials(get_host_subscription(db, host))
+    try:
+        return subscription_is_active_essentials(get_host_subscription(db, host))
+    except Exception:
+        return False
 
 
 def require_active_essentials(db: Session, host: Optional[Host]) -> None:
-    """Raise 403 if host lacks active Essentials entitlement."""
-    if not host_has_active_essentials(db, host):
+    """Raise 403 if host lacks active Essentials entitlement. Never 500."""
+    try:
+        entitled = host_has_active_essentials(db, host)
+    except Exception:
+        entitled = False
+    if not entitled:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=ENTITLEMENT_REQUIRED_DETAIL,
