@@ -347,7 +347,11 @@ from app.models.host import Host
 
 @app.get("/billing", include_in_schema=False)
 def read_billing(request: Request):
-    return templates.TemplateResponse(name="billing.html", context={"request": request})
+    return templates.TemplateResponse(
+        request=request,
+        name="billing.html",
+        context={"request": request},
+    )
 
 @app.get("/users/me")
 @app.get("/api/v1/users/me")
