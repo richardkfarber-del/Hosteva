@@ -64,14 +64,21 @@ def search_compliance_ordinances(query: str, limit: int = 5, db: Session = Depen
             results = []
 
             
-    return [
-        {
+    import os as _os
+    is_prod = _os.getenv("ENVIRONMENT", "").lower() == "production"
+    out = []
+    for ord in results:
+        jur = (ord.jurisdiction or "")
+        # Never surface labeled sample/demo ordinances to users (esp. production)
+        if "sample" in jur.lower() or "(sample)" in jur.lower() or "demo" in jur.lower():
+            if is_prod or True:  # Phase A: hide in all envs for user-facing search
+                continue
+        out.append({
             "id": ord.id,
             "jurisdiction": ord.jurisdiction,
             "ordinance_text": ord.ordinance_text
-        }
-        for ord in results
-    ]
+        })
+    return out
 
 
 def is_name_match(extracted: str, expected: str) -> bool:
@@ -437,9 +444,13 @@ def recalculate_property_compliance_score(property_id: str, db: Session) -> floa
 @router.get("/documents/{filename}/download")
 def download_private_document(
     filename: str,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
 ):
     from fastapi.responses import FileResponse
+    # BUG-008: require auth — unauthenticated downloads forbidden
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Authentication required")
     safe_filename = os.path.basename(filename)
     candidates = [
         os.path.join("app/storage/private_uploads", safe_filename),
