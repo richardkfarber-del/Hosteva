@@ -14,7 +14,10 @@ from app.core.billing_gate import (
     require_checkout_host,
     checkout_client_reference_id,
     resolve_essentials_price_id,
+    normalize_essentials_tier,
+    host_has_active_essentials,
 )
+from app.core.security import get_current_user
 from app.db_models import Subscription, PermitTransaction
 from app.models.compliance import PropertyCompliance
 
@@ -243,8 +246,9 @@ async def stripe_webhook(
                 sub.stripe_customer_id = stripe_cust
                 sub.stripe_subscription_id = stripe_sub
                 sub.status = "active"
-                sub.tier = metadata.get("tier") or "STARTER"
-                sub.plan_details = stripe_sub or "activated"
+                # US-006: always persist ESSENTIALS (map starter/pro/growth/etc.)
+                sub.tier = normalize_essentials_tier(metadata.get("tier") or "ESSENTIALS")
+                sub.plan_details = "Compliance Essentials"
                 db.commit()
                 logging.info(f"Stripe Webhook: Activated subscription {sub.tier} for host {host.id}")
         
@@ -291,3 +295,47 @@ async def stripe_webhook(
             logging.info(f"Stripe Webhook: Subscription {sub_id} status updated to {sub.status}")
 
     return {"status": "success"}
+
+
+@router.post("/simulate-entitlement")
+async def simulate_entitlement(
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Non-prod only: activate Essentials for the current Host (Widow / local QA).
+
+    Prefer POST /api/v1/billing/webhooks with a simulated checkout.session.completed
+    payload in automated tests. This route is a convenience for manual probes when
+    ENVIRONMENT != production. Does not charge Stripe.
+    """
+    if IS_PRODUCTION or os.getenv("ENVIRONMENT", "").lower() == "production":
+        raise HTTPException(status_code=404, detail="Not found")
+
+    username = (current_user or {}).get("username")
+    if not username:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    host = db.query(Host).filter(Host.username == username).first()
+    if not host:
+        raise HTTPException(status_code=404, detail="Host not found")
+
+    sub = db.query(Subscription).filter(Subscription.user_id == host.id).first()
+    if not sub:
+        sub = Subscription(user_id=host.id)
+        db.add(sub)
+    sub.status = "active"
+    sub.tier = "ESSENTIALS"
+    sub.plan_details = "Compliance Essentials"
+    if not sub.stripe_subscription_id:
+        sub.stripe_subscription_id = f"sub_sim_{host.id}"
+    if not sub.stripe_customer_id:
+        sub.stripe_customer_id = f"cus_sim_{host.id}"
+    db.commit()
+    db.refresh(sub)
+    return {
+        "status": "ok",
+        "has_active_subscription": host_has_active_essentials(db, host),
+        "tier": "Compliance Essentials",
+        "subscription_tier": sub.tier,
+        "subscription_status": sub.status,
+        "note": "Simulated Essentials entitlement (non-production only).",
+    }

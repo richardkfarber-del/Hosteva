@@ -234,7 +234,7 @@ def test_webhook_subscription_completed():
     sub = db.query(Subscription).filter(Subscription.user_id == "host_billing_test").first()
     assert sub is not None
     assert sub.status == "active"
-    assert sub.tier == "GROWTH"
+    assert sub.tier == "ESSENTIALS"  # US-006: aliases normalize to ESSENTIALS
     assert sub.stripe_subscription_id == "sub_billing_test"
     db.close()
 

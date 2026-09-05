@@ -71,20 +71,14 @@ def get_me(current_user: dict = Depends(get_current_user), db: Session = Depends
                 "tier": "Free Tier"
             }
             
-        sub_tier = "Free Tier"
-        if host.subscription and host.subscription.status == "active":
-            sub_tier = host.subscription.plan_details or "Pro"
-            if isinstance(sub_tier, str):
-                sub_tier = sub_tier.capitalize() + " Host"
-            else:
-                sub_tier = "Pro Host"
-            
+        from app.core.billing_gate import me_entitlement_fields
+        ent = me_entitlement_fields(db, host)
         return {
             "id": host.id,
             "username": host.username,
             "email": host.email,
             "full_name": host.username,
-            "tier": sub_tier
+            **ent,
         }
     except Exception:
         return {
@@ -103,12 +97,8 @@ def get_user_analytics(current_user: dict = Depends(get_current_user), db: Sessi
     if not host:
         raise HTTPException(status_code=404, detail="User not found")
         
-    sub_tier = "Free Tier"
-    if host.subscription and host.subscription.status == "active":
-        sub_tier = host.subscription.plan_details or "Pro"
-        sub_tier = sub_tier.capitalize()
-    else:
-        sub_tier = getattr(host, "subscription_tier", "Pro")
+    from app.core.billing_gate import me_entitlement_fields
+    ent = me_entitlement_fields(db, host)
 
     is_production = os.getenv("ENVIRONMENT", "").lower() == "production"
     recent_queries = [] if is_production else [
@@ -117,6 +107,7 @@ def get_user_analytics(current_user: dict = Depends(get_current_user), db: Sessi
         {"query": "Is a 30-day minimum stay required in Orlando?", "date": "2026-04-12"}
     ]
     return {
-        "subscription_tier": sub_tier,
+        "subscription_tier": ent["tier"],
+        "has_active_subscription": ent["has_active_subscription"],
         "recent_queries": recent_queries
     }

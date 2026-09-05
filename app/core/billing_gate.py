@@ -6,7 +6,7 @@ this flag is true AND the caller is an authenticated Host (never user_mock_123).
 from __future__ import annotations
 
 import os
-from typing import Optional
+from typing import Optional, Any
 
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -126,3 +126,116 @@ def resolve_essentials_price_id(tier: str, interval: Optional[str] = None) -> tu
     if not price_id:
         raise HTTPException(status_code=500, detail="Billing not configured")
     return price_id, billing_interval
+
+
+# --- Essentials entitlement (US-006) ---
+# Active Essentials = Subscription.status == "active" AND tier in ESSENTIALS (+ aliases)
+
+ESSENTIALS_TIER_ALIASES = frozenset({
+    "essentials",
+    "compliance_essentials",
+    "complianceessentials",
+    "starter",
+    "basic",
+    "pro",
+    "growth",
+    "premium",
+    "enterprise",
+})
+
+ENTITLEMENT_REQUIRED_DETAIL = (
+    "Essentials subscription required for full checklist depth. "
+    "Please upgrade to Compliance Essentials."
+)
+
+
+def _tier_key(raw: Optional[str]) -> str:
+    if not raw:
+        return ""
+    return (
+        str(raw)
+        .strip()
+        .lower()
+        .replace("-", "_")
+        .replace(" ", "_")
+    )
+
+
+def is_essentials_tier(tier: Optional[str]) -> bool:
+    """True if tier string maps to Phase I Essentials (incl. legacy aliases)."""
+    key = _tier_key(tier)
+    if not key or key in ("free", "inactive", "canceled", "cancelled"):
+        return False
+    if key in ESSENTIALS_TIER_ALIASES:
+        return True
+    if "essential" in key or "compliance" in key:
+        return True
+    return False
+
+
+def normalize_essentials_tier(raw: Optional[str]) -> str:
+    """Persist ESSENTIALS for any paid/alias activation; FREE otherwise."""
+    key = _tier_key(raw)
+    if not key or key in ("free", "inactive", "canceled", "cancelled"):
+        return "FREE"
+    if is_essentials_tier(raw):
+        return "ESSENTIALS"
+    # Phase I: unknown paid-ish labels still map to Essentials
+    return "ESSENTIALS"
+
+
+def subscription_is_active_essentials(sub: Any) -> bool:
+    """Active Essentials entitlement from a Subscription row (or None)."""
+    if sub is None:
+        return False
+    if getattr(sub, "status", None) != "active":
+        return False
+    tier = getattr(sub, "tier", None)
+    plan = getattr(sub, "plan_details", None)
+    return is_essentials_tier(tier) or is_essentials_tier(plan if isinstance(plan, str) else None)
+
+
+def get_host_subscription(db: Session, host: Host):
+    """Load Subscription for host (relationship or query)."""
+    if host is None:
+        return None
+    sub = getattr(host, "subscription", None)
+    if sub is not None:
+        return sub
+    from app.db_models import Subscription
+
+    return db.query(Subscription).filter(Subscription.user_id == host.id).first()
+
+
+def host_has_active_essentials(db: Session, host: Optional[Host]) -> bool:
+    if host is None:
+        return False
+    return subscription_is_active_essentials(get_host_subscription(db, host))
+
+
+def require_active_essentials(db: Session, host: Optional[Host]) -> None:
+    """Raise 403 if host lacks active Essentials entitlement."""
+    if not host_has_active_essentials(db, host):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=ENTITLEMENT_REQUIRED_DETAIL,
+        )
+
+
+def display_tier_label(sub: Any) -> str:
+    """UI label for /users/me: Compliance Essentials | Free Tier."""
+    if subscription_is_active_essentials(sub):
+        return "Compliance Essentials"
+    return "Free Tier"
+
+
+def me_entitlement_fields(db: Session, host: Optional[Host]) -> dict:
+    """Consistent entitlement fields for /users/me and /api/v1/users/me."""
+    sub = get_host_subscription(db, host) if host else None
+    active = subscription_is_active_essentials(sub)
+    return {
+        "tier": "Compliance Essentials" if active else "Free Tier",
+        "has_active_subscription": active,
+        "subscription_tier": (getattr(sub, "tier", None) or "FREE") if sub else "FREE",
+        "subscription_status": (getattr(sub, "status", None) or "inactive") if sub else "inactive",
+    }
