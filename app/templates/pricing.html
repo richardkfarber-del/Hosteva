@@ -7,7 +7,10 @@
 </head>
 <body class="bg-gray-100">
     <div class="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-        <h2 class="text-3xl font-extrabold text-gray-900 text-center mb-8">Choose Your Plan</h2>
+        <h2 class="text-3xl font-extrabold text-gray-900 text-center mb-4">Choose Your Plan</h2>
+        <div class="mb-8 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-center text-amber-900 text-sm font-medium">
+            Billing temporarily unavailable. Paid checkout is disabled until auth-bound Stripe is ready. Free tools remain available.
+        </div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <!-- Basic Plan -->
             <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col">
@@ -19,10 +22,10 @@
                         <span class="text-green-500 mr-2">&#10003;</span> Basic Features
                     </li>
                 </ul>
-                <button class="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition-colors">Current Plan</button>
+                <button class="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition-colors" type="button">Current Plan</button>
             </div>
             <!-- Pro Plan -->
-            <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col border-2 border-blue-500">
+            <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col border-2 border-blue-500 opacity-75">
                 <h3 class="text-xl font-semibold mb-4">Pro</h3>
                 <p class="text-gray-500 mb-4">For growing hosts</p>
                 <p class="text-4xl font-bold mb-6">$29<span class="text-sm text-gray-500 font-normal">/mo</span></p>
@@ -34,10 +37,10 @@
                         <span class="text-green-500 mr-2">&#10003;</span> Premium Analytics
                     </li>
                 </ul>
-                <button class="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition-colors" onclick="checkout('pro')">Upgrade to Pro</button>
+                <button class="w-full bg-gray-400 text-white py-2 rounded-md cursor-not-allowed" type="button" disabled aria-disabled="true">Billing temporarily unavailable</button>
             </div>
             <!-- Premium Plan -->
-            <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col">
+            <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col opacity-75">
                 <h3 class="text-xl font-semibold mb-4">Premium</h3>
                 <p class="text-gray-500 mb-4">For power hosts</p>
                 <p class="text-4xl font-bold mb-6">$99<span class="text-sm text-gray-500 font-normal">/mo</span></p>
@@ -49,40 +52,9 @@
                         <span class="text-green-500 mr-2">&#10003;</span> Priority Support
                     </li>
                 </ul>
-                <button class="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition-colors" onclick="checkout('premium')">Upgrade to Premium</button>
+                <button class="w-full bg-gray-400 text-white py-2 rounded-md cursor-not-allowed" type="button" disabled aria-disabled="true">Billing temporarily unavailable</button>
             </div>
         </div>
     </div>
-
-    <script>
-        async function checkout(tier) {
-            try {
-                const response = await fetch('/api/subscriptions/checkout', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ tier: tier })
-                });
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.checkout_url) {
-                        window.location.href = data.checkout_url;
-                    } else {
-                        alert('Error initiating checkout');
-                    }
-                } else {
-                    if (response.status === 500 || response.status === 502) {
-                        alert('Payment provider unavailable. Billing may not be configured in this environment.');
-                    } else {
-                        alert('Error initiating checkout');
-                    }
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Error initiating checkout');
-            }
-        }
-    </script>
 </body>
 </html>

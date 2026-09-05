@@ -30,6 +30,8 @@ def get_current_user():
 
 @router.post("/create-checkout-session")
 async def create_checkout_session(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    from app.core.billing_gate import require_billing_enabled
+    require_billing_enabled()
     try:
         checkout_session = stripe.checkout.Session.create(
             payment_method_types=['card'],
