@@ -1,4 +1,5 @@
-from fastapi import FastAPI, Request, Response, Depends, Cookie
+import logging
+from fastapi import FastAPI, HTTPException, Request, Response, Depends, Cookie
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, PlainTextResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -10,6 +11,7 @@ from sqlalchemy.orm import Session
 from app.database import engine, Base, get_db
 from app.routers import user, waitlist, listings, ordinances, zoning, compliance, hosts, properties, notifications, dashboard_api, eligibility, florida_compliance, listing_optimizer, permit_generator, recommendations, subscriptions, documents, market_intelligence, pricing
 from app.integrations.ota_routes import router as ota_router
+# Phase A: OTA mocked — only mount when ENABLE_OPERATIONS_MODULE=true
 from app.api.routes import swarm, queue, properties as v1_properties
 from app.api.v1.onboarding.validate import router as validate_router
 from app.api.v1.compliance import router as compliance_v1_router
@@ -145,7 +147,10 @@ app.include_router(pricing.router)
 app.include_router(waitlist.router)
 app.include_router(documents.router, prefix="/api")
 app.include_router(market_intelligence.router)
-app.include_router(ota_router)
+if os.getenv('ENABLE_OPERATIONS_MODULE', 'false').lower() in ('1','true','yes'):
+    app.include_router(ota_router)
+else:
+    logging.info('OTA/operations router not mounted (ENABLE_OPERATIONS_MODULE=false)')
 app.include_router(swarm.router)
 app.include_router(queue.router)
 app.include_router(validate_router)
@@ -339,40 +344,59 @@ def read_checkout_mock(request: Request):
 from app.core.security import get_current_user
 from app.models.host import Host
 
+
+@app.get("/billing", include_in_schema=False)
+def read_billing(request: Request):
+    return templates.TemplateResponse(name="billing.html", context={"request": request})
+
 @app.get("/users/me")
 @app.get("/api/v1/users/me")
 def get_current_active_user_proxy(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    username = current_user.get("username")
-    host = db.query(Host).filter(Host.username == username).first()
+    """BUG-002: stable 200 JSON for Bearer auth — never 500 on missing subscription rel."""
+    username = current_user.get("username") or current_user.get("sub")
+    if not username:
+        raise HTTPException(status_code=401, detail="Could not validate credentials")
+
+    try:
+        host = db.query(Host).filter(Host.username == username).first()
+    except Exception:
+        logging.exception("users/me host lookup failed")
+        host = None
+
     if not host:
         return {
             "username": username or "Guest",
             "email": "",
             "full_name": username or "Guest",
             "tier": "Free Tier",
-            "has_active_subscription": False
+            "has_active_subscription": False,
         }
-    
+
     sub_tier = "Free Tier"
     has_active_sub = False
-    if host.subscription and host.subscription.status == "active":
-        has_active_sub = True
-        sub_tier = host.subscription.plan_details or "Compliance Essentials"
-        if isinstance(sub_tier, str):
-            if "compliance" in sub_tier.lower() or "essential" in sub_tier.lower() or "starter" in sub_tier.lower() or "growth" in sub_tier.lower() or "pro" in sub_tier.lower():
-                sub_tier = "Compliance Essentials"
+    try:
+        sub = getattr(host, "subscription", None)
+        if sub is not None and getattr(sub, "status", None) == "active":
+            has_active_sub = True
+            plan = getattr(sub, "plan_details", None) or "Compliance Essentials"
+            if isinstance(plan, str):
+                pl = plan.lower()
+                if any(k in pl for k in ("compliance", "essential", "starter", "growth", "pro", "basic")):
+                    sub_tier = "Compliance Essentials"
+                else:
+                    sub_tier = plan.capitalize() + " Host"
             else:
-                sub_tier = sub_tier.capitalize() + " Host"
-        else:
-            sub_tier = "Compliance Essentials"
-            
+                sub_tier = "Compliance Essentials"
+    except Exception:
+        logging.exception("users/me subscription read failed; defaulting Free Tier")
+
     return {
-        "id": host.id,
+        "id": str(host.id) if getattr(host, "id", None) is not None else None,
         "username": host.username,
-        "email": host.email,
+        "email": getattr(host, "email", "") or "",
         "full_name": host.username,
         "tier": sub_tier,
-        "has_active_subscription": has_active_sub
+        "has_active_subscription": has_active_sub,
     }
 
 if __name__ == "__main__":

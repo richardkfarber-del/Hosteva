@@ -140,12 +140,12 @@ def audit_compliance_document(file_stream, expected_metadata: dict) -> dict:
             if extracted_date:
                 break
 
-    # If no date was found in document, default to 1 year future expiration date for valid upload
-    if not extracted_date:
-        extracted_date = date(date.today().year + 1, 12, 31)
-
-    if not extracted_permit:
-        extracted_permit = "PERMIT-VERIFIED"
+    # TE-004 / BUG-008: never fabricate permit numbers or future expiry that bias APPROVED.
+    # Missing fields stay None; caller must fail-closed / mark needs_review.
+    import os as _os
+    if _os.getenv("ENVIRONMENT", "").lower() != "production":
+        # Dev-only explicit fixture marker — still not PERMIT-VERIFIED
+        pass
 
     return {
         "extracted_name": extracted_name,

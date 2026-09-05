@@ -47,38 +47,16 @@ class PropertiesResponseOut(BaseModel):
     meta: MetaOut
 
 async def aggregate_properties(db: Session, username: str) -> dict:
-    # A mock database aggregation query taking time
-    await asyncio.sleep(10.0)
-    
-    # Query could look like this: 
-    # db.query(Property).filter(Property.user_id == username).all()
-    # For now, returning mock data matching the UI contract from SPIKE-005
-    
+    """BUG-006: never return Ocean Drive mock properties. Empty until real DB path used."""
     return {
-        "properties": [
-            {
-                "id": "prop_9a8b7c6d",
-                "address": {
-                    "full_string": "123 Ocean Drive, Unit 4B, Miami Beach, FL 33139",
-                    "zip_code": "33139"
-                },
-                "property_type": "Condo",
-                "compliance_progress": {
-                    "completed": 4,
-                    "total": 7,
-                    "percentage": 57.1
-                },
-                "status_badge": "pending_compliance",
-                "compliance_id": "123-45-6789"  # this will be masked by field_serializer
-            }
-        ],
+        "properties": [],
         "meta": {
-            "total_properties": 1,
+            "total_properties": 0,
             "platform_adoption_metrics": {
                 "airbnb_linked": False,
-                "vrbo_linked": False
-            }
-        }
+                "vrbo_linked": False,
+            },
+        },
     }
 
 @router.get("", response_model=PropertiesResponseOut)
