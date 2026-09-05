@@ -211,9 +211,9 @@ tailwind.config = {
                 <span class="material-symbols-outlined">notifications</span>
                 <span class="absolute top-0 right-0 w-2 h-2 bg-gradient-to-br from-primary to-primary-container rounded-full animate-pulse"></span>
             </button>
-            <button class="text-gray-500 hover:text-primary transition-colors">
+            <a href="/settings" class="text-gray-500 hover:text-primary transition-colors" title="Account settings" id="header-settings-link">
                 <span class="material-symbols-outlined">settings</span>
-            </button>
+            </a>
             <button onclick="logout()" class="flex items-center gap-1.5 text-gray-500 hover:text-red-600 transition-colors" id="header-logout-btn" title="Log Out">
                 <span class="material-symbols-outlined">logout</span>
                 <span class="text-sm font-semibold hidden md:inline">Log Out</span>
