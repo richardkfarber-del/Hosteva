@@ -109,7 +109,11 @@ def create_property(
 ):
     from app.models.host import Host
     from app.models.property import Property
-    from app.routers.properties import fetch_real_property_image
+    from app.routers.properties import (
+        fetch_real_property_image,
+        geocode_address,
+        is_fallback_property_image,
+    )
     import json
     import uuid
 
@@ -118,9 +122,13 @@ def create_property(
     if not host:
         raise HTTPException(status_code=404, detail="Host profile not found")
         
-    # 2. Fetch real property image or use placeholder
+    # 2. Geocode then fetch image (retry normalized location before stock — BUG-PL-02)
     full_address = f"{property_data.address.address}, {property_data.address.city}, {property_data.address.state} {property_data.address.zip_code}".strip()
-    image_url = fetch_real_property_image(full_address)
+    try:
+        geocoded_for_image = geocode_address(full_address)
+    except Exception:
+        geocoded_for_image = None
+    image_url = fetch_real_property_image(full_address, geocoded=geocoded_for_image)
 
     # 3. Initialize compliance data details
     comp = property_data.compliance_data
@@ -280,5 +288,6 @@ def create_property(
         "property_type": db_property.property_type,
         "hoa_status": db_property.hoa_status,
         "zoning_status": db_property.zoning_status,
-        "image_url": db_property.image_url
+        "image_url": db_property.image_url,
+        "image_is_placeholder": is_fallback_property_image(db_property.image_url),
     }

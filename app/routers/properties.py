@@ -19,120 +19,179 @@ from app.core.security import get_current_user
 router = APIRouter(prefix="/api/properties", tags=["Properties"])
 
 
-def fetch_real_property_image(address: str) -> str:
-    import logging
-    logger = logging.getLogger("app.routers.properties")
-    logger.info(f"DEBUG: fetch_real_property_image starting for address: {address}")
-    print(f"DEBUG: fetch_real_property_image starting for address: {address}", flush=True)
-    
-    api_key = os.getenv("GOOGLE_MAPS_API_KEY") or os.getenv("Maps_API_KEY")
-    fallback_url = "/static/img/fallback_house.jpg"
-    if not api_key:
-        print("DEBUG: Google Street View Onboarding: GOOGLE_MAPS_API_KEY or Maps_API_KEY is not configured.", flush=True)
-        logger.warning("DEBUG: Google Street View Onboarding: GOOGLE_MAPS_API_KEY or Maps_API_KEY is not configured.")
-        return fallback_url
-    
-    print(f"DEBUG: Google Street View Onboarding: Fetching image for address: {address}", flush=True)
-    logger.info(f"DEBUG: Google Street View Onboarding: Fetching image for address: {address}")
-    
+FALLBACK_PROPERTY_IMAGE_URL = "/static/img/fallback_house.jpg"
+
+
+def is_fallback_property_image(url: str | None) -> bool:
+    """True when image_url is missing or the stock placeholder (not a real facade)."""
+    if not url:
+        return True
+    return "fallback_house.jpg" in url
+
+
+def _save_property_image_bytes(content: bytes) -> str:
     import uuid
-    # 1. Try Google Street View metadata first to check availability
+    img_uuid = str(uuid.uuid4())
+    os.makedirs("app/static/property_images", exist_ok=True)
+    file_path = f"app/static/property_images/{img_uuid}.jpg"
+    with open(file_path, "wb") as f:
+        f.write(content)
+    return f"/static/property_images/{img_uuid}.jpg"
+
+
+def _try_street_view_image(location: str, api_key: str, logger) -> str | None:
+    """Return saved /static/property_images/*.jpg if Street View metadata is OK for location."""
+    if not location:
+        return None
     try:
         metadata_url = "https://maps.googleapis.com/maps/api/streetview/metadata"
-        params = {
-            "location": address,
-            "key": api_key
-        }
+        params = {"location": location, "key": api_key}
         resp = requests.get(metadata_url, params=params, timeout=5)
-        status_code = resp.status_code
-        print(f"DEBUG: Image fetch status for {address}: {status_code}", flush=True)
-        logger.info(f"DEBUG: Image fetch status for {address}: {status_code}")
-        print(f"DEBUG: Google Street View API Metadata response text: {resp.text}", flush=True)
-        logger.info(f"DEBUG: Google Street View API Metadata response text: {resp.text}")
-        if resp.status_code == 200:
-            data = resp.json()
-            status = data.get("status")
-            print(f"DEBUG: Google Street View API Metadata status field: {status}", flush=True)
-            logger.info(f"DEBUG: Google Street View API Metadata status field: {status}")
-            if status == "OK":
-                escaped_addr = urllib.parse.quote(address)
-                street_view_url = f"https://maps.googleapis.com/maps/api/streetview?size=800x600&location={escaped_addr}&key={api_key}"
-                print("DEBUG: Google Street View Onboarding: Successfully resolved Street View metadata. Downloading image server-side...", flush=True)
-                logger.info("DEBUG: Google Street View Onboarding: Successfully resolved Street View metadata. Downloading image server-side...")
-                img_resp = requests.get(street_view_url, timeout=10)
-                if img_resp.status_code == 200:
-                    img_uuid = str(uuid.uuid4())
-                    os.makedirs("app/static/property_images", exist_ok=True)
-                    file_path = f"app/static/property_images/{img_uuid}.jpg"
-                    with open(file_path, "wb") as f:
-                        f.write(img_resp.content)
-                    print(f"DEBUG: Real image successfully saved to {file_path}", flush=True)
-                    logger.info(f"DEBUG: Real image successfully saved to {file_path}")
-                    print("DEBUG: Success! Image retrieved using New Key via Street View API.", flush=True)
-                    logger.info("DEBUG: Success! Image retrieved using New Key via Street View API.")
-                    return f"/static/property_images/{img_uuid}.jpg"
-    except Exception as e:
-        print(f"DEBUG: Error checking Street View metadata: {e}", flush=True)
-        logger.exception("DEBUG: Error checking Street View metadata")
-        
-    # 2. Try Google Places API to find a photo if Street View is not available
+        print(f"DEBUG: Street View metadata for {location!r}: HTTP {resp.status_code} body={resp.text}", flush=True)
+        logger.info("DEBUG: Street View metadata for %r: HTTP %s body=%s", location, resp.status_code, resp.text)
+        if resp.status_code != 200:
+            return None
+        data = resp.json()
+        status = data.get("status")
+        if status != "OK":
+            print(f"DEBUG: Street View metadata status={status} for {location!r} — not short-circuiting callers; retry paths may continue.", flush=True)
+            logger.info("DEBUG: Street View metadata status=%s for %r", status, location)
+            return None
+        img_resp = requests.get(
+            "https://maps.googleapis.com/maps/api/streetview",
+            params={"size": "800x600", "location": location, "key": api_key},
+            timeout=10,
+        )
+        if img_resp.status_code == 200 and img_resp.content:
+            saved = _save_property_image_bytes(img_resp.content)
+            print(f"DEBUG: Street View image saved to {saved} for location={location!r}", flush=True)
+            logger.info("DEBUG: Street View image saved to %s for location=%r", saved, location)
+            return saved
+    except Exception:
+        print(f"DEBUG: Error checking Street View for {location!r}", flush=True)
+        logger.exception("DEBUG: Error checking Street View for %r", location)
+    return None
+
+
+def _try_places_photo(query: str, api_key: str, logger) -> str | None:
+    """Return saved Places photo path if Find Place yields a photo for query."""
+    if not query:
+        return None
     try:
         find_place_url = "https://maps.googleapis.com/maps/api/place/findplacefromtext/json"
         params = {
-            "input": address,
+            "input": query,
             "inputtype": "textquery",
             "fields": "photos",
-            "key": api_key
+            "key": api_key,
         }
         resp = requests.get(find_place_url, params=params, timeout=5)
-        print(f"DEBUG: Google Places API Find Place response code: {resp.status_code}", flush=True)
-        logger.info(f"DEBUG: Google Places API Find Place response code: {resp.status_code}")
-        print(f"DEBUG: Google Places API Find Place response text: {resp.text}", flush=True)
-        logger.info(f"DEBUG: Google Places API Find Place response text: {resp.text}")
-        if resp.status_code == 200:
-            data = resp.json()
-            candidates = data.get("candidates", [])
-            print(f"DEBUG: Google Places API Find Place candidates count: {len(candidates)}", flush=True)
-            logger.info(f"DEBUG: Google Places API Find Place candidates count: {len(candidates)}")
-            if candidates:
-                photos = candidates[0].get("photos", [])
-                print(f"DEBUG: Google Places API Find Place photos count: {len(photos)}", flush=True)
-                logger.info(f"DEBUG: Google Places API Find Place photos count: {len(photos)}")
-                if photos:
-                    photo_ref = photos[0].get("photo_reference")
-                    places_url = f"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference={photo_ref}&key={api_key}"
-                    print("DEBUG: Google Street View Onboarding: Successfully resolved Places photo. Downloading image server-side...", flush=True)
-                    logger.info("DEBUG: Google Street View Onboarding: Successfully resolved Places photo. Downloading image server-side...")
-                    img_resp = requests.get(places_url, timeout=10)
-                    if img_resp.status_code == 200:
-                        img_uuid = str(uuid.uuid4())
-                        os.makedirs("app/static/property_images", exist_ok=True)
-                        file_path = f"app/static/property_images/{img_uuid}.jpg"
-                        with open(file_path, "wb") as f:
-                            f.write(img_resp.content)
-                        print(f"DEBUG: Real image successfully saved to {file_path}", flush=True)
-                        logger.info(f"DEBUG: Real image successfully saved to {file_path}")
-                        print("DEBUG: Success! Image retrieved using New Key via Places API.", flush=True)
-                        logger.info("DEBUG: Success! Image retrieved using New Key via Places API.")
-                        return f"/static/property_images/{img_uuid}.jpg"
-    except Exception as e:
-        print(f"DEBUG: Error checking Places API photo: {e}", flush=True)
-        logger.exception("DEBUG: Error checking Places API photo")
-        
-    print("DEBUG: Google Street View Onboarding: No real image found. Falling back to default property image.", flush=True)
-    logger.info("DEBUG: Google Street View Onboarding: No real image found. Falling back to default property image.")
-    return fallback_url
+        print(f"DEBUG: Places Find Place for {query!r}: HTTP {resp.status_code} body={resp.text}", flush=True)
+        logger.info("DEBUG: Places Find Place for %r: HTTP %s body=%s", query, resp.status_code, resp.text)
+        if resp.status_code != 200:
+            return None
+        candidates = resp.json().get("candidates", [])
+        if not candidates:
+            return None
+        photos = candidates[0].get("photos") or []
+        if not photos:
+            return None
+        photo_ref = photos[0].get("photo_reference")
+        if not photo_ref:
+            return None
+        img_resp = requests.get(
+            "https://maps.googleapis.com/maps/api/place/photo",
+            params={"maxwidth": 800, "photo_reference": photo_ref, "key": api_key},
+            timeout=10,
+        )
+        if img_resp.status_code == 200 and img_resp.content:
+            saved = _save_property_image_bytes(img_resp.content)
+            print(f"DEBUG: Places photo saved to {saved} for query={query!r}", flush=True)
+            logger.info("DEBUG: Places photo saved to %s for query=%r", saved, query)
+            return saved
+    except Exception:
+        print(f"DEBUG: Error checking Places photo for {query!r}", flush=True)
+        logger.exception("DEBUG: Error checking Places photo for %r", query)
+    return None
+
+
+def fetch_real_property_image(address: str, geocoded: dict | None = None) -> str:
+    """Prefer Street View / Places photo; geocode-normalize and retry before stock fallback.
+
+    BUG-PL-02: a metadata miss on the raw address must not silent-stock without
+    retrying geocode-normalized formatted_address and lat,lng.
+    """
+    import logging
+    logger = logging.getLogger("app.routers.properties")
+    logger.info("DEBUG: fetch_real_property_image starting for address: %s", address)
+    print(f"DEBUG: fetch_real_property_image starting for address: {address}", flush=True)
+
+    api_key = os.getenv("GOOGLE_MAPS_API_KEY") or os.getenv("Maps_API_KEY")
+    if not api_key:
+        print("DEBUG: Google Street View Onboarding: GOOGLE_MAPS_API_KEY or Maps_API_KEY is not configured.", flush=True)
+        logger.warning("DEBUG: Google Street View Onboarding: GOOGLE_MAPS_API_KEY or Maps_API_KEY is not configured.")
+        return FALLBACK_PROPERTY_IMAGE_URL
+
+    # 1) Raw address — Street View then Places
+    saved = _try_street_view_image(address, api_key, logger)
+    if saved:
+        return saved
+    saved = _try_places_photo(address, api_key, logger)
+    if saved:
+        return saved
+
+    # 2) Geocode-normalized retry (BUG-PL-02) — do not short-circuit to stock on first miss
+    geo = geocoded if isinstance(geocoded, dict) else None
+    if not geo or not (geo.get("formatted_address") or geo.get("lat") is not None):
+        geo = geocode_address(address)
+
+    formatted = (geo or {}).get("formatted_address") or ""
+    lat = (geo or {}).get("lat")
+    lng = (geo or {}).get("lng")
+    latlng = f"{lat},{lng}" if lat is not None and lng is not None else ""
+
+    tried = {address.strip().lower()} if address else set()
+    for loc in (formatted, latlng):
+        if not loc:
+            continue
+        key = loc.strip().lower()
+        if key in tried:
+            continue
+        tried.add(key)
+        print(f"DEBUG: Street View retry with geocode-normalized location={loc!r}", flush=True)
+        logger.info("DEBUG: Street View retry with geocode-normalized location=%r", loc)
+        saved = _try_street_view_image(loc, api_key, logger)
+        if saved:
+            return saved
+
+    if formatted and formatted.strip().lower() not in {address.strip().lower()}:
+        saved = _try_places_photo(formatted, api_key, logger)
+        if saved:
+            return saved
+
+    print("DEBUG: Google Street View Onboarding: No real image found after geocode retry. Falling back to labeled placeholder.", flush=True)
+    logger.info("DEBUG: Google Street View Onboarding: No real image found after geocode retry. Falling back to labeled placeholder.")
+    return FALLBACK_PROPERTY_IMAGE_URL
 
 
 def geocode_address(address: str) -> dict:
     """
     Geocodes an address to identify locality (City), administrative_area_level_2 (County),
-    and administrative_area_level_1 (State), and raw address components.
+    and administrative_area_level_1 (State), plus formatted_address / lat / lng for image retry.
     """
+    empty = {
+        "city": "",
+        "county": "",
+        "state": "",
+        "address_components": [],
+        "formatted_address": "",
+        "lat": None,
+        "lng": None,
+    }
     api_key = os.getenv("GOOGLE_MAPS_API_KEY") or os.getenv("Maps_API_KEY")
     if not api_key:
         print("Geocoding address WARNING: GOOGLE_MAPS_API_KEY or Maps_API_KEY is not configured.")
-        return {"city": "", "county": "", "state": "", "address_components": []}
+        return empty
     try:
         url = "https://maps.googleapis.com/maps/api/geocode/json"
         params = {"address": address, "key": api_key}
@@ -142,7 +201,8 @@ def geocode_address(address: str) -> dict:
             data = resp.json()
             print(f"Geocoding API status: {data.get('status')}")
             if data.get("status") == "OK" and data.get("results"):
-                components = data["results"][0].get("address_components", [])
+                result0 = data["results"][0]
+                components = result0.get("address_components", [])
                 city = ""
                 county = ""
                 state = ""
@@ -154,11 +214,26 @@ def geocode_address(address: str) -> dict:
                         county = c.get("long_name", "")
                     elif "administrative_area_level_1" in types:
                         state = c.get("short_name", "")
-                print(f"Geocoded result: city='{city}', county='{county}', state='{state}'")
-                return {"city": city, "county": county, "state": state, "address_components": components}
+                loc = (result0.get("geometry") or {}).get("location") or {}
+                formatted = result0.get("formatted_address") or ""
+                lat = loc.get("lat")
+                lng = loc.get("lng")
+                print(
+                    f"Geocoded result: city='{city}', county='{county}', state='{state}', "
+                    f"formatted={formatted!r}, lat={lat}, lng={lng}"
+                )
+                return {
+                    "city": city,
+                    "county": county,
+                    "state": state,
+                    "address_components": components,
+                    "formatted_address": formatted,
+                    "lat": lat,
+                    "lng": lng,
+                }
     except Exception as e:
         print(f"Error geocoding address: {e}")
-    return {"city": "", "county": "", "state": "", "address_components": []}
+    return empty
 
 
 class PropertyCreate(BaseModel):
@@ -273,6 +348,7 @@ def get_properties(
             "baths": 2,
             "price": 149 if p.property_type and p.property_type.lower() == "condo" else 249,
             "image_url": p.image_url or "",
+            "image_is_placeholder": is_fallback_property_image(p.image_url),
             "required_permits": json.loads(p.required_permits) if p.required_permits else [],
             "local_restrictions": json.loads(p.local_restrictions) if p.local_restrictions else {},
             "lat": 34.0901,
@@ -295,12 +371,10 @@ def create_property(
     if not host:
         raise HTTPException(status_code=404, detail="Host profile not found")
         
-    # Fetch real property imagery
+    # Jurisdiction-Aware Geocoding first so Street View can retry normalized location (BUG-PL-02)
     full_address = f"{property_data.address}, {property_data.city}, {property_data.state} {property_data.zip_code}".strip()
-    image_url = fetch_real_property_image(full_address)
-
-    # Jurisdiction-Aware Geocoding (extract City and County)
     geocoded = geocode_address(full_address)
+    image_url = fetch_real_property_image(full_address, geocoded=geocoded)
     city_name = geocoded.get("city") or property_data.city
     county_name = geocoded.get("county") or (f"{city_name} County" if city_name else "Unknown County")
     state_name = geocoded.get("state") or property_data.state
@@ -446,6 +520,7 @@ def create_property(
         "baths": 2,
         "price": 249,
         "image_url": db_property.image_url or "",
+        "image_is_placeholder": is_fallback_property_image(db_property.image_url),
         "required_permits": json.loads(db_property.required_permits) if db_property.required_permits else [],
         "local_restrictions": json.loads(db_property.local_restrictions) if db_property.local_restrictions else {}
     }
