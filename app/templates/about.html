@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Hosteva | About — Florida STR compliance research</title>
+    <meta name="description" content="About Hosteva: Florida-first STR compliance research and checklists with .gov citations. Built for checklist depth vs HostReady/PermitGuard-class tools — not a PMS."/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        "surface": "#f8f9ff",
+                        "surface-container-low": "#eff4ff",
+                        "surface-container-lowest": "#ffffff",
+                        "primary": "#006576",
+                        "primary-container": "#1c7f92",
+                        "on-surface": "#001c37",
+                        "on-surface-variant": "#3e484b",
+                        "outline-variant": "#bec8cc",
+                        "on-primary": "#ffffff"
+                    },
+                    fontFamily: {
+                        "headline": ["Manrope", "sans-serif"],
+                        "body": ["Inter", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-surface text-on-surface font-body antialiased min-h-screen flex flex-col">
+<nav class="sticky top-0 w-full z-50 bg-surface/90 backdrop-blur-xl border-b border-outline-variant/20">
+    <div class="flex justify-between items-center px-6 py-4 max-w-7xl mx-auto">
+        <a href="/" class="flex items-center gap-3">
+            <img alt="Hosteva Logo" class="h-9 w-auto max-w-full object-contain" src="/static/img/CleanLogo.png?v=20260522"/>
+        </a>
+        <div class="flex items-center gap-6">
+            <a class="text-on-surface-variant hover:text-primary transition-colors font-medium text-sm" href="/features">Features</a>
+            <a class="text-primary font-semibold text-sm" href="/about">About</a>
+            <a class="text-on-surface-variant hover:text-primary transition-colors font-medium text-sm" href="/wizard">Compliance</a>
+            <a class="text-on-surface-variant hover:text-primary transition-colors font-medium text-sm" href="/pricing">Pricing</a>
+            <a href="/login" class="text-on-surface-variant hover:text-primary transition-colors font-medium text-sm">Sign In</a>
+            <a href="/register" class="bg-primary text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-primary-container transition-all">Get Started</a>
+        </div>
+    </div>
+</nav>
+
+<main class="flex-grow py-16 px-6">
+    <div class="max-w-3xl mx-auto bg-surface-container-lowest p-8 md:p-12 rounded-2xl shadow-sm border border-outline-variant/15 space-y-8">
+        <div>
+            <h1 class="font-headline text-4xl font-extrabold text-on-surface mb-3">About Hosteva</h1>
+            <p class="text-on-surface-variant leading-relaxed">
+                Hosteva helps Florida short-term rental hosts and property managers research zoning risk and follow a municipal compliance checklist.
+                We are a <strong class="text-on-surface">compliance research</strong> product — not a law firm, and not a property-management system.
+            </p>
+        </div>
+        <div>
+            <h2 class="font-headline text-xl font-bold text-on-surface mb-2">Our positioning</h2>
+            <p class="text-on-surface-variant leading-relaxed">
+                Phase I focuses on Florida checklist depth and .gov citations for corridors such as Kissimmee, Panama City Beach, and Miami Beach.
+                When hosts compare tools, we sit with HostReady/PermitGuard-class compliance checklist products — not Guesty/Hostaway-class PMS or multi-channel ops suites.
+                Historical “HostReady Bubble” naming from early internal drafts is not used in Hosteva customer materials.
+            </p>
+        </div>
+        <div>
+            <h2 class="font-headline text-xl font-bold text-on-surface mb-2">What we will not claim</h2>
+            <ul class="list-disc pl-6 space-y-2 text-on-surface-variant text-sm">
+                <li>We do not market Hosteva as an “operations engine” or live multi-channel hub in Phase I.</li>
+                <li>We do not invent traffic-light zoning results for uncovered localities — we fail closed with Under Review.</li>
+                <li>We do not provide legal advice; hosts own final municipal filings.</li>
+            </ul>
+        </div>
+        <div class="flex flex-wrap gap-4 pt-2">
+            <a href="/features" class="bg-primary text-on-primary px-6 py-3 rounded-xl font-semibold hover:bg-primary-container transition-all">See Features</a>
+            <a href="/wizard" class="border border-outline-variant/40 px-6 py-3 rounded-xl font-semibold text-primary hover:bg-surface transition-all">Check an address</a>
+        </div>
+    </div>
+</main>
+
+<footer class="border-t border-outline-variant/20 py-8 px-6 text-center text-xs text-on-surface-variant">
+    <p class="mb-2">Hosteva is an automated compliance research tool. Hosteva does not provide legal advice; hosts are responsible for final municipal filings.</p>
+    <p><a class="underline" href="/privacy">Privacy</a> · <a class="underline" href="/terms">Terms</a> · <a class="underline" href="/">Home</a></p>
+</footer>
+</body>
+</html>

@@ -74,13 +74,39 @@ def autocomplete_address(input: str, sessiontoken: str = None):
 
 
 def _lookup_municipal(db: Session, city: str, county: str, state_code: str):
+    """Align with compliance municipal aliasing (City of X / contains city)."""
     municipal_code = None
+    state_ok = ((MunicipalCode.state.ilike(state_code)) | (MunicipalCode.state.is_(None)))
+
     if city:
         municipal_code = db.query(MunicipalCode).filter(
             MunicipalCode.municipality_name.ilike(city),
             MunicipalCode.jurisdiction_type.ilike("City"),
-            ((MunicipalCode.state.ilike(state_code)) | (MunicipalCode.state.is_(None))),
+            state_ok,
         ).first()
+
+        # Packs may store "City of Miami Beach" while geocode returns "Miami Beach"
+        if not municipal_code:
+            municipal_code = db.query(MunicipalCode).filter(
+                MunicipalCode.municipality_name.ilike(f"City of {city}"),
+                MunicipalCode.jurisdiction_type.ilike("City"),
+                state_ok,
+            ).first()
+
+        if not municipal_code:
+            municipal_code = db.query(MunicipalCode).filter(
+                MunicipalCode.municipality_name.ilike(f"%{city}%"),
+                MunicipalCode.jurisdiction_type.ilike("City"),
+                state_ok,
+            ).first()
+
+        # Name matches City of X (or contains city) without requiring jurisdiction_type=City
+        if not municipal_code:
+            municipal_code = db.query(MunicipalCode).filter(
+                (MunicipalCode.municipality_name.ilike(f"City of {city}"))
+                | (MunicipalCode.municipality_name.ilike(f"%City of%{city}%")),
+                state_ok,
+            ).first()
 
     if not municipal_code and county:
         clean_county = county.replace(" County", "").strip()
@@ -88,7 +114,7 @@ def _lookup_municipal(db: Session, city: str, county: str, state_code: str):
             (MunicipalCode.municipality_name.ilike(county))
             | (MunicipalCode.municipality_name.ilike(clean_county)),
             MunicipalCode.jurisdiction_type.ilike("County"),
-            ((MunicipalCode.state.ilike(state_code)) | (MunicipalCode.state.is_(None))),
+            state_ok,
         ).first()
 
     return municipal_code
