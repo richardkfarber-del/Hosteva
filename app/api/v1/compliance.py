@@ -218,20 +218,28 @@ def get_checklist_items(property_id: str, db: Session = Depends(get_db), current
         raise HTTPException(status_code=403, detail="Free tier accounts cannot view the full compliance task list. Please upgrade to Essentials or higher.")
         
     items = db.query(PropertyCompliance).filter(PropertyCompliance.property_id == property_id).all()
-    return [
-        {
+    # Prefetch municipal source URLs for checklist citation (US-003)
+    mc_ids = {item.municipal_code_id for item in items if item.municipal_code_id}
+    mc_by_id = {}
+    if mc_ids:
+        for mc in db.query(MunicipalCode).filter(MunicipalCode.id.in_(list(mc_ids))).all():
+            mc_by_id[mc.id] = mc
+    result = []
+    for item in items:
+        mc = mc_by_id.get(item.municipal_code_id)
+        result.append({
             "id": str(item.id),
             "property_id": item.property_id,
-            "municipal_code_id": str(item.municipal_code_id),
+            "municipal_code_id": str(item.municipal_code_id) if item.municipal_code_id else None,
             "is_compliant": item.is_compliant,
             "status": item.status or "PENDING",
             "rejection_notes": item.rejection_notes,
             "violation_notes": item.violation_notes,
             "valid_period": str(item.valid_period),
-            "task_name": item.task_name
-        }
-        for item in items
-    ]
+            "task_name": item.task_name,
+            "source_url": (mc.source_url if mc and mc.source_url else None),
+        })
+    return result
 
 @router.get("", response_model=AddressComplianceResponse)
 @router.get("/address", response_model=AddressComplianceResponse)
@@ -272,6 +280,18 @@ def get_compliance_by_address(address: str, db: Session = Depends(get_db)):
             MunicipalCode.jurisdiction_type.ilike("City"),
             ((MunicipalCode.state.ilike(state_code)) | (MunicipalCode.state.is_(None)))
         ).first()
+        # Alias: packs may store "City of Miami Beach" while geocode returns "Miami Beach"
+        if not municipal_code:
+            municipal_code = db.query(MunicipalCode).filter(
+                MunicipalCode.municipality_name.ilike(f"City of {city}"),
+                MunicipalCode.jurisdiction_type.ilike("City"),
+                ((MunicipalCode.state.ilike(state_code)) | (MunicipalCode.state.is_(None)))
+            ).first()
+        if not municipal_code:
+            municipal_code = db.query(MunicipalCode).filter(
+                MunicipalCode.municipality_name.ilike(city),
+                ((MunicipalCode.state.ilike(state_code)) | (MunicipalCode.state.is_(None)))
+            ).first()
         
     if not municipal_code and county:
         clean_county = county.replace(" County", "").strip()
@@ -313,17 +333,20 @@ def get_compliance_by_address(address: str, db: Session = Depends(get_db)):
         if municipal_code.str_prohibited or not municipal_code.is_allowed:
             is_compliant = False
             
+        muni_source = municipal_code.source_url or None
         if municipal_code.requires_permit:
             checklist.append({
                 "task_name": municipal_code.permit_name or f"Permit Required ({municipal_code.ordinance_number})",
                 "status": "PENDING",
-                "is_compliant": False
+                "is_compliant": False,
+                "source_url": muni_source,
             })
         if municipal_code.tax_rate is not None:
             checklist.append({
                 "task_name": f"Tax Registration ({municipal_code.tax_rate}% TDT)",
                 "status": "PENDING",
-                "is_compliant": False
+                "is_compliant": False,
+                "source_url": muni_source,
             })
             
     if hoa_rule:
@@ -333,21 +356,28 @@ def get_compliance_by_address(address: str, db: Session = Depends(get_db)):
         checklist.append({
             "task_name": f"HOA Registration: {hoa_rule.hoa_name}",
             "status": "PENDING",
-            "is_compliant": False
+            "is_compliant": False,
+            "source_url": hoa_rule.official_website or None,
         })
         
     if not city and not county and not state:
         raise HTTPException(status_code=404, detail="No compliance rules found for this address location.")
 
-    # Check if jurisdiction is under review or fallback
+    # Check if jurisdiction is under review or fallback (US-004: never Compliant/GREEN here)
     is_under_review = False
     if not municipal_code or (municipal_code and municipal_code.municipality_name == "State of Florida" and city and city.lower() != "florida"):
         is_under_review = True
+
+    if is_under_review:
+        is_compliant = False
+
+    status_label = "UNDER_REVIEW" if is_under_review else ("RESTRICTED" if not is_compliant else "ALLOWED_WITH_CHECKLIST")
 
     return AddressComplianceResponse(
         address=address,
         is_compliant=is_compliant,
         is_under_review=is_under_review,
+        status=status_label,
         municipal_code=municipal_code,
         hoa_rule=hoa_rule,
         checklist=checklist
@@ -422,7 +452,8 @@ def get_compliance_task(task_id: str, db: Session = Depends(get_db)):
         "is_compliant": task.is_compliant,
         "uploaded_file_url": task.uploaded_file_url,
         "ocr_metadata_json": task.ocr_metadata_json,
-        "verification_notes": task.verification_notes
+        "verification_notes": task.verification_notes,
+        "source_url": (m_code.source_url if m_code and m_code.source_url else None),
     }
 
 

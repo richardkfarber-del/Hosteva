@@ -96,7 +96,7 @@
         </form>
 
         <div class="mt-6 text-center border-t border-slate-100 pt-4">
-            <p class="text-sm text-slate-600">Already have an account? <a href="/login" class="font-bold text-primary hover:underline">Sign in</a></p>
+            <p class="text-sm text-slate-600">Already have an account? <a id="signin-link" href="/login" class="font-bold text-primary hover:underline">Sign in</a></p>
         </div>
     </div>
 
@@ -151,6 +151,9 @@
 
                         const urlParams = new URLSearchParams(window.location.search);
                         const addressParam = urlParams.get('address') || sessionStorage.getItem('pending_property_address') || '';
+                        if (addressParam) {
+                            sessionStorage.setItem('pending_property_address', addressParam);
+                        }
                         const planParam = urlParams.get('plan') || '';
 
                         let targetUrl = '/dashboard';
@@ -163,7 +166,12 @@
                         }
                         window.location.href = targetUrl;
                     } else {
-                        window.location.href = '/login';
+                        const failParams = new URLSearchParams(window.location.search);
+                        const addr = failParams.get('address') || sessionStorage.getItem('pending_property_address') || '';
+                        const nextDash = addr
+                            ? `/dashboard?initial_address=${encodeURIComponent(addr)}`
+                            : '/dashboard';
+                        window.location.href = `/login?next=${encodeURIComponent(nextDash)}${addr ? `&address=${encodeURIComponent(addr)}` : ''}`;
                     }
                 } else {
                     errorMsg.textContent = data.detail || 'Registration failed. Please check details.';
@@ -177,6 +185,31 @@
                 spinner.classList.add('hidden');
             }
         });
+    </script>
+
+    <script>
+    // US-002: retain wizard/landing address through register
+    (function initPendingPropertyBanner() {
+        const urlParams = new URLSearchParams(window.location.search);
+        let addressParam = urlParams.get('address') || sessionStorage.getItem('pending_property_address') || '';
+        if (urlParams.get('address')) {
+            sessionStorage.setItem('pending_property_address', urlParams.get('address'));
+            addressParam = urlParams.get('address');
+        }
+        if (addressParam) {
+            const banner = document.getElementById('property-pending-banner');
+            const textEl = document.getElementById('pending-address-text');
+            if (banner && textEl) {
+                textEl.textContent = addressParam;
+                banner.classList.remove('hidden');
+            }
+            const signin = document.getElementById('signin-link');
+            if (signin) {
+                const nextDash = `/dashboard?initial_address=${encodeURIComponent(addressParam)}`;
+                signin.href = `/login?next=${encodeURIComponent(nextDash)}&address=${encodeURIComponent(addressParam)}`;
+            }
+        }
+    })();
     </script>
 
     <script>

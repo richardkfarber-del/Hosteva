@@ -235,15 +235,29 @@
                     const q = new URLSearchParams(window.location.search);
                     let next = q.get('next');
                     const checkout = q.get('checkout');
+                    const addressParam = q.get('address') || sessionStorage.getItem('pending_property_address') || '';
+                    if (addressParam) {
+                        sessionStorage.setItem('pending_property_address', addressParam);
+                    }
                     // Only allow relative same-site paths
                     if (next && next.startsWith('/') && !next.startsWith('//')) {
                         if (checkout) {
                             const sep = next.includes('?') ? '&' : '?';
                             next = `${next}${sep}checkout=${encodeURIComponent(checkout)}`;
                         }
+                        // US-002: if next is bare /dashboard and we still have an address, attach it
+                        if (addressParam && (next === '/dashboard' || next.startsWith('/dashboard?'))) {
+                            if (!next.includes('initial_address=')) {
+                                const sep = next.includes('?') ? '&' : '?';
+                                next = `${next}${sep}initial_address=${encodeURIComponent(addressParam)}`;
+                            }
+                        }
                         window.location.href = next;
-                    } else if (checkout) {
-                        window.location.href = `/dashboard?checkout=${encodeURIComponent(checkout)}`;
+                    } else if (checkout || addressParam) {
+                        const parts = [];
+                        if (addressParam) parts.push(`initial_address=${encodeURIComponent(addressParam)}`);
+                        if (checkout) parts.push(`checkout=${encodeURIComponent(checkout)}`);
+                        window.location.href = '/dashboard' + (parts.length ? '?' + parts.join('&') : '');
                     } else {
                         window.location.href = '/dashboard';
                     }

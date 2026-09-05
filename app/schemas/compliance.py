@@ -112,11 +112,13 @@ class AddressComplianceChecklist(BaseModel):
     task_name: str
     status: str
     is_compliant: bool
+    source_url: Optional[str] = None
 
 class AddressComplianceResponse(BaseModel):
     address: str
     is_compliant: bool
     is_under_review: bool = False
+    status: Optional[str] = None
     municipal_code: Optional[MunicipalRuleResponse] = None
     hoa_rule: Optional[HOARuleResponse] = None
     checklist: List[AddressComplianceChecklist] = []

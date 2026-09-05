@@ -179,7 +179,10 @@ def test_get_compliance_by_address_not_found(mock_geocode):
     assert response.status_code == 200
     data = response.json()
     assert data["address"] == "999 Unknown St"
-    assert data["is_compliant"] is True  # default compliant if no restrictive rules found
+    # US-004: empty curated rules => Under Review, never is_compliant true
+    assert data["is_under_review"] is True
+    assert data["is_compliant"] is False
+    assert data.get("status") == "UNDER_REVIEW"
     assert data["municipal_code"] is None
     assert data["hoa_rule"] is None
     assert data["checklist"] == []

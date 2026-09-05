@@ -1363,46 +1363,84 @@ Processing Time: ${data.estimated_processing_time}`);
                 window.allProperties = properties;
                 dynamicContent.innerHTML = '';
                 
-                if (properties.length === 0) {
-                    const urlParams = new URLSearchParams(window.location.search);
-                    const initialAddress = urlParams.get('initial_address') || sessionStorage.getItem('pending_property_address');
-                    
-                    if (initialAddress) {
-                        console.log("Auto-provisioning initial property:", initialAddress);
-                        dynamicContent.innerHTML = `
-                            <div class="bg-surface-container-lowest p-12 rounded-2xl shadow-sm border border-outline-variant/20 text-center max-w-lg mx-auto space-y-4">
-                                <div class="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
-                                <h3 class="font-headline font-bold text-xl text-on-surface">Provisioning Property & Compliance Rules</h3>
-                                <p class="text-xs text-on-surface-variant">Connecting ${DOMPurify.sanitize(decodeURIComponent(initialAddress))} to your Hosteva dashboard...</p>
+                // US-002: never silently drop wizard/register address — explicit confirm
+                const urlParamsEarly = new URLSearchParams(window.location.search);
+                let pendingAddress = urlParamsEarly.get('initial_address') || sessionStorage.getItem('pending_property_address') || '';
+                if (pendingAddress) {
+                    try { pendingAddress = decodeURIComponent(pendingAddress); } catch (_) {}
+                    sessionStorage.setItem('pending_property_address', pendingAddress);
+                }
+                const alreadyHasPending = pendingAddress && properties.some(p =>
+                    (p.address || '').toLowerCase().includes(pendingAddress.toLowerCase().slice(0, 24))
+                );
+                const dismissedPending = sessionStorage.getItem('pending_property_dismissed') === pendingAddress
+                    && !urlParamsEarly.get('initial_address');
+                if (pendingAddress && !alreadyHasPending && !dismissedPending) {
+                    const safeAddr = (typeof DOMPurify !== 'undefined')
+                        ? DOMPurify.sanitize(pendingAddress)
+                        : pendingAddress.replace(/[<>&"']/g, '');
+                    dynamicContent.innerHTML = `
+                        <div id="pending-property-confirm" class="bg-surface-container-lowest p-10 rounded-2xl shadow-sm border border-primary/20 text-center max-w-lg mx-auto space-y-5">
+                            <div class="w-14 h-14 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto">
+                                <span class="material-symbols-outlined text-3xl">home_pin</span>
                             </div>
-                        `;
-
+                            <h3 class="font-headline font-bold text-xl text-on-surface">Add this property?</h3>
+                            <p class="text-sm text-on-surface-variant">You audited this address before registering. Confirm to save it on your dashboard — it will not be dropped.</p>
+                            <p class="text-sm font-semibold text-on-surface bg-surface-container-low rounded-xl px-4 py-3 break-words">${safeAddr}</p>
+                            <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                                <button id="confirm-add-pending-property" class="hero-gradient text-white font-bold px-6 py-3 rounded-xl shadow-md active:scale-95 transition-all">Yes, add property</button>
+                                <button id="dismiss-pending-property" class="px-6 py-3 rounded-xl border border-outline-variant/40 text-on-surface-variant font-semibold hover:bg-surface-container-low transition-all">Not now</button>
+                            </div>
+                            <p id="pending-property-error" class="hidden text-xs text-error font-medium"></p>
+                        </div>
+                    `;
+                    // If user already has other properties, still show confirm above empty/list — append list below after decision.
+                    document.getElementById('confirm-add-pending-property').addEventListener('click', async () => {
+                        const btn = document.getElementById('confirm-add-pending-property');
+                        const errEl = document.getElementById('pending-property-error');
+                        btn.disabled = true;
+                        btn.textContent = 'Adding…';
                         try {
                             const createResp = await fetch('/api/properties/', {
                                 method: 'POST',
-                                headers: {
-                                    ...headers,
-                                    'Content-Type': 'application/json'
-                                },
+                                headers: { ...headers, 'Content-Type': 'application/json' },
                                 body: JSON.stringify({
-                                    address: decodeURIComponent(initialAddress),
+                                    address: pendingAddress,
                                     city: "",
                                     state: "FL",
                                     zip_code: "",
                                     property_type: "Single Family"
                                 })
                             });
-
                             if (createResp.ok) {
                                 sessionStorage.removeItem('pending_property_address');
+                                sessionStorage.removeItem('pending_property_dismissed');
                                 window.history.replaceState({}, document.title, window.location.pathname);
                                 return await fetchProperties();
                             }
+                            const detail = await createResp.json().catch(() => ({}));
+                            errEl.textContent = detail.detail || 'Could not add property. Try again or use Add Property.';
+                            errEl.classList.remove('hidden');
+                            btn.disabled = false;
+                            btn.textContent = 'Yes, add property';
                         } catch (createErr) {
-                            console.error("Auto-provisioning property failed:", createErr);
+                            console.error('Pending property create failed:', createErr);
+                            errEl.textContent = 'Network error adding property. Address is still retained — try again.';
+                            errEl.classList.remove('hidden');
+                            btn.disabled = false;
+                            btn.textContent = 'Yes, add property';
                         }
-                    }
+                    });
+                    document.getElementById('dismiss-pending-property').addEventListener('click', () => {
+                        // Keep pending_property_address so it is not silently dropped; clear URL only
+                        sessionStorage.setItem('pending_property_dismissed', pendingAddress);
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                        fetchProperties();
+                    });
+                    return;
+                }
 
+                if (properties.length === 0) {
                     const template = document.getElementById('layout-empty');
                     const clone = template.content.cloneNode(true);
                     
@@ -1584,6 +1622,9 @@ Processing Time: ${data.estimated_processing_time}`);
                                 taskStatus = 'Audit Pending';
                             }
                             
+                            const sourceHtml = item.source_url
+                                ? `<a href="${item.source_url}" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline text-xs font-semibold inline-flex items-center gap-0.5 mt-0.5">Official source <span class="material-symbols-outlined text-[12px]">open_in_new</span></a>`
+                                : `<span class="text-[11px] text-on-surface-variant/80 italic">Source pending</span>`;
                             alertsList.innerHTML += `
                                 <li class="flex gap-4 items-start group">
                                     <div class="mt-1 w-8 h-8 rounded-full ${bgColor} flex items-center justify-center shrink-0">
@@ -1592,6 +1633,7 @@ Processing Time: ${data.estimated_processing_time}`);
                                     <div>
                                         <p class="text-sm font-semibold text-on-surface">${item.task_name || item.violation_notes}</p>
                                         <p class="text-xs text-on-surface-variant">Status: <strong>${taskStatus}</strong>.</p>
+                                        ${sourceHtml}
                                     </div>
                                 </li>
                             `;
@@ -1641,17 +1683,33 @@ Processing Time: ${data.estimated_processing_time}`);
                     }
                     
                     if (alertsList.innerHTML === '') {
-                        alertsList.innerHTML = `
-                            <li class="flex gap-4 items-start group">
-                                <div class="mt-1 w-8 h-8 rounded-full bg-green-100 flex items-center justify-center shrink-0">
-                                    <span class="material-symbols-outlined text-green-600 text-lg">check_circle</span>
-                                </div>
-                                <div>
-                                    <p class="text-sm font-semibold text-on-surface">Zoning is fully Compliant</p>
-                                    <p class="text-xs text-on-surface-variant">All regulations checked. No active compliance issues.</p>
-                                </div>
-                            </li>
-                        `;
+                        const zs = (p.zoning_status || '').toLowerCase();
+                        const underReview = !zs || zs === 'pending' || zs.includes('review') || zs === 'action required';
+                        if (underReview) {
+                            alertsList.innerHTML = `
+                                <li class="flex gap-4 items-start group">
+                                    <div class="mt-1 w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+                                        <span class="material-symbols-outlined text-amber-700 text-lg">hourglass_top</span>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-semibold text-on-surface">Under Review</p>
+                                        <p class="text-xs text-on-surface-variant">No curated checklist yet — this is not a Compliant / GREEN determination.</p>
+                                    </div>
+                                </li>
+                            `;
+                        } else {
+                            alertsList.innerHTML = `
+                                <li class="flex gap-4 items-start group">
+                                    <div class="mt-1 w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
+                                        <span class="material-symbols-outlined text-slate-600 text-lg">info</span>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-semibold text-on-surface">No open checklist items</p>
+                                        <p class="text-xs text-on-surface-variant">Status: ${p.zoning_status || 'Pending'}. Not legal advice.</p>
+                                    </div>
+                                </li>
+                            `;
+                        }
                     }
                     
                     // Manage listing button
