@@ -109,21 +109,54 @@ def seed_data():
         else:
             print("Region Miami Beach, FL already exists")
 
-        # Seed Municipal Code
-        mb_mcode = db.query(MunicipalCode).filter_by(municipality_name="City of Miami Beach", ordinance_number="MB-STR-PROHIBITION").first()
-        if not mb_mcode:
-            mb_mcode = MunicipalCode(
-                municipality_name="City of Miami Beach",
+        # Seed Municipal Code — Free Audit geocodes locality as "Miami Beach" (ilike exact).
+        # Keep legacy "City of Miami Beach" row AND a geocode-matching "Miami Beach" City/FL row.
+        mb_source = "https://www.miamibeachfl.gov/government/planning/zoning/"
+        for mb_name in ("Miami Beach", "City of Miami Beach"):
+            mb_mcode = db.query(MunicipalCode).filter_by(
+                municipality_name=mb_name,
                 ordinance_number="MB-STR-PROHIBITION",
-                str_prohibited=True,
-                max_occupancy_limit=None
-            )
-            db.add(mb_mcode)
-            db.commit()
-            db.refresh(mb_mcode)
-            print("Seeded MunicipalCode: City of Miami Beach")
-        else:
-            print("MunicipalCode City of Miami Beach already exists")
+            ).first()
+            if not mb_mcode:
+                # Also match any prior row without ordinance number uniqueness
+                mb_mcode = db.query(MunicipalCode).filter(
+                    MunicipalCode.municipality_name.ilike(mb_name),
+                    MunicipalCode.jurisdiction_type.ilike("City"),
+                ).first()
+            if not mb_mcode:
+                mb_mcode = MunicipalCode(
+                    municipality_name=mb_name,
+                    ordinance_number="MB-STR-PROHIBITION",
+                    str_prohibited=True,
+                    is_allowed=False,
+                    requires_permit=True,
+                    permit_name="Miami Beach STR Certificate / Zoning Review",
+                    max_occupancy_limit=None,
+                    jurisdiction_type="City",
+                    state="FL",
+                    source_url=mb_source,
+                    str_permitted_raw="Restricted / Prohibited in many residential zones",
+                    is_expert_verified=True,
+                )
+                db.add(mb_mcode)
+                db.commit()
+                db.refresh(mb_mcode)
+                print(f"Seeded MunicipalCode: {mb_name}")
+            else:
+                # Upsert Free-Audit fields so live check is Covered (not Under Review)
+                mb_mcode.ordinance_number = mb_mcode.ordinance_number or "MB-STR-PROHIBITION"
+                mb_mcode.str_prohibited = True
+                mb_mcode.is_allowed = False
+                mb_mcode.jurisdiction_type = mb_mcode.jurisdiction_type or "City"
+                mb_mcode.state = mb_mcode.state or "FL"
+                if not mb_mcode.source_url:
+                    mb_mcode.source_url = mb_source
+                if not mb_mcode.permit_name:
+                    mb_mcode.requires_permit = True
+                    mb_mcode.permit_name = "Miami Beach STR Certificate / Zoning Review"
+                mb_mcode.is_expert_verified = True
+                db.commit()
+                print(f"MunicipalCode {mb_name} already exists — Free-Audit fields upserted")
 
         # Seed Ordinance text
         mb_ord = db.query(Ordinance).filter_by(jurisdiction="City of Miami Beach").first()

@@ -104,6 +104,8 @@ def test_compliance_address_under_review_flag(mock_geocode):
     data = response.json()
     assert "is_under_review" in data
     assert data["is_under_review"] is True
+    assert data["is_compliant"] is False  # US-004: never Compliant/GREEN when under review
+    assert data.get("status") in (None, "UNDER_REVIEW") or data.get("status") == "UNDER_REVIEW"
     assert "checklist" in data
 
 def test_user_profile_and_sidebar_widget_flow():

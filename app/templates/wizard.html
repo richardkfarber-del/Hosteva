@@ -402,7 +402,7 @@
                 let sourceLinkHtml = sourceUrl ? `
                     <a href="${sourceUrl}" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline font-bold mt-2 inline-flex items-center gap-1">
                         View Ordinance Reference <span class="material-symbols-outlined text-xs">open_in_new</span>
-                    </a>` : '';
+                    </a>` : `<span class="text-on-surface-variant text-xs italic mt-2 inline-block">Source pending</span>`;
 
                 const municipalCard = document.createElement('div');
                 municipalCard.className = 'bg-white rounded-2xl p-5 border border-outline-variant/15 hover:bg-surface-container-low/30 transition-all shadow-sm flex items-start gap-4 text-left';
@@ -507,7 +507,11 @@
                 
                 let checklistItemsHtml = '';
                 if (data.checklist && data.checklist.length > 0) {
-                    checklistItemsHtml = data.checklist.map(item => `
+                    checklistItemsHtml = data.checklist.map(item => {
+                        const src = item.source_url
+                            ? `<a href="${item.source_url}" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline text-[11px] font-semibold inline-flex items-center gap-0.5">Official source <span class="material-symbols-outlined text-[11px]">open_in_new</span></a>`
+                            : `<span class="text-[11px] text-on-surface-variant/80 italic">Source pending</span>`;
+                        return `
                         <div class="flex items-start gap-3">
                             <span class="material-symbols-outlined ${item.is_compliant ? 'text-tertiary' : 'text-outline'} shrink-0" style="font-size: 20px;">
                                 ${item.is_compliant ? 'check_box' : 'check_box_outline_blank'}
@@ -517,18 +521,27 @@
                                 <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${item.is_compliant ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
                                     ${item.status}
                                 </span>
+                                <div>${src}</div>
+                            </div>
+                        </div>`;
+                    }).join('');
+                } else if (data.is_under_review) {
+                    checklistItemsHtml = `
+                        <div class="flex items-start gap-3">
+                            <span class="material-symbols-outlined text-amber-700 shrink-0" style="font-size: 20px;">hourglass_top</span>
+                            <div>
+                                <p class="text-on-surface text-sm font-medium">Under Review</p>
+                                <p class="text-on-surface-variant text-xs">No curated checklist yet — not a Compliant / GREEN result.</p>
                             </div>
                         </div>
-                    `).join('');
+                    `;
                 } else {
                     checklistItemsHtml = `
                         <div class="flex items-start gap-3">
-                            <span class="material-symbols-outlined text-tertiary shrink-0" style="font-size: 20px;">
-                                check_circle
-                            </span>
+                            <span class="material-symbols-outlined text-outline shrink-0" style="font-size: 20px;">info</span>
                             <div>
-                                <p class="text-on-surface text-sm font-medium">No actions required</p>
-                                <p class="text-on-surface-variant text-xs">This property has no compliance tasks scheduled.</p>
+                                <p class="text-on-surface text-sm font-medium">No checklist tasks returned</p>
+                                <p class="text-on-surface-variant text-xs">Complete registration for fuller task tracking. Not legal advice.</p>
                             </div>
                         </div>
                     `;

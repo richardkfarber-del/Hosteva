@@ -646,5 +646,26 @@
     }
 </script>
 
+
+    <script>
+    // US-002: preserve address on register CTAs when landing has ?address= or session pending
+    (function () {
+        const params = new URLSearchParams(window.location.search);
+        const addr = params.get('address') || sessionStorage.getItem('pending_property_address') || '';
+        if (params.get('address')) {
+            sessionStorage.setItem('pending_property_address', params.get('address'));
+        }
+        if (!addr) return;
+        document.querySelectorAll('a[href^="/register"]').forEach(a => {
+            try {
+                const u = new URL(a.getAttribute('href'), window.location.origin);
+                if (!u.searchParams.get('address')) {
+                    u.searchParams.set('address', addr);
+                    a.setAttribute('href', u.pathname + u.search);
+                }
+            } catch (_) {}
+        });
+    })();
+    </script>
 </body>
 </html>

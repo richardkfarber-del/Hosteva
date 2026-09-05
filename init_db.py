@@ -131,16 +131,30 @@ def main():
             try:
                 count = db_sess.query(func.count(MunicipalCode.id)).scalar()
                 if count == 0:
-                    print("Database municipal_codes table is empty. Running rules seeding...")
+                    print("Database municipal_codes table is empty. Running Excel rules seeding...")
                     excel_dir = os.path.dirname(__file__)
                     seed_rules(db_sess, excel_dir)
-                    print("Database seeding completed successfully.")
+                    print("Excel rules seeding completed successfully.")
                 else:
-                    print(f"Database already contains {count} municipal code rules. Skipping auto-seeding.")
+                    print(f"Database already contains {count} municipal code rules. Skipping Excel auto-seeding.")
             except Exception as seed_err:
                 print(f"Warning: Auto-seeding failed: {seed_err}")
             finally:
                 db_sess.close()
+
+            # SP-001 / Free Audit: always upsert Miami Beach + related packs from
+            # scripts/seed_compliance_rules.py (idempotent). Excel Phase-1 sheet does
+            # not include City of Miami Beach; Render buildCommand runs init_db.py.
+            try:
+                try:
+                    from scripts.seed_compliance_rules import seed_data as seed_compliance_packs
+                except ImportError:
+                    from seed_compliance_rules import seed_data as seed_compliance_packs
+                print("Running seed_compliance_rules.py (Miami Beach Free Audit pack)...")
+                seed_compliance_packs()
+                print("seed_compliance_rules.py completed.")
+            except Exception as pack_err:
+                print(f"Warning: seed_compliance_rules pack failed: {pack_err}")
         except Exception as seed_init_err:
             print(f"Warning: Skipping auto-seeding step during database initialization: {seed_init_err}")
 

@@ -35,10 +35,12 @@ def seed_tampa_bay_rules():
                 "str_prohibited": False,
                 "requires_permit": True,
                 "permit_name": "DBPR Vacation Rental License (Dwelling or Condominium)",
-                "source_url": "https://www.hostaway.com/blog/rental-arbitrage-in-tampa/",
+                "source_url": "https://www.myfloridalicense.com/DBPR/hotels-restaurants/vacation-rentals/",
                 "stay_restriction_days": None,
                 "max_rentals_per_year": None,
                 "tax_rate": None,
+                "jurisdiction_type": "State",
+                "state": "FL",
             },
             {
                 "municipality_name": "Hillsborough County",
@@ -46,10 +48,12 @@ def seed_tampa_bay_rules():
                 "str_prohibited": False,
                 "stay_restriction_days": 7,
                 "tax_rate": 6.0,
-                "source_url": "https://truenorthmanaged.com/tampa/tampa-short-term-rental-regulations/",
+                "source_url": "https://www.hillsboroughcounty.org/",
                 "requires_permit": False,
                 "permit_name": None,
                 "max_rentals_per_year": None,
+                "jurisdiction_type": "County",
+                "state": "FL",
             },
             {
                 "municipality_name": "City of St. Petersburg",
@@ -61,6 +65,8 @@ def seed_tampa_bay_rules():
                 "tax_rate": None,
                 "requires_permit": False,
                 "permit_name": None,
+                "jurisdiction_type": "City",
+                "state": "FL",
             },
             {
                 "municipality_name": "Pasco County",
@@ -69,10 +75,65 @@ def seed_tampa_bay_rules():
                 "requires_permit": True,
                 "permit_name": "Conditional Use Permit (CUP)",
                 "tax_rate": 4.0,
-                "source_url": "https://www.bnbcalc.com/blog/short-term-rental-regulation/Pasco-County-Florida-Guide",
+                "source_url": "https://floridarevenue.com/Forms_library/current/dr15tdt.pdf",
                 "stay_restriction_days": None,
                 "max_rentals_per_year": None,
-            }
+                "jurisdiction_type": "County",
+                "state": "FL",
+            },
+            # US-003 / SP-001 UAT covered localities (official .gov / municipal)
+            {
+                "municipality_name": "Bay County",
+                "ordinance_number": "BAY-STR-INSPECT",
+                "str_prohibited": False,
+                "requires_permit": True,
+                "permit_name": "Short-Term Vacation Rental Inspection",
+                "tax_rate": 5.0,
+                "source_url": "https://www.baycountyfl.gov/783/Short-Term-Vacation-Rental-Inspections",
+                "stay_restriction_days": None,
+                "max_rentals_per_year": None,
+                "jurisdiction_type": "County",
+                "state": "FL",
+            },
+            {
+                "municipality_name": "Broward County",
+                "ordinance_number": "BROWARD-RRC",
+                "str_prohibited": False,
+                "requires_permit": True,
+                "permit_name": "Residential Rental Certificate",
+                "tax_rate": None,
+                "source_url": "https://www.broward.org/Planning/CodeEnforcement/Pages/ResRentCert.aspx",
+                "stay_restriction_days": None,
+                "max_rentals_per_year": None,
+                "jurisdiction_type": "County",
+                "state": "FL",
+            },
+            {
+                "municipality_name": "Panama City Beach",
+                "ordinance_number": "PCB-STR",
+                "str_prohibited": False,
+                "requires_permit": True,
+                "permit_name": "Panama City Beach STR Registration",
+                "tax_rate": None,
+                "source_url": "https://www.pcbfl.gov/",
+                "stay_restriction_days": None,
+                "max_rentals_per_year": None,
+                "jurisdiction_type": "City",
+                "state": "FL",
+            },
+            {
+                "municipality_name": "Kissimmee",
+                "ordinance_number": "KISS-STR-ZONE",
+                "str_prohibited": False,
+                "requires_permit": True,
+                "permit_name": "Kissimmee STR Zoning / Registration",
+                "tax_rate": None,
+                "source_url": "https://www.kissimmee.gov/",
+                "stay_restriction_days": None,
+                "max_rentals_per_year": None,
+                "jurisdiction_type": "City",
+                "state": "FL",
+            },
         ]
 
         seeded_count = 0
@@ -93,6 +154,14 @@ def seed_tampa_bay_rules():
                 existing.requires_permit = rule["requires_permit"]
                 existing.permit_name = rule["permit_name"]
                 existing.source_url = rule["source_url"]
+                if rule.get("jurisdiction_type"):
+                    existing.jurisdiction_type = rule["jurisdiction_type"]
+                if rule.get("state"):
+                    existing.state = rule["state"]
+                if rule.get("is_allowed") is not None:
+                    existing.is_allowed = rule["is_allowed"]
+                elif rule.get("str_prohibited"):
+                    existing.is_allowed = False
                 existing.tax_rate = rule["tax_rate"]
                 updated_count += 1
                 print(f"Updated existing MunicipalCode: {rule['municipality_name']} ({rule['ordinance_number']})")
