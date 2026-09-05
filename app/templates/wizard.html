@@ -90,7 +90,7 @@
                 <label class="block text-sm font-bold text-on-surface mb-2 font-headline">Property Address</label>
                 <div class="relative">
                     <span class="material-symbols-outlined absolute left-4 top-3.5 text-outline">location_on</span>
-                    <input type="text" id="addressInput" placeholder="e.g. 123 Ocean Drive, Miami FL" 
+                    <input type="text" id="addressInput" placeholder="e.g. 100 N Tampa St, Tampa, FL" 
                         class="w-full bg-white/80 border border-outline-variant/30 rounded-xl pl-12 pr-4 py-3.5 text-on-surface placeholder:text-outline glass-input transition-all">
                     <!-- Dropdown for autocomplete suggestions -->
                     <div id="autocomplete-dropdown" class="autocomplete-dropdown hidden"></div>
@@ -279,7 +279,7 @@
         }
     }
 
-    function runAudit() {
+    async function runAudit() {
         const address = addressInput.value.trim();
         const addressError = document.getElementById('addressError');
         
@@ -322,43 +322,58 @@
             // Populate Verdict Banner
             const verdictContainer = document.getElementById('verdictBannerContainer');
             
+            // Keep address visible after run (BUG-001)
+            addressInput.value = address;
+            sessionStorage.setItem('pending_property_address', address);
+
             let bannerHtml = '';
-            if (!data.is_compliant) {
+            if (data.is_under_review || (!data.municipal_code && !(data.checklist && data.checklist.length))) {
                 bannerHtml = `
-                <div class="bg-error-container/30 rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative overflow-hidden border border-error/20 mb-6 shadow-sm">
-                    <div class="absolute -right-20 -top-20 w-64 h-64 bg-error opacity-10 rounded-full blur-[80px] pointer-events-none"></div>
+                <div class="bg-amber-50 rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative overflow-hidden border border-amber-200 mb-6 shadow-sm">
                     <div class="space-y-1 z-10 text-left">
-                        <div class="flex items-center gap-2 text-error">
-                            <span class="material-symbols-outlined icon-filled">warning</span>
-                            <h3 class="font-display font-bold text-lg">Violation Detected</h3>
+                        <div class="flex items-center gap-2 text-amber-800">
+                            <span class="material-symbols-outlined icon-filled">hourglass_top</span>
+                            <h3 class="font-display font-bold text-lg">Under Review</h3>
                         </div>
-                        <p class="text-on-surface-variant text-sm font-medium">Critical compliance issues found based on local regulations or HOA rules. Immediate action recommended to avoid penalties.</p>
+                        <p class="text-on-surface-variant text-sm font-medium">We do not have a curated, expert-verified determination for this address yet. This is not a Compliant / GREEN result. Not legal advice.</p>
                     </div>
                     <div class="z-10 shrink-0">
-                        <span class="inline-flex items-center justify-center px-3 py-1 rounded-full bg-error-container text-on-error-container font-bold text-xs tracking-wide border border-error/20">
-                            Risk Level: High
+                        <span class="inline-flex items-center justify-center px-3 py-1 rounded-full bg-amber-100 text-amber-900 font-bold text-xs tracking-wide border border-amber-200">
+                            Fail-closed
                         </span>
                     </div>
                 </div>`;
-            } else { // Compliant / eligible
+            } else if (!data.is_compliant) {
+                bannerHtml = `
+                <div class="bg-error-container/30 rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative overflow-hidden border border-error/20 mb-6 shadow-sm">
+                    <div class="space-y-1 z-10 text-left">
+                        <div class="flex items-center gap-2 text-error">
+                            <span class="material-symbols-outlined icon-filled">warning</span>
+                            <h3 class="font-display font-bold text-lg">Restrictions Likely</h3>
+                        </div>
+                        <p class="text-on-surface-variant text-sm font-medium">Curated municipal or HOA rules indicate STR may be restricted or prohibited. Review checklist items below. Not legal advice.</p>
+                    </div>
+                </div>`;
+            } else {
                 bannerHtml = `
                 <div class="bg-tertiary-container/10 rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative overflow-hidden border border-tertiary/20 mb-6 shadow-sm">
-                    <div class="absolute -right-20 -top-20 w-64 h-64 bg-tertiary opacity-10 rounded-full blur-[80px] pointer-events-none"></div>
                     <div class="space-y-1 z-10 text-left">
                         <div class="flex items-center gap-2 text-tertiary">
-                            <span class="material-symbols-outlined icon-filled">check_circle</span>
-                            <h3 class="font-display font-bold text-lg">Compliant</h3>
+                            <span class="material-symbols-outlined icon-filled">checklist</span>
+                            <h3 class="font-display font-bold text-lg">Checklist Available</h3>
                         </div>
-                        <p class="text-on-surface-variant text-sm font-medium">Property is compliant with active local zoning regulations and HOA rules.</p>
-                    </div>
-                    <div class="z-10 shrink-0">
-                        <span class="inline-flex items-center justify-center px-3 py-1 rounded-full bg-tertiary-container text-on-tertiary-fixed font-bold text-xs tracking-wide border border-tertiary/20">
-                            Risk Level: Low
-                        </span>
+                        <p class="text-on-surface-variant text-sm font-medium">Curated Florida municipal rules found. Complete checklist items (permits/taxes may apply). Not a legal determination.</p>
                     </div>
                 </div>`;
             }
             verdictContainer.innerHTML = bannerHtml;
+
+            // Always show address echo so UI never looks like "Awaiting address input"
+            const addrEcho = document.createElement('p');
+            addrEcho.className = 'text-sm font-semibold text-on-surface mb-4';
+            addrEcho.id = 'resultAddressEcho';
+            addrEcho.textContent = 'Address: ' + address;
+            verdictContainer.prepend(addrEcho);
 
             // Populate Cards Stack
             const cardsStack = document.getElementById('categoryCardsStack');
@@ -608,9 +623,13 @@
     // Check URL parameters on mount/load
     document.addEventListener("DOMContentLoaded", () => {
         const urlParams = new URLSearchParams(window.location.search);
-        const addressParam = urlParams.get('address');
+        let addressParam = urlParams.get('address');
+        if (!addressParam) {
+            addressParam = sessionStorage.getItem('pending_property_address');
+        }
         if (addressParam) {
-            addressInput.value = decodeURIComponent(addressParam);
+            // URLSearchParams already decodes; avoid double-decode corruption
+            addressInput.value = addressParam;
             runAudit();
         }
     });
