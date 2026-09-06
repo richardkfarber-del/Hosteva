@@ -15,7 +15,6 @@ def import_models():
     import app.models.compliance
     import app.models.swarm
     import app.models.oauth
-    import app.integrations.ota_models
 
 # Run import mapping
 import_models()
@@ -23,10 +22,27 @@ import_models()
 from app.database import SessionLocal
 from app.models.compliance import MunicipalCode
 
+# SP-012 / Richard Tampa Bay GO: Curated marketing must-list jurisdictions.
+# PCB city is absent from Complete.xlsx — this pack is the Curated source for PCB.
+# Broward may exist as FL seed but is NOT Tampa Bay marketing.
+CURATED_NAMES = {
+    "Tampa",
+    "St. Petersburg",
+    "City of St. Petersburg",
+    "Clearwater",
+    "Hillsborough County",
+    "Pinellas County",
+    "Pasco County",
+    "Panama City Beach",
+    "Bay County",
+    "Kissimmee",
+}
+
+
 def seed_tampa_bay_rules():
     db = SessionLocal()
     try:
-        print("Starting Tampa Bay area compliance rules seeding...")
+        print("Starting Tampa Bay / corridor Curated pack seeding...")
 
         rules = [
             {
@@ -41,6 +57,23 @@ def seed_tampa_bay_rules():
                 "tax_rate": None,
                 "jurisdiction_type": "State",
                 "state": "FL",
+                "is_expert_verified": False,  # state row never elevates city Covered alone
+                "source_kind": "manual_pack",
+            },
+            {
+                "municipality_name": "Tampa",
+                "ordinance_number": "TAMPA-STR",
+                "str_prohibited": False,
+                "requires_permit": True,
+                "permit_name": "Tampa STR Registration / Zoning Review",
+                "source_url": "https://www.tampa.gov/",
+                "stay_restriction_days": None,
+                "max_rentals_per_year": None,
+                "tax_rate": None,
+                "jurisdiction_type": "City",
+                "state": "FL",
+                "is_expert_verified": True,
+                "source_kind": "manual_pack",
             },
             {
                 "municipality_name": "Hillsborough County",
@@ -54,6 +87,23 @@ def seed_tampa_bay_rules():
                 "max_rentals_per_year": None,
                 "jurisdiction_type": "County",
                 "state": "FL",
+                "is_expert_verified": True,
+                "source_kind": "manual_pack",
+            },
+            {
+                "municipality_name": "St. Petersburg",
+                "ordinance_number": "ST-PETE-FREQ-LIMIT",
+                "str_prohibited": False,
+                "max_rentals_per_year": 3,
+                "source_url": "https://www.stpete.org/business/planning___zoning/zoning.php",
+                "stay_restriction_days": None,
+                "tax_rate": None,
+                "requires_permit": False,
+                "permit_name": None,
+                "jurisdiction_type": "City",
+                "state": "FL",
+                "is_expert_verified": True,
+                "source_kind": "manual_pack",
             },
             {
                 "municipality_name": "City of St. Petersburg",
@@ -67,6 +117,38 @@ def seed_tampa_bay_rules():
                 "permit_name": None,
                 "jurisdiction_type": "City",
                 "state": "FL",
+                "is_expert_verified": True,
+                "source_kind": "manual_pack",
+            },
+            {
+                "municipality_name": "Clearwater",
+                "ordinance_number": "CLEARWATER-STR",
+                "str_prohibited": False,
+                "requires_permit": True,
+                "permit_name": "Clearwater STR Registration",
+                "source_url": "https://www.myclearwater.com/",
+                "stay_restriction_days": None,
+                "max_rentals_per_year": None,
+                "tax_rate": None,
+                "jurisdiction_type": "City",
+                "state": "FL",
+                "is_expert_verified": True,
+                "source_kind": "manual_pack",
+            },
+            {
+                "municipality_name": "Pinellas County",
+                "ordinance_number": "PINELLAS-TDT",
+                "str_prohibited": False,
+                "requires_permit": False,
+                "permit_name": None,
+                "tax_rate": 6.0,
+                "source_url": "https://www.pinellastaxcollector.gov/",
+                "stay_restriction_days": None,
+                "max_rentals_per_year": None,
+                "jurisdiction_type": "County",
+                "state": "FL",
+                "is_expert_verified": True,
+                "source_kind": "manual_pack",
             },
             {
                 "municipality_name": "Pasco County",
@@ -80,6 +162,8 @@ def seed_tampa_bay_rules():
                 "max_rentals_per_year": None,
                 "jurisdiction_type": "County",
                 "state": "FL",
+                "is_expert_verified": True,
+                "source_kind": "manual_pack",
             },
             # US-003 / SP-001 UAT covered localities (official .gov / municipal)
             {
@@ -94,8 +178,11 @@ def seed_tampa_bay_rules():
                 "max_rentals_per_year": None,
                 "jurisdiction_type": "County",
                 "state": "FL",
+                "is_expert_verified": True,
+                "source_kind": "manual_pack",
             },
             {
+                # Present in Complete / pack — NOT Tampa Bay marketing (COVERAGE_COPY §1.2)
                 "municipality_name": "Broward County",
                 "ordinance_number": "BROWARD-RRC",
                 "str_prohibited": False,
@@ -107,8 +194,11 @@ def seed_tampa_bay_rules():
                 "max_rentals_per_year": None,
                 "jurisdiction_type": "County",
                 "state": "FL",
+                "is_expert_verified": True,
+                "source_kind": "manual_pack",
             },
             {
+                # Absent from Complete.xlsx — Curated source of truth for PCB city
                 "municipality_name": "Panama City Beach",
                 "ordinance_number": "PCB-STR",
                 "str_prohibited": False,
@@ -120,6 +210,8 @@ def seed_tampa_bay_rules():
                 "max_rentals_per_year": None,
                 "jurisdiction_type": "City",
                 "state": "FL",
+                "is_expert_verified": True,
+                "source_kind": "manual_pack",
             },
             {
                 "municipality_name": "Kissimmee",
@@ -133,6 +225,8 @@ def seed_tampa_bay_rules():
                 "max_rentals_per_year": None,
                 "jurisdiction_type": "City",
                 "state": "FL",
+                "is_expert_verified": True,
+                "source_kind": "manual_pack",
             },
         ]
 
@@ -140,14 +234,18 @@ def seed_tampa_bay_rules():
         updated_count = 0
 
         for rule in rules:
-            # Query for existing record based on municipality_name and ordinance_number
             existing = db.query(MunicipalCode).filter_by(
                 municipality_name=rule["municipality_name"],
                 ordinance_number=rule["ordinance_number"]
             ).first()
+            if not existing:
+                existing = db.query(MunicipalCode).filter_by(
+                    municipality_name=rule["municipality_name"],
+                    jurisdiction_type=rule.get("jurisdiction_type"),
+                    state=rule.get("state") or "FL",
+                ).first()
 
             if existing:
-                # Update attributes (UPSERT behavior)
                 existing.str_prohibited = rule["str_prohibited"]
                 existing.stay_restriction_days = rule["stay_restriction_days"]
                 existing.max_rentals_per_year = rule["max_rentals_per_year"]
@@ -163,10 +261,14 @@ def seed_tampa_bay_rules():
                 elif rule.get("str_prohibited"):
                     existing.is_allowed = False
                 existing.tax_rate = rule["tax_rate"]
+                existing.is_ai_scraped = False
+                if rule.get("is_expert_verified") is not None:
+                    existing.is_expert_verified = rule["is_expert_verified"]
+                if rule.get("source_kind") and hasattr(existing, "source_kind"):
+                    existing.source_kind = rule["source_kind"]
                 updated_count += 1
                 print(f"Updated existing MunicipalCode: {rule['municipality_name']} ({rule['ordinance_number']})")
             else:
-                # Create a new record
                 new_record = MunicipalCode(
                     municipality_name=rule["municipality_name"],
                     ordinance_number=rule["ordinance_number"],
@@ -176,7 +278,13 @@ def seed_tampa_bay_rules():
                     requires_permit=rule["requires_permit"],
                     permit_name=rule["permit_name"],
                     source_url=rule["source_url"],
-                    tax_rate=rule["tax_rate"]
+                    tax_rate=rule["tax_rate"],
+                    jurisdiction_type=rule.get("jurisdiction_type"),
+                    state=rule.get("state") or "FL",
+                    is_ai_scraped=False,
+                    is_expert_verified=bool(rule.get("is_expert_verified")),
+                    source_kind=rule.get("source_kind") or "manual_pack",
+                    is_allowed=False if rule.get("str_prohibited") else True,
                 )
                 db.add(new_record)
                 seeded_count += 1
@@ -186,6 +294,7 @@ def seed_tampa_bay_rules():
         print("\n--- Seeding Completed Successfully ---")
         print(f"New records seeded: {seeded_count}")
         print(f"Records updated: {updated_count}")
+        print(f"Curated must-list names reinforced: {sorted(CURATED_NAMES)}")
         print("--------------------------------------\n")
 
     except Exception as e:

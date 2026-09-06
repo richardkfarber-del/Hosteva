@@ -220,6 +220,19 @@ def main():
                 print("seed_compliance_rules.py completed.")
             except Exception as pack_err:
                 print(f"Warning: seed_compliance_rules pack failed: {pack_err}")
+
+            # SP-012 / Richard Tampa Bay GO: upsert Tampa Bay Curated + PCB city pack.
+            # PCB is absent from Complete.xlsx; this pack is the Curated source for PCB.
+            try:
+                try:
+                    from scripts.seed_tampa_bay_rules import seed_tampa_bay_rules
+                except ImportError:
+                    from seed_tampa_bay_rules import seed_tampa_bay_rules
+                print("Running seed_tampa_bay_rules.py (Tampa Bay + PCB Curated pack)...")
+                seed_tampa_bay_rules()
+                print("seed_tampa_bay_rules.py completed.")
+            except Exception as tampa_err:
+                print(f"Warning: seed_tampa_bay_rules pack failed: {tampa_err}")
         except Exception as seed_init_err:
             print(f"Warning: Skipping auto-seeding step during database initialization: {seed_init_err}")
 

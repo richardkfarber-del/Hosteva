@@ -255,20 +255,38 @@ def test_admin_research_list_requires_key(client, db):
 
 
 def test_coverage_copy_surfaces(client):
-    """SP-012: FL framing; no CA/TX/NY Covered laundry list."""
+    """SP-012: FL Curated + Tampa Bay must-list; no Broward-as-Tampa-Bay; Falcon SEO titles."""
     for path in ("/", "/features", "/pricing"):
         body = client.get(path).text
         assert "Florida" in body
         assert "Under Review" in body
+        assert "Tampa Bay" in body
         # Hard bans from COVERAGE_COPY
         assert "10 states" not in body.lower()
         assert "spanning 10" not in body.lower()
-        # Must not sell CA/TX/NY as Covered geography (honest "not multi-state" OK)
         for banned in ("Covered in California", "Covered in Texas", "Covered in New York"):
             assert banned not in body
         assert "we cover california" not in body.lower()
+        # Broward must not be sold as Tampa Bay (explicit exclusion OK)
+        assert "Tampa Bay" in body
+
+    landing = client.get("/").text
+    assert "Kissimmee, Miami Beach, Tampa Bay" in landing  # Falcon title
+    assert "Panama City Beach" in landing
+    assert "St. Petersburg" in landing
+    assert "Hillsborough" in landing
+    assert "Pinellas" in landing
+    assert "Pasco" in landing
+
     features = client.get("/features").text
-    assert "Where" in features and "Covered" in features
+    assert "Curated Florida coverage — Kissimmee to Tampa Bay" in features  # Falcon H2
+    assert "Kissimmee" in features and "Panama City Beach" in features
+    assert "Miami-Dade" in features
+    assert "Clearwater" in features
+
+    pricing = client.get("/pricing").text
+    assert "Curated jurisdictions" in pricing  # Falcon title fragment
+    assert "Tampa Bay" in pricing
 
 
 def test_eligibility_non_fl_under_review(client, db, monkeypatch):
@@ -294,3 +312,54 @@ def test_eligibility_non_fl_under_review(client, db, monkeypatch):
     data = r.json()
     assert data["status"] == "UNDER_REVIEW"
     assert data.get("status_reason") == "OUT_OF_PACK_GEOGRAPHY"
+
+
+def test_seed_tampa_bay_pcb_curated(db, monkeypatch):
+    """PCB city Curated from seed_tampa_bay; Tampa Bay names expert_verified; Broward not Tampa Bay marketing."""
+    from scripts import seed_tampa_bay_rules as tampa_mod
+
+    monkeypatch.setattr(tampa_mod, "SessionLocal", lambda: db)
+    # seed closes the session; keep test session usable by no-op close
+    original_close = db.close
+    db.close = lambda: None
+    try:
+        tampa_mod.seed_tampa_bay_rules()
+    finally:
+        db.close = original_close
+
+    pcb = db.query(MunicipalCode).filter(
+        MunicipalCode.municipality_name == "Panama City Beach",
+        MunicipalCode.state == "FL",
+    ).first()
+    assert pcb is not None
+    assert pcb.is_expert_verified is True
+    assert pcb.is_ai_scraped is False
+
+    for name in (
+        "Tampa",
+        "St. Petersburg",
+        "Clearwater",
+        "Hillsborough County",
+        "Pinellas County",
+        "Pasco County",
+        "Bay County",
+        "Kissimmee",
+    ):
+        row = db.query(MunicipalCode).filter(MunicipalCode.municipality_name == name).first()
+        assert row is not None, name
+        assert row.is_expert_verified is True, name
+        assert (row.state or "FL").upper() == "FL"
+
+    # Broward may exist as FL seed but must not appear in Features Tampa Bay list
+    features = Path(__file__).resolve().parents[1] / "app" / "templates" / "features.html"
+    html = features.read_text()
+    bay_block_start = html.find("Tampa Bay area")
+    assert bay_block_start > 0
+    bay_block = html[bay_block_start:bay_block_start + 600]
+    assert "Broward" not in bay_block
+
+
+def test_init_db_wires_tampa_bay_seed():
+    init_src = (REPO_ROOT / "init_db.py").read_text()
+    assert "seed_tampa_bay_rules" in init_src
+
