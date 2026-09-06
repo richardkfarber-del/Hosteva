@@ -25,6 +25,8 @@ from app.models.compliance import MunicipalCode
 # SP-012 / Richard Tampa Bay GO: Curated marketing must-list jurisdictions.
 # PCB city is absent from Complete.xlsx — this pack is the Curated source for PCB.
 # Broward may exist as FL seed but is NOT Tampa Bay marketing.
+# Runtime SoT is app.services.curated_coverage.FL_CURATED_ALLOWLIST (Option B).
+# This set is the corridor/pack names this seed script reinforces.
 CURATED_NAMES = {
     "Tampa",
     "St. Petersburg",
@@ -36,6 +38,7 @@ CURATED_NAMES = {
     "Panama City Beach",
     "Bay County",
     "Kissimmee",
+    "Orlando",
 }
 
 
@@ -228,6 +231,22 @@ def seed_tampa_bay_rules():
                 "is_expert_verified": True,
                 "source_kind": "manual_pack",
             },
+            {
+                "municipality_name": "Orlando",
+                "ordinance_number": "ORL-HOME-SHARE",
+                "str_prohibited": False,
+                "requires_permit": True,
+                "permit_name": "Orlando Home-Sharing Registration",
+                "tax_rate": 6.0,
+                "source_url": "https://www.orlando.gov/Initiatives/Home-Sharing-Registration",
+                "stay_restriction_days": None,
+                "max_rentals_per_year": None,
+                "jurisdiction_type": "City",
+                "state": "FL",
+                "is_expert_verified": True,
+                "source_kind": "manual_pack",
+            },
+
         ]
 
         seeded_count = 0

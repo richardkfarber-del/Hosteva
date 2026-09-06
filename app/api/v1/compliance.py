@@ -360,9 +360,12 @@ def get_compliance_by_address(address: str, db: Session = Depends(get_db)):
     if not city and not county and not state:
         raise HTTPException(status_code=404, detail="No compliance rules found for this address location.")
 
-    # Covered gate (SP-006/007/010): Curated Free Audit = FL + usable municipal row.
-    # Non-FL Complete rows may exist as Thin/research seed but never elevate Covered.
-    # HOA match alone never elevates Covered. AI drafts (is_ai_scraped) never Covered.
+    # Covered gate: ONLY FL_CURATED_ALLOWLIST → Covered checklist depth.
+    # Thin FL seed (Ocala-class, Orange County, Broward, …) → UNDER_REVIEW (same as miss).
+    # Non-FL research seeds never elevate Covered. HOA alone never elevates Covered.
+    # Allowlist: app.services.curated_coverage (expand for CURATED_LIST_AUDIT A/B/C).
+    from app.services.curated_coverage import is_curated_fl_municipal
+
     is_under_review = False
     status_reason = None
     coverage_tier = None
@@ -370,47 +373,37 @@ def get_compliance_by_address(address: str, db: Session = Depends(get_db)):
     state_upper = (state_code or "").strip().upper()
     is_fl = state_upper == "FL"
 
-    def _is_curated_fl(mc) -> bool:
-        if not mc:
-            return False
-        if not is_fl:
-            return False
-        mc_state = (mc.state or "FL").strip().upper()
-        if mc_state and mc_state != "FL":
-            return False
-        if getattr(mc, "is_ai_scraped", False):
-            return False
-        if mc.municipality_name == "State of Florida" and city and city.lower() != "florida":
-            return False
-        return True
+    def _hoa_assist_checklist():
+        if not hoa_rule:
+            return []
+        return [{
+            "task_name": f"HOA Registration: {hoa_rule.hoa_name}",
+            "status": "PENDING",
+            "is_compliant": False,
+            "source_url": hoa_rule.official_website or None,
+        }]
 
     if not municipal_code:
         is_under_review = True
         status_reason = "MISSING_MUNICIPAL_CODE"
         coverage_tier = "UNDER_REVIEW"
-    elif not _is_curated_fl(municipal_code):
+    elif not is_curated_fl_municipal(
+        municipal_code, address_state=state_upper, geocoded_city=city
+    ):
         is_under_review = True
         if not is_fl:
             status_reason = "OUT_OF_PACK_GEOGRAPHY"
             coverage_tier = "UNDER_REVIEW"
-            # Hide non-FL research seed from Covered checklist response; HOA assistive OK
-            municipal_code = None
-            checklist = []
-            if hoa_rule:
-                checklist.append({
-                    "task_name": f"HOA Registration: {hoa_rule.hoa_name}",
-                    "status": "PENDING",
-                    "is_compliant": False,
-                    "source_url": hoa_rule.official_website or None,
-                })
         elif getattr(municipal_code, "is_ai_scraped", False):
             status_reason = "THIN_COVERAGE"
             coverage_tier = "THIN"
-            municipal_code = None
-            checklist = []
         else:
-            status_reason = "MISSING_MUNICIPAL_CODE"
-            coverage_tier = "UNDER_REVIEW"
+            # Thin FL seed row present but not on Curated allowlist
+            status_reason = "THIN_COVERAGE"
+            coverage_tier = "THIN"
+        # Same as miss: no Covered checklist theater from Thin / out-of-pack rows
+        municipal_code = None
+        checklist = _hoa_assist_checklist()
     else:
         coverage_tier = "CURATED"
 
