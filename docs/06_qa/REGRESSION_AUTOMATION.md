@@ -2,6 +2,8 @@
 
 Lean GitHub Actions gate for Hosteva. Does **not** replace Widow (browser) UAT.
 
+**Living checklist:** full module inventory (every `test_*.py`), ownership rules, Widow-only gaps, and live-smoke rows live in [TEST_INVENTORY.md](./TEST_INVENTORY.md). This file is how-to-run / CI overview only.
+
 ## What CI runs
 
 ### `unit` (every `pull_request` + `push` to `main`)
@@ -20,6 +22,8 @@ python -m pytest tests/ app/tests/ -q --tb=short
 ```
 
 `app/tests/conftest.py` and `tests/conftest.py` set the same sqlite / JWT baseline. Individual modules may override DB URLs for isolation.
+
+Module-by-module inventory: [TEST_INVENTORY.md](./TEST_INVENTORY.md).
 
 ### `smoke_live` (`workflow_dispatch` only)
 
@@ -49,7 +53,7 @@ LIVE_BASE_URL=https://gethosteva.com bash scripts/smoke_live.sh
 
 ## Widow-only (manual — not in this gate)
 
-Keep these on Widow / human UAT; CI does not cover them:
+Canonical gap list: [TEST_INVENTORY.md § Widow-only](./TEST_INVENTORY.md#widow-only--manual-not-ci). Keep these on Widow / human UAT; CI does not cover them:
 
 - Stripe Checkout redirect + webhook entitlement (real Stripe / live kill-switch)
 - Street View / Places image quality and “Street View unavailable” overlay on real addresses
