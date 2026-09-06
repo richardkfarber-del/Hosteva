@@ -202,19 +202,40 @@ def check_eligibility(request: EligibilityRequest, db: Session = Depends(get_db)
             }
 
         if not municipal:
-            status = STATUS_UNDER_REVIEW if state_code.upper() == "FL" else STATUS_NOT_COVERED
+            # SP-007: primary user-facing frame is Under Review (GO default) for both
+            # FL miss and non-FL. status_reason distinguishes geography.
+            is_fl = state_code.upper() == "FL"
+            status = STATUS_UNDER_REVIEW
+            status_reason = "MISSING_MUNICIPAL_CODE" if is_fl else "OUT_OF_PACK_GEOGRAPHY"
             conditions = (
                 "Under Review — no curated municipal rule row for this locality. "
                 "Hosteva does not invent a traffic-light zoning result."
-                if status == STATUS_UNDER_REVIEW
-                else "Not Covered — Phase I Free Audit is Florida-first; this locality is outside curated coverage."
+                if is_fl
+                else (
+                    "Under Review — municipal Covered geography is Florida-only today. "
+                    "This locality is outside the Florida municipal pack; we will not invent a result."
+                )
             )
+            try:
+                from app.services.research_queue import enqueue_research
+                enqueue_research(
+                    db,
+                    state=state_code.upper() or "ZZ",
+                    municipality_name=city or (county.replace(" County", "").strip() if county else "unknown"),
+                    jurisdiction_type="city" if city else "county",
+                    sample_address=formatted_address,
+                    trigger_reason=status_reason,
+                )
+            except Exception:
+                pass
             return {
                 "address": formatted_address,
                 "jurisdiction": jurisdiction,
                 "status": status,
                 "determination": status,
                 "conditions": conditions,
+                "status_reason": status_reason,
+                "coverage_tier": "UNDER_REVIEW",
                 "components": {
                     "city": city,
                     "county": county,
@@ -226,10 +247,50 @@ def check_eligibility(request: EligibilityRequest, db: Session = Depends(get_db)
                 "prefer_compliance_api": "/api/v1/compliance?address=",
             }
 
-        # Have a municipal row — still do not emit GREEN/YELLOW/RED.
-        # Point callers at the compliance checklist API for sold Free Audit.
+        # Have a municipal row — non-FL research seeds are still Under Review (Covered=FL only)
+        mc_state = (municipal.state or state_code or "").upper()
+        if state_code.upper() != "FL" or (mc_state and mc_state != "FL") or getattr(municipal, "is_ai_scraped", False):
+            status = STATUS_UNDER_REVIEW
+            conditions = (
+                "Under Review — municipal Covered geography is Florida-only today "
+                "(or this row is a non-authoritative research seed). Not legal advice."
+            )
+            try:
+                from app.services.research_queue import enqueue_research
+                enqueue_research(
+                    db,
+                    state=state_code.upper() or mc_state or "ZZ",
+                    municipality_name=city or municipal.municipality_name,
+                    jurisdiction_type="city",
+                    sample_address=formatted_address,
+                    trigger_reason="OUT_OF_PACK_GEOGRAPHY",
+                )
+            except Exception:
+                pass
+            return {
+                "address": formatted_address,
+                "jurisdiction": jurisdiction,
+                "status": status,
+                "determination": status,
+                "conditions": conditions,
+                "status_reason": "OUT_OF_PACK_GEOGRAPHY",
+                "coverage_tier": "UNDER_REVIEW",
+                "municipality_name": municipal.municipality_name,
+                "components": {
+                    "city": city,
+                    "county": county,
+                    "state": state,
+                    "country": country,
+                    "postal_code": postal_code,
+                },
+                "traffic_light_removed": True,
+                "prefer_compliance_api": "/api/v1/compliance?address=",
+            }
+
+        # Have a curated FL municipal row — still do not emit GREEN/YELLOW/RED.
+        # SP-007: Restricted FL pack is Covered ≠ Compliant; point at compliance API.
         if municipal.str_prohibited or not municipal.is_allowed:
-            determination = STATUS_UNDER_REVIEW
+            determination = "RESTRICTED"
             conditions = (
                 f"Municipal rules for {municipal.municipality_name} indicate STR may be restricted or prohibited. "
                 "Open Free Audit checklist via /api/v1/compliance for task details. Not legal advice."
