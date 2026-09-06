@@ -215,18 +215,18 @@ def test_search_compliance_fallback_on_exception():
 
 def test_get_compliance_by_address_state_fallback():
     """
-    Address with no city/county seed falls back to State of Florida rules.
-    US-004: state fallback for a real city is under review — never Compliant/GREEN.
+    Address with no city/county Curated match may hit State of Florida seed,
+    but state row never elevates Covered — Under Review, no checklist theater.
     """
     response = client.get("/api/v1/compliance", params={"address": "Orlando Address"})
     assert response.status_code == 200
     data = response.json()
-    assert data["municipal_code"]["municipality_name"] == "State of Florida"
     assert data.get("is_under_review") is True
     assert data["is_compliant"] is False
     assert data.get("status") == "UNDER_REVIEW"
-    assert len(data["checklist"]) == 1
-    assert data["checklist"][0]["task_name"] == "Florida DBPR License"
+    # State-of-FL fallback is not Curated → cleared from Covered response
+    assert data["municipal_code"] is None
+    assert data["checklist"] == []
 
 def test_compliance_task_chat():
     """

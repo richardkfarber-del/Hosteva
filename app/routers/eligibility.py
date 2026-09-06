@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.compliance import MunicipalCode
+from app.services.curated_coverage import is_curated_fl_municipal
 
 logger = logging.getLogger(__name__)
 
@@ -247,23 +248,38 @@ def check_eligibility(request: EligibilityRequest, db: Session = Depends(get_db)
                 "prefer_compliance_api": "/api/v1/compliance?address=",
             }
 
-        # Have a municipal row — non-FL research seeds are still Under Review (Covered=FL only)
+        # Have a municipal row — Covered only if on FL_CURATED_ALLOWLIST (Thin FL / non-FL → UR)
         mc_state = (municipal.state or state_code or "").upper()
-        if state_code.upper() != "FL" or (mc_state and mc_state != "FL") or getattr(municipal, "is_ai_scraped", False):
+        curated = is_curated_fl_municipal(
+            municipal, address_state=state_code, geocoded_city=city
+        )
+        if not curated:
+            is_fl = state_code.upper() == "FL"
             status = STATUS_UNDER_REVIEW
-            conditions = (
-                "Under Review — municipal Covered geography is Florida-only today "
-                "(or this row is a non-authoritative research seed). Not legal advice."
-            )
+            if not is_fl or (mc_state and mc_state != "FL"):
+                status_reason = "OUT_OF_PACK_GEOGRAPHY"
+                conditions = (
+                    "Under Review — municipal Covered geography is Florida-only today "
+                    "(or this row is a non-authoritative research seed). Not legal advice."
+                )
+                coverage_tier = "UNDER_REVIEW"
+            else:
+                status_reason = "THIN_COVERAGE"
+                conditions = (
+                    "Under Review — this Florida locality is not on the Curated Covered list yet "
+                    "(thin / research seed). Hosteva does not invent Covered checklist depth. "
+                    "Not legal advice."
+                )
+                coverage_tier = "THIN"
             try:
                 from app.services.research_queue import enqueue_research
                 enqueue_research(
                     db,
                     state=state_code.upper() or mc_state or "ZZ",
                     municipality_name=city or municipal.municipality_name,
-                    jurisdiction_type="city",
+                    jurisdiction_type="city" if city else "county",
                     sample_address=formatted_address,
-                    trigger_reason="OUT_OF_PACK_GEOGRAPHY",
+                    trigger_reason=status_reason,
                 )
             except Exception:
                 pass
@@ -273,8 +289,8 @@ def check_eligibility(request: EligibilityRequest, db: Session = Depends(get_db)
                 "status": status,
                 "determination": status,
                 "conditions": conditions,
-                "status_reason": "OUT_OF_PACK_GEOGRAPHY",
-                "coverage_tier": "UNDER_REVIEW",
+                "status_reason": status_reason,
+                "coverage_tier": coverage_tier,
                 "municipality_name": municipal.municipality_name,
                 "components": {
                     "city": city,
@@ -287,7 +303,7 @@ def check_eligibility(request: EligibilityRequest, db: Session = Depends(get_db)
                 "prefer_compliance_api": "/api/v1/compliance?address=",
             }
 
-        # Have a curated FL municipal row — still do not emit GREEN/YELLOW/RED.
+        # Curated FL municipal row — still do not emit GREEN/YELLOW/RED.
         # SP-007: Restricted FL pack is Covered ≠ Compliant; point at compliance API.
         if municipal.str_prohibited or not municipal.is_allowed:
             determination = "RESTRICTED"

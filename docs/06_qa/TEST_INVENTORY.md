@@ -38,7 +38,7 @@ python -m pytest tests/ app/tests/ -q --tb=short
 | `tests/test_bug_us006_checklist_500.py` | Free checklist-items / tasks return **403 not 500**; relationship boom still 403; simulate flag path | api | PR / main CI | CI on main is the gate | BUG_US006 |
 | `tests/test_bug_us006_simulate_500.py` | `simulate-entitlement` returns 200 when `ALLOW_BILLING_SIMULATION=true`; `/me` + checklist after simulate | api | PR / main CI | CI on main is the gate | BUG_US006_SIMULATE_500 |
 | `tests/test_calendar_v1.py` | iCal sync registration + Celery sync task; calendar export success / invalid token | api | PR / main CI | CI on main is the gate | Calendar v1 |
-| `tests/test_compliance_address.py` | Compliance-by-address success / HOA match / not found / missing+empty address params | api | PR / main CI | CI on main is the gate | Address lookup |
+| `tests/test_compliance_address.py` | Compliance-by-address; Orange County Thin→UR; HOA match; miss UR; missing+empty address params | api | PR / main CI | CI on main is the gate | Address lookup + Curated gate |
 | `tests/test_compliance_endpoint.py` | Compliance get/search (+ fallbacks); task chat; agent trigger; fill-permit-form | api | PR / main CI | CI on main is the gate | Broader compliance API |
 | `tests/test_eligibility_mb_city_of.py` | “City of Miami Beach” municipal alias; MB Convention Center eligibility allowed+checklist (not stuck UNDER_REVIEW) | api | PR / main CI | CI on main is the gate | Cheap MB seed guard |
 | `tests/test_eligibility_no_hash.py` | TE-002: no hash-lottery GREEN/YELLOW/RED; removed `determine_status`; under-review without muni | unit | PR / main CI | CI on main is the gate | TE-002 |

@@ -255,38 +255,50 @@ def test_admin_research_list_requires_key(client, db):
 
 
 def test_coverage_copy_surfaces(client):
-    """SP-012: FL Curated + Tampa Bay must-list; no Broward-as-Tampa-Bay; Falcon SEO titles."""
+    """SP-012 Option B: regional hero + full Features list; thin examples; no Broward-as-Tampa-Bay."""
     for path in ("/", "/features", "/pricing"):
         body = client.get(path).text
         assert "Florida" in body
         assert "Under Review" in body
         assert "Tampa Bay" in body
-        # Hard bans from COVERAGE_COPY
-        assert "10 states" not in body.lower()
+        # Ban multi-state Covered claims; allow honest "not 10 states" phrasing
         assert "spanning 10" not in body.lower()
+        assert "cover 10 states" not in body.lower()
+        assert "across 10 states" not in body.lower()
         for banned in ("Covered in California", "Covered in Texas", "Covered in New York"):
             assert banned not in body
         assert "we cover california" not in body.lower()
-        # Broward must not be sold as Tampa Bay (explicit exclusion OK)
-        assert "Tampa Bay" in body
 
     landing = client.get("/").text
-    assert "Kissimmee, Miami Beach, Tampa Bay" in landing  # Falcon title
-    assert "Panama City Beach" in landing
-    assert "St. Petersburg" in landing
-    assert "Hillsborough" in landing
-    assert "Pinellas" in landing
-    assert "Pasco" in landing
+    assert "Orlando" in landing
+    assert "Curated Florida" in landing or "Curated" in landing
+    assert "Ocala" in landing  # thin example in microcopy
+    assert "Jacksonville" in landing
 
     features = client.get("/features").text
-    assert "Curated Florida coverage — Kissimmee to Tampa Bay" in features  # Falcon H2
-    assert "Kissimmee" in features and "Panama City Beach" in features
-    assert "Miami-Dade" in features
-    assert "Clearwater" in features
+    assert "Where we’re Covered" in features or "Where we're Covered" in features
+    for name in (
+        "Kissimmee", "Orlando", "Clermont",
+        "Panama City Beach", "Bay County", "Destin",
+        "Miami Beach", "Miami", "Miami-Dade", "Fort Lauderdale", "Key West",
+        "Tampa", "St. Petersburg", "Clearwater", "Hillsborough", "Pinellas", "Pasco",
+        "Broward County", "Collier County", "Monroe County", "Walton County",
+        "St. Johns County", "Flagler County", "Gulf County", "Brevard County",
+        "Naples", "Sarasota", "Cape Coral", "Cocoa Beach",
+    ):
+        assert name in features, name
+    # Broward under SE Florida, not inside Tampa Bay card
+    bay_start = features.find("Tampa Bay")
+    se_start = features.find("Southeast Florida")
+    assert bay_start > 0 and se_start > 0
+    bay_block = features[bay_start:bay_start + 800]
+    assert "Broward" not in bay_block
+    assert "Broward County" in features
 
     pricing = client.get("/pricing").text
-    assert "Curated jurisdictions" in pricing  # Falcon title fragment
+    assert "Curated" in pricing
     assert "Tampa Bay" in pricing
+    assert "Orlando" in pricing
 
 
 def test_eligibility_non_fl_under_review(client, db, monkeypatch):
@@ -344,6 +356,7 @@ def test_seed_tampa_bay_pcb_curated(db, monkeypatch):
         "Pasco County",
         "Bay County",
         "Kissimmee",
+        "Orlando",
     ):
         row = db.query(MunicipalCode).filter(MunicipalCode.municipality_name == name).first()
         assert row is not None, name
@@ -353,7 +366,9 @@ def test_seed_tampa_bay_pcb_curated(db, monkeypatch):
     # Broward may exist as FL seed but must not appear in Features Tampa Bay list
     features = Path(__file__).resolve().parents[1] / "app" / "templates" / "features.html"
     html = features.read_text()
-    bay_block_start = html.find("Tampa Bay area")
+    bay_block_start = html.find(">Tampa Bay<")
+    if bay_block_start < 0:
+        bay_block_start = html.find("Tampa Bay")
     assert bay_block_start > 0
     bay_block = html[bay_block_start:bay_block_start + 600]
     assert "Broward" not in bay_block
@@ -363,3 +378,121 @@ def test_init_db_wires_tampa_bay_seed():
     init_src = (REPO_ROOT / "init_db.py").read_text()
     assert "seed_tampa_bay_rules" in init_src
 
+
+@patch("app.api.v1.compliance.geocode_address")
+def test_option_b_curated_gate_ocala_under_review(mock_geocode, client, db):
+    """Ocala-class Thin FL seed must not look Covered."""
+    db.add(MunicipalCode(
+        id=uuid.uuid4(),
+        municipality_name="Ocala",
+        ordinance_number="OCALA-YES",
+        jurisdiction_type="City",
+        state="FL",
+        is_allowed=True,
+        str_prohibited=False,
+        requires_permit=True,
+        permit_name="Ocala STR",
+        tax_rate=4.0,
+        source_url="https://www.ocalafl.gov/",
+        is_expert_verified=True,
+        source_kind="excel_seed",
+    ))
+    db.commit()
+    mock_geocode.return_value = {
+        "city": "Ocala", "county": "Marion County", "state": "FL", "address_components": [],
+    }
+    data = client.get("/api/v1/compliance", params={"address": "123 Main St, Ocala, FL"}).json()
+    assert data["is_under_review"] is True
+    assert data["status"] == "UNDER_REVIEW"
+    assert data["is_compliant"] is False
+    assert data.get("status_reason") == "THIN_COVERAGE"
+    assert data.get("coverage_tier") == "THIN"
+    assert data["municipal_code"] is None
+    assert data["checklist"] == []
+
+
+@patch("app.api.v1.compliance.geocode_address")
+def test_option_b_orlando_kissimmee_keywest_covered(mock_geocode, client, db):
+    """Option B cities (Orlando, Kissimmee, Key West) get Covered checklist depth."""
+    for name, ordn, permit in (
+        ("Orlando", "ORL-HOME-SHARE", "Orlando Home-Sharing Registration"),
+        ("Kissimmee", "KISS-STR-ZONE", "Kissimmee STR Zoning / Registration"),
+        ("Key West", "KW-STR", "Key West Vacation Rental License"),
+    ):
+        db.add(MunicipalCode(
+            id=uuid.uuid4(),
+            municipality_name=name,
+            ordinance_number=ordn,
+            jurisdiction_type="City",
+            state="FL",
+            is_allowed=True,
+            str_prohibited=False,
+            requires_permit=True,
+            permit_name=permit,
+            tax_rate=6.0,
+            source_url=f"https://example.gov/{name.lower().replace(' ', '-')}",
+            is_expert_verified=True,
+            source_kind="manual_pack",
+        ))
+    db.commit()
+
+    cases = [
+        ("Orlando", "1 Orange Ave, Orlando, FL"),
+        ("Kissimmee", "301 E Dakin Ave, Kissimmee, FL"),
+        ("Key West", "500 Duval St, Key West, FL"),
+    ]
+    for city, addr in cases:
+        mock_geocode.return_value = {
+            "city": city, "county": "Some County", "state": "FL", "address_components": [],
+        }
+        data = client.get("/api/v1/compliance", params={"address": addr}).json()
+        assert data["is_under_review"] is False, city
+        assert data["status"] in ("ALLOWED_WITH_CHECKLIST", "RESTRICTED"), (city, data["status"])
+        assert data.get("coverage_tier") == "CURATED", city
+        assert data["municipal_code"] is not None, city
+        assert data["municipal_code"]["municipality_name"] == city
+        assert data["checklist"], city
+
+
+@patch("app.api.v1.compliance.geocode_address")
+def test_option_b_tampa_and_miami_beach_covered(mock_geocode, client, db):
+    db.add(MunicipalCode(
+        id=uuid.uuid4(), municipality_name="Tampa", ordinance_number="TAMPA-STR",
+        jurisdiction_type="City", state="FL", is_allowed=True, str_prohibited=False,
+        requires_permit=True, permit_name="Tampa STR", source_url="https://www.tampa.gov/",
+        is_expert_verified=True,
+    ))
+    db.add(MunicipalCode(
+        id=uuid.uuid4(), municipality_name="Miami Beach", ordinance_number="MB-STR",
+        jurisdiction_type="City", state="FL", is_allowed=False, str_prohibited=True,
+        requires_permit=True, permit_name="MB STR",
+        source_url="https://www.miamibeachfl.gov/", is_expert_verified=True,
+    ))
+    db.commit()
+    mock_geocode.return_value = {
+        "city": "Tampa", "county": "Hillsborough County", "state": "FL", "address_components": [],
+    }
+    data = client.get("/api/v1/compliance", params={"address": "401 E Jackson St, Tampa, FL"}).json()
+    assert data["is_under_review"] is False
+    assert data["status"] == "ALLOWED_WITH_CHECKLIST"
+    assert data.get("coverage_tier") == "CURATED"
+
+    mock_geocode.return_value = {
+        "city": "Miami Beach", "county": "Miami-Dade County", "state": "FL", "address_components": [],
+    }
+    data = client.get("/api/v1/compliance", params={"address": "1700 Convention Center Dr, Miami Beach, FL"}).json()
+    assert data["is_under_review"] is False
+    assert data["status"] == "RESTRICTED"
+    assert data.get("coverage_tier") == "CURATED"
+
+
+def test_curated_allowlist_option_b_aliases():
+    from app.services.curated_coverage import is_name_on_curated_allowlist as ok
+    assert ok("City of St. Petersburg") is True
+    assert ok("Sarasota City") is True
+    assert ok("Orange County") is False
+    assert ok("Ocala") is False
+    assert ok("Key West") is True
+    assert ok("Broward County") is True
+    assert ok("Fort Myers") is False
+    assert ok("Fort Myers Beach") is True

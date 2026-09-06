@@ -60,6 +60,7 @@ def setup_test_db():
             id=uuid.uuid4(),
             municipality_name="Orange County",
             jurisdiction_type="County",
+            state="FL",
             ordinance_number="JURISDICTION-RULES",
             str_prohibited=False,
             is_allowed=True,
@@ -70,7 +71,8 @@ def setup_test_db():
             occupancy_limits="max 10 guests",
             tax_rate=6.0,
             source_url="https://orange.county.gov/str",
-            last_verified_date=datetime.date(2026, 6, 5)
+            last_verified_date=datetime.date(2026, 6, 5),
+            is_expert_verified=True,
         )
         db.add(mc)
         
@@ -117,20 +119,18 @@ def test_get_compliance_by_address_success(mock_geocode):
     response = client.get("/api/v1/compliance", params={"address": "123 Main St"})
     assert response.status_code == 200
     data = response.json()
-    
-    # Verify response schema structure
+
+    # Orange County is Thin (Option B) — Under Review, not Covered theater
     assert data["address"] == "123 Main St"
-    assert data["is_compliant"] is True
-    
-    assert data["municipal_code"] is not None
-    assert data["municipal_code"]["municipality_name"] == "Orange County"
-    assert data["municipal_code"]["jurisdiction_type"] == "County"
-    assert data["municipal_code"]["stay_restriction_days"] == 30
-    assert data["municipal_code"]["tax_rate"] == 6.0
-    
-    assert data["hoa_rule"] is None  # Does not match location for HOA 'Osceola County'
-    
-    # Verify geocoding integration was called
+    assert data["is_under_review"] is True
+    assert data["is_compliant"] is False
+    assert data["status"] == "UNDER_REVIEW"
+    assert data.get("status_reason") == "THIN_COVERAGE"
+    assert data.get("coverage_tier") == "THIN"
+    assert data["municipal_code"] is None
+    assert data["checklist"] == []
+    assert data["hoa_rule"] is None
+
     mock_geocode.assert_called_once_with("123 Main St")
 
 @patch("app.api.v1.compliance.geocode_address")
