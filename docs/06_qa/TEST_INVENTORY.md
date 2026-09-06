@@ -2,6 +2,8 @@
 
 **Ownership**
 
+**Updated:** 2026-09-05 (ET)
+
 - **Hulk** adds a row when shipping a bug fix (regression module or new coverage).
 - **Phil Coulson** keeps this inventory current (paths, guards, layers, links).
 - **CI** remains the periodic gate (`unit` on every PR + push to `main`).
@@ -9,7 +11,7 @@
 
 How to run and CI wiring: see [REGRESSION_AUTOMATION.md](./REGRESSION_AUTOMATION.md).
 
-**Last known green (suite):** do **not** invent per-module pass/fail here. The gate is **CI on main**. Latest cited tip at inventory write: `75085184f8341d0f04834cc30b28dfb41aef4f56` (merge PR #19) — CI workflow **success** on that push. Re-check Actions on `main` for the current tip.
+**Last known green (suite):** **Updated:** 2026-09-05 (ET). Do **not** invent per-module pass/fail here. The gate is **CI on main**. Latest cited tip at inventory write: `75085184f8341d0f04834cc30b28dfb41aef4f56` (merge PR #19) — CI workflow **success** on that push. Re-check Actions on `main` for the current tip.
 
 ---
 
