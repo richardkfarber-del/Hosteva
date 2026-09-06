@@ -8,7 +8,8 @@
 <body class="bg-gray-100">
     <div class="max-w-5xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
         <h1 class="text-3xl font-extrabold text-gray-900 text-center mb-2">Pricing — Hosteva</h1>
-        <p class="text-center text-gray-600 mb-6">Florida Phase I. One paid plan.</p>
+        <p class="text-center text-gray-600 mb-2">Florida Phase I. One paid plan.</p>
+        <p class="text-center text-gray-600 mb-6 text-sm">Municipal Free Audit coverage is Florida jurisdictions in our database. Essentials deepens the checklist for those same Florida places — it doesn’t unlock other states.</p>
         {% if not billing_enabled %}
         <div id="billing-disabled-banner" class="mb-8 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-center text-amber-900 text-sm font-medium">
             Billing temporarily unavailable. Paid checkout is disabled until billing is re-enabled. Free tools remain available.
@@ -21,7 +22,7 @@
                 <p class="text-gray-500 mb-4 text-sm">Check address / preliminary zoning</p>
                 <p class="text-4xl font-bold mb-6">$0</p>
                 <ul class="mb-8 flex-1 text-sm text-gray-700 space-y-2">
-                    <li>Florida address lookup</li>
+                    <li>Florida address lookup against our municipal rules pack</li>
                     <li>Preliminary zoning risk or Under Review</li>
                     <li>Not legal advice</li>
                 </ul>
@@ -36,6 +37,7 @@
                     <li>Interactive Florida municipal checklist</li>
                     <li>Official .gov portal links when available</li>
                     <li>Fee / inspection notes when in data</li>
+                    <li>Built on the same Florida Covered geography — deeper checklist and .gov links when available, not multi-state coverage</li>
                 </ul>
                 <button type="button" id="cta-essentials-monthly" onclick="startEssentialsCheckout('monthly')" class="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700">Get Essentials — $9.99/mo</button>
                 <button type="button" id="cta-essentials-yearly" onclick="startEssentialsCheckout('yearly')" class="mt-2 w-full bg-white border border-blue-600 text-blue-700 py-2 rounded-md hover:bg-blue-50">Get Essentials — $99/yr</button>

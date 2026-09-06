@@ -21,6 +21,7 @@ def main():
         import app.models.swarm
         import app.models.oauth
         import app.models.password_reset
+        import app.models.research_request
         import app.integrations.ota_models
         
         # Enable PostgreSQL extensions if PostgreSQL
@@ -98,7 +99,8 @@ def main():
                 ("minimum_stay_requirement", "VARCHAR(255)"),
                 ("occupancy_limits", "VARCHAR(255)"),
                 ("tax_rate_registration_fee", "VARCHAR(255)"),
-                ("last_verified_date", "DATE")
+                ("last_verified_date", "DATE"),
+                ("source_kind", "VARCHAR(50)")
             ]:
                 if col_name not in columns:
                     with engine.connect() as conn:
@@ -151,6 +153,19 @@ def main():
             print(f"Warning: Could not ensure password_reset_tokens: {prt_err}")
 
 
+        try:
+            tables = inspector.get_table_names()
+            if "research_requests" not in tables:
+                from app.models.research_request import ResearchRequest
+                ResearchRequest.__table__.create(bind=engine, checkfirst=True)
+                print("Created research_requests table.")
+            else:
+                print("research_requests table already exists.")
+        except Exception as rr_err:
+            print(f"Warning: Could not ensure research_requests: {rr_err}")
+
+
+
         # Auto-seed GTM rules database if empty
         try:
             import sys
@@ -168,14 +183,25 @@ def main():
 
             db_sess = SessionLocal()
             try:
+                excel_dir = os.path.dirname(__file__)
                 count = db_sess.query(func.count(MunicipalCode.id)).scalar()
-                if count == 0:
-                    print("Database municipal_codes table is empty. Running Excel rules seeding...")
-                    excel_dir = os.path.dirname(__file__)
+                # SP-010: when Drive Complete.xlsx is present, always idempotent upsert
+                # (fixes seed-if-empty footgun that left stale/partial DBs without denser rows).
+                try:
+                    from scripts.seed_rules import complete_xlsx_present
+                except ImportError:
+                    from seed_rules import complete_xlsx_present
+                force_reseed = complete_xlsx_present(excel_dir)
+                if count == 0 or force_reseed:
+                    reason = "empty table" if count == 0 else "Complete.xlsx present (idempotent upsert)"
+                    print(f"Running Excel rules seeding ({reason}; prior municipal_codes count={count})...")
                     seed_rules(db_sess, excel_dir)
                     print("Excel rules seeding completed successfully.")
                 else:
-                    print(f"Database already contains {count} municipal code rules. Skipping Excel auto-seeding.")
+                    print(
+                        f"Database already contains {count} municipal code rules and Complete.xlsx "
+                        "is absent. Skipping Excel auto-seeding."
+                    )
             except Exception as seed_err:
                 print(f"Warning: Auto-seeding failed: {seed_err}")
             finally:

@@ -83,6 +83,8 @@ class MunicipalCode(Base):
     scraped_at = Column(DateTime(timezone=True), nullable=True)
     form_template_path = Column(String(500), nullable=True)
     form_layout_json = Column(Text, nullable=True)
+    # excel_seed | manual_pack | open_data | ai_draft | hoa_poc | url_fetch_draft | url_fetch_curated
+    source_kind = Column(String(50), nullable=True, default=None)
 
     if is_sqlite:
         __table_args__ = (
