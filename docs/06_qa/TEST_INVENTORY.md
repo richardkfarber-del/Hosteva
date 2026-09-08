@@ -62,11 +62,12 @@ python -m pytest tests/ app/tests/ -q --tb=short
 | `tests/test_us015_checklist_signup_cta.py` | US-015 Covered guest Sign Up CTA + helper + honesty; Under Review no checklist CTA; register `next` return intent; no pricing/allowlist | dom-assert | PR / main CI | CI on main is the gate | PL-CTA US-015 |
 | `tests/test_us018_dup_address_guard.py` | US-018 host-scoped dup address block (exact + trim/case); friendly Wasp 409 copy + Open existing; other host unblocked; no Option B/CTA/SV | api/dom-assert | PR / main CI | CI on main is the gate | PL-DUP US-018 |
 | `tests/test_us018b_dup_cleanup.py` | US-018b/TE-010 host-scoped existing-dup cleanup; richest→canonical else earliest created_at; reattach children; cross-host intact; idempotent; admin endpoint | api/unit | PR / main CI | CI on main is the gate | PL-DUP US-018b |
+| `tests/test_us018c_address_normalize.py` | US-018c/TE-011 normalize-before-match: short≡full Stable Run; prevent 409 both forms; cleanup residual pair; distinct streets + cross-host intact | api/unit | PR / main CI | CI on main is the gate | PL-DUP US-018c |
 | `tests/test_user_me_guest_fix.py` | `/api/user/me` must not collapse Bearer hosts into Guest; shape parity; missing host ≠ Guest label | api | PR / main CI | CI on main is the gate | Guest identity bug |
 | `tests/test_validation_engine.py` | Agnostic validate: reject zoning / property type / stay duration; allowed → checklist generation | api | PR / main CI | CI on main is the gate | Validation engine |
 | `tests/test_validation_workflow.py` | Hillsborough nightly reject / weekly allowed+checklist; St. Petersburg warning+checklist; Pasco permit+checklist | api | PR / main CI | CI on main is the gate | County workflow fixtures |
 
-**Module count:** 35 (`2` under `app/tests/`, `33` under `tests/`).
+**Module count:** 36 (`2` under `app/tests/`, `34` under `tests/`).
 
 ---
 
