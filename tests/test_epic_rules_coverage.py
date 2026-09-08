@@ -243,14 +243,17 @@ def test_draft_ready_still_under_review(mock_geocode, client, db):
     assert res.json()["is_compliant"] is False
 
 
-def test_admin_research_list_requires_key(client, db):
+def test_admin_research_list_requires_key(client, db, monkeypatch):
+    # Pin key in-test so other modules' import-time ADMIN/RESEARCH env cannot 401 us.
+    monkeypatch.setenv("RESEARCH_ADMIN_KEY", "test-admin-key")
+    monkeypatch.setenv("ADMIN_API_KEY", "test-admin-key")
     r = client.get("/api/v1/admin/research-requests")
     assert r.status_code in (401, 503)
     r2 = client.get(
         "/api/v1/admin/research-requests",
         headers={"X-Admin-Key": "test-admin-key"},
     )
-    assert r2.status_code == 200
+    assert r2.status_code == 200, r2.text
     assert isinstance(r2.json(), list)
 
 

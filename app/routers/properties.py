@@ -400,6 +400,24 @@ def get_properties(
                 sql_query = str(query)
         logger.info(f"DEBUG: Empty dashboard. Executed SQL query: {sql_query}")
         print(f"DEBUG: Empty dashboard. Executed SQL query: {sql_query}", flush=True)
+
+    # BUG-PL-11: list hydrate — correct stale Compliant / green from compliance truth
+    for p in properties:
+        zs = (p.zoning_status or "").strip().lower()
+        if zs in ("compliant", "green"):
+            try:
+                _align_property_zoning_with_compliance(db, p, commit=True)
+            except Exception:
+                logger.exception(
+                    "BUG-PL-11: list hydrate failed for property %s",
+                    getattr(p, "id", "?"),
+                )
+                try:
+                    db.rollback()
+                except Exception:
+                    pass
+                if (p.zoning_status or "").strip().lower() in ("compliant", "green"):
+                    p.zoning_status = "Pending"
         
     result = [
         {
@@ -624,6 +642,26 @@ def create_property(
     db.commit()
     db.refresh(db_property)
 
+    # BUG-PL-11 / PL-05: never invent Compliant for Thin / UNDER_REVIEW / checklist
+    try:
+        _align_property_zoning_with_compliance(db, db_property, commit=True)
+        db.refresh(db_property)
+    except Exception:
+        logger.exception(
+            "BUG-PL-11: create-time compliance align failed for property %s",
+            getattr(db_property, "id", "?"),
+        )
+        try:
+            db.rollback()
+        except Exception:
+            pass
+        if (db_property.zoning_status or "").strip().lower() in ("compliant", "green"):
+            db_property.zoning_status = "Pending"
+            try:
+                db.commit()
+            except Exception:
+                pass
+
     def _create_payload(prop):
         return {
             "id": prop.id,
@@ -659,8 +697,65 @@ def create_property(
     return payload
 
 
+def _property_full_address(prop) -> str:
+    return ", ".join(
+        part for part in [
+            getattr(prop, "address", None),
+            getattr(prop, "city", None),
+            f"{getattr(prop, 'state', None) or ''} {getattr(prop, 'zip_code', None) or ''}".strip(),
+        ]
+        if part
+    )
+
+
+def _compliance_status_label(result) -> str:
+    return (
+        getattr(result, "status", None)
+        or (
+            "UNDER_REVIEW" if getattr(result, "is_under_review", False)
+            else (
+                "RESTRICTED"
+                if not getattr(result, "is_compliant", True)
+                else "ALLOWED_WITH_CHECKLIST"
+            )
+        )
+    )
+
+
+def _align_property_zoning_with_compliance(db, prop, *, commit: bool = False) -> str:
+    """BUG-PL-11 / PL-05: correct zoning_status from live /api/v1/compliance truth.
+
+    Never leaves a false Compliant green for UNDER_REVIEW / Restricted / Pending /
+    ALLOWED_WITH_CHECKLIST. Used by list hydrate, create, and evaluate.
+    """
+    old = (getattr(prop, "zoning_status", None) or "").strip()
+    try:
+        from app.api.v1.compliance import get_compliance_by_address
+
+        result = get_compliance_by_address(address=_property_full_address(prop), db=db)
+        new_status = _map_compliance_label_to_zoning(_compliance_status_label(result))
+    except Exception:
+        logger.exception(
+            "BUG-PL-11: compliance hydrate failed for property %s",
+            getattr(prop, "id", "?"),
+        )
+        if old.lower() in ("compliant", "green"):
+            new_status = "Pending"
+        else:
+            new_status = old or "Pending"
+
+    if (new_status or "").strip().lower() == "compliant":
+        new_status = "Action Required"
+
+    if new_status != getattr(prop, "zoning_status", None):
+        prop.zoning_status = new_status
+        if commit:
+            db.commit()
+    return new_status
+
+
 def _map_compliance_label_to_zoning(status_label: str) -> str:
-    """Align property zoning_status with /api/v1/compliance truth (BUG-PL-05).
+    """Align property zoning_status with /api/v1/compliance truth (BUG-PL-05 / PL-11).
 
     Never maps to Compliant for Restricted / Pending / Under Review / checklist-required.
     """
@@ -694,25 +789,13 @@ def evaluate_compliance(
         raise HTTPException(status_code=404, detail="Property not found")
 
     old_status = property_item.zoning_status
-    full_address = ", ".join(
-        p for p in [
-            property_item.address,
-            property_item.city,
-            f"{property_item.state or ''} {property_item.zip_code or ''}".strip(),
-        ] if p
-    )
-
     compliance_status = "UNDER_REVIEW"
     try:
         from app.api.v1.compliance import get_compliance_by_address
-        result = get_compliance_by_address(address=full_address, db=db)
-        compliance_status = (
-            getattr(result, "status", None)
-            or (
-                "UNDER_REVIEW" if getattr(result, "is_under_review", False)
-                else ("RESTRICTED" if not getattr(result, "is_compliant", True) else "ALLOWED_WITH_CHECKLIST")
-            )
+        result = get_compliance_by_address(
+            address=_property_full_address(property_item), db=db
         )
+        compliance_status = _compliance_status_label(result)
         new_status = _map_compliance_label_to_zoning(compliance_status)
     except Exception:
         # Fail closed: never invent Compliant when compliance lookup fails
@@ -723,7 +806,7 @@ def evaluate_compliance(
             new_status = "Pending"
         compliance_status = "LOOKUP_FAILED"
 
-    # Hard guard: this endpoint must never claim Compliant
+    # Hard guard: this endpoint must never claim Compliant (BUG-PL-05 / PL-11)
     if (new_status or "").strip().lower() == "compliant":
         new_status = "Action Required"
 

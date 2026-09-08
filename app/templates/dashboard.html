@@ -1522,6 +1522,55 @@ Processing Time: ${data.estimated_processing_time}`);
                     return;
                 }
 
+                // BUG-PL-11: badge honesty — never paint green COMPLIANT from stale zoning when
+                // checklist is empty/403 or zoning is Under Review / Restricted / Pending / checklist-required.
+                const resolveDashboardBadge = (zoningStatus, checklistItems, checklistLocked) => {
+                    const zs = (zoningStatus || '').trim();
+                    const zsLower = zs.toLowerCase();
+                    const items = Array.isArray(checklistItems) ? checklistItems : [];
+                    const notGreenZoning = !zsLower
+                        || zsLower === 'pending'
+                        || zsLower.includes('review')
+                        || zsLower === 'action required'
+                        || zsLower === 'violation'
+                        || zsLower.includes('manual review');
+
+                    if (checklistLocked) {
+                        if (zsLower === 'pending' || zsLower.includes('review') || !zsLower) {
+                            return { kind: 'awaiting', score: 0 };
+                        }
+                        // Locked checklist + Compliant claim is not verified municipal truth
+                        return { kind: 'attention', score: 0 };
+                    }
+
+                    if (items.length > 0) {
+                        const compliantTasks = items.filter(item => item.is_compliant).length;
+                        const score = Math.round((compliantTasks / items.length) * 100);
+                        if (notGreenZoning) {
+                            if (zsLower === 'pending' || zsLower.includes('review') || !zsLower) {
+                                return { kind: 'awaiting', score: 0 };
+                            }
+                            return { kind: 'attention', score };
+                        }
+                        if (score === 100 && zsLower === 'compliant') {
+                            return { kind: 'compliant', score: 100 };
+                        }
+                        if (score === 100) {
+                            return { kind: 'attention', score: 100 };
+                        }
+                        return { kind: 'attention', score };
+                    }
+
+                    // Empty checklist: never trust stale Compliant alone (BUG-PL-11)
+                    if (zsLower === 'pending' || zsLower.includes('review') || !zsLower) {
+                        return { kind: 'awaiting', score: 0 };
+                    }
+                    if (zsLower === 'compliant' || zsLower === 'green') {
+                        return { kind: 'attention', score: 0 };
+                    }
+                    return { kind: 'attention', score: 0 };
+                };
+
                 // Fetch checklist items for all properties in parallel to compute dynamic compliance scores
                 const checklistPromises = properties.map((p, idx) => 
                     fetch(`/api/v1/compliance/checklist-items/${p.id}`, { headers })
@@ -1543,8 +1592,9 @@ Processing Time: ${data.estimated_processing_time}`);
                     
                     const p = properties[0];
                     let checklistItems = propertiesChecklists[0] || [];
+                    const checklistLockedSingle = !!(checklistItems && checklistItems.error === 'upgrade_required');
                     
-                    if (checklistItems && checklistItems.error === 'upgrade_required') {
+                    if (checklistLockedSingle) {
                         const taskContainer = clone.getElementById('dashboard-pending-tasks');
                         if (taskContainer) {
                             taskContainer.innerHTML = `
@@ -1604,38 +1654,24 @@ Processing Time: ${data.estimated_processing_time}`);
                     const compText = clone.querySelector('.single-compliance-text');
                     const compDesc = clone.querySelector('.single-compliance-desc');
                     
-                    let complianceScore = 100;
-                    let isAwaitingAudit = false;
-                    
-                    if (checklistItems.length > 0) {
-                        const compliantTasks = checklistItems.filter(item => item.is_compliant).length;
-                        complianceScore = Math.round((compliantTasks / checklistItems.length) * 100);
-                    } else {
-                        if (p.zoning_status === 'Compliant') {
-                            complianceScore = 100;
-                        } else if (p.zoning_status === 'Pending') {
-                            complianceScore = 0;
-                            isAwaitingAudit = true;
-                        } else {
-                            complianceScore = 0;
-                        }
-                    }
+                    const badgeState = resolveDashboardBadge(p.zoning_status, checklistItems, checklistLockedSingle);
+                    let complianceScore = badgeState.score;
+                    let isAwaitingAudit = badgeState.kind === 'awaiting';
 
                     if (isAwaitingAudit) {
                         badge.className = 'bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1';
                         badge.innerHTML = `<span class="material-symbols-outlined text-sm">schedule</span> AWAITING AUDIT`;
                         compDesc.innerText = 'Zoning verification in progress';
                         if (compText) compText.innerText = 'Awaiting Audit';
+                    } else if (badgeState.kind === 'compliant') {
+                        badge.className = 'bg-tertiary-fixed text-on-tertiary-fixed px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1';
+                        badge.innerHTML = `<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">check_circle</span> COMPLIANT`;
+                        compDesc.innerText = 'Elite Host Status maintained';
+                        if (compText) compText.innerText = `${complianceScore}%`;
                     } else {
-                        if (complianceScore === 100) {
-                            badge.className = 'bg-tertiary-fixed text-on-tertiary-fixed px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1';
-                            badge.innerHTML = `<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">check_circle</span> COMPLIANT`;
-                            compDesc.innerText = 'Elite Host Status maintained';
-                        } else {
-                            badge.className = 'bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1';
-                            badge.innerHTML = `<span class="material-symbols-outlined text-sm">warning</span> NEEDS ATTENTION`;
-                            compDesc.innerText = 'Immediate action required';
-                        }
+                        badge.className = 'bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1';
+                        badge.innerHTML = `<span class="material-symbols-outlined text-sm">warning</span> NEEDS ATTENTION`;
+                        compDesc.innerText = 'Immediate action required';
                         if (compText) compText.innerText = `${complianceScore}%`;
                     }
                     
@@ -1843,37 +1879,24 @@ Processing Time: ${data.estimated_processing_time}`);
                             showPlaceholderLabel();
                         };
                         
-                        // Compute dynamic compliance score
-                        let complianceScore = 100;
-                        let isAwaitingAudit = false;
-                        
-                        if (checklistItems.length > 0) {
-                            const compliantTasks = checklistItems.filter(item => item.is_compliant).length;
-                            complianceScore = Math.round((compliantTasks / checklistItems.length) * 100);
-                        } else {
-                            if (p.zoning_status === 'Compliant') {
-                                complianceScore = 100;
-                            } else if (p.zoning_status === 'Pending') {
-                                complianceScore = 0;
-                                isAwaitingAudit = true;
-                            } else {
-                                complianceScore = 0;
-                            }
-                        }
+                        // BUG-PL-11: hydrate badge from compliance-honest zoning + checklist (no stale green)
+                        const checklistLocked = !!(checklistItems && checklistItems.error === 'upgrade_required');
+                        const effectiveChecklist = checklistLocked ? [] : (Array.isArray(checklistItems) ? checklistItems : []);
+                        const badgeState = resolveDashboardBadge(p.zoning_status, effectiveChecklist, checklistLocked);
+                        let complianceScore = badgeState.score;
+                        let isAwaitingAudit = badgeState.kind === 'awaiting';
                         complianceScoresSum += complianceScore;
 
                         const badge = cardClone.querySelector('.property-card-badge');
                         if (isAwaitingAudit) {
                             badge.className = 'absolute top-4 right-4 bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-black flex items-center gap-1 shadow-sm';
                             badge.innerHTML = `<span class="material-symbols-outlined text-sm">schedule</span> AWAITING AUDIT`;
+                        } else if (badgeState.kind === 'compliant') {
+                            badge.className = 'absolute top-4 right-4 bg-tertiary-fixed text-on-tertiary-fixed px-3 py-1 rounded-full text-xs font-black flex items-center gap-1 shadow-sm';
+                            badge.innerHTML = `<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">check_circle</span> COMPLIANT`;
                         } else {
-                            if (complianceScore === 100) {
-                                badge.className = 'absolute top-4 right-4 bg-tertiary-fixed text-on-tertiary-fixed px-3 py-1 rounded-full text-xs font-black flex items-center gap-1 shadow-sm';
-                                badge.innerHTML = `<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">check_circle</span> COMPLIANT`;
-                            } else {
-                                badge.className = 'absolute top-4 right-4 bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-xs font-black flex items-center gap-1 shadow-sm';
-                                badge.innerHTML = `<span class="material-symbols-outlined text-sm">warning</span> ${complianceScore}% COMPLIANT`;
-                            }
+                            badge.className = 'absolute top-4 right-4 bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-xs font-black flex items-center gap-1 shadow-sm';
+                            badge.innerHTML = `<span class="material-symbols-outlined text-sm">warning</span> ${complianceScore}% COMPLIANT`;
                         }
                         
                         // Bind buttons inside the card
