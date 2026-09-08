@@ -1,7 +1,10 @@
 """BUG-PL-08 C — Lazy re-fetch / migrate property images into object storage.
 
 Heal rules:
-- Placeholder (fallback_house.jpg / empty): leave alone.
+- Placeholder (fallback_house.jpg / empty): leave alone on hot-path list heal
+  (fail-closed honesty). Admin/backfill retries placeholders when object storage
+  is configured (Street View re-fetch → R2/S3 upload) so fail-closed rows can
+  recover after credentials/config are fixed.
 - Ephemeral `/static/property_images/*`: always migrate or re-fetch into object store.
 - Durable HTTPS: trust on hot path unless PROPERTY_IMAGE_LAZY_VERIFY is set;
   admin/backfill always verifies.
@@ -134,9 +137,31 @@ def heal_property_image(
     *,
     verify_remote: Optional[bool] = None,
     commit: bool = True,
+    retry_placeholder: bool = False,
 ) -> str:
-    """Ensure prop.image_url is durable or honest placeholder. Returns final URL."""
+    """Ensure prop.image_url is durable or honest placeholder. Returns final URL.
+
+    When ``retry_placeholder`` is True (admin/backfill only), attempt Street View
+    re-fetch for rows already on fallback_house.jpg / empty image_url. Hot-path
+    list heal should leave placeholders alone (default).
+    """
     url = prop.image_url or ""
+    if is_fallback_property_image(url):
+        if not retry_placeholder:
+            return url or FALLBACK_PROPERTY_IMAGE_URL
+        logger.info(
+            "BUG-PL-08: retrying placeholder for property %s",
+            getattr(prop, "id", "?"),
+        )
+        refetched = _refetch_street_view(prop)
+        if refetched:
+            prop.image_url = refetched
+            if commit:
+                db.commit()
+            return refetched
+        # Still placeholder — leave alone (already honest)
+        return url or FALLBACK_PROPERTY_IMAGE_URL
+
     if not needs_image_heal(url, verify_remote=verify_remote):
         return url or FALLBACK_PROPERTY_IMAGE_URL
 
@@ -200,9 +225,19 @@ def backfill_property_images(
     host_id: Optional[str] = None,
     limit: Optional[int] = None,
     verify_remote: bool = True,
+    include_placeholders: Optional[bool] = None,
 ) -> BackfillResult:
-    """Walk non-placeholder rows and heal/migrate into object storage."""
+    """Walk property rows and heal/migrate into object storage.
+
+    ``include_placeholders`` defaults to True when ``storage_configured()`` so
+    fail-closed placeholder rows can be retried (SV re-fetch → upload). When
+    storage is not configured, placeholders stay skipped (no pointless Maps burn).
+    """
     from app.models.property import Property
+    from app.services.property_image_storage import storage_configured
+
+    if include_placeholders is None:
+        include_placeholders = storage_configured()
 
     q = db.query(Property)
     if host_id:
@@ -215,16 +250,27 @@ def backfill_property_images(
             break
         result.scanned += 1
         before = prop.image_url or ""
-        if is_fallback_property_image(before):
+        is_placeholder = is_fallback_property_image(before)
+        if is_placeholder and not include_placeholders:
             result.skipped += 1
             continue
-        if not needs_image_heal(before, verify_remote=verify_remote):
+        if not is_placeholder and not needs_image_heal(
+            before, verify_remote=verify_remote
+        ):
             result.skipped += 1
             continue
         try:
             after = heal_property_image(
-                db, prop, verify_remote=verify_remote, commit=True
+                db,
+                prop,
+                verify_remote=verify_remote,
+                commit=True,
+                retry_placeholder=is_placeholder,
             )
+            if is_placeholder and is_fallback_property_image(after):
+                # Retry attempted but Maps/upload still failed — still placeholder
+                result.skipped += 1
+                continue
             if is_fallback_property_image(after):
                 result.placeholders += 1
                 result.healed += 1

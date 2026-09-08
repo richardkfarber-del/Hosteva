@@ -35,10 +35,27 @@ def main() -> int:
         action="store_true",
         help="Skip HEAD checks on existing HTTPS URLs",
     )
+    parser.add_argument(
+        "--include-placeholders",
+        action="store_true",
+        default=None,
+        help="Retry placeholder rows (default when storage configured)",
+    )
+    parser.add_argument(
+        "--skip-placeholders",
+        action="store_true",
+        help="Never retry fallback_house.jpg / empty rows",
+    )
     args = parser.parse_args()
 
     from app.database import SessionLocal
     from app.services.property_image_heal import backfill_property_images
+
+    include_placeholders = None
+    if args.skip_placeholders:
+        include_placeholders = False
+    elif args.include_placeholders:
+        include_placeholders = True
 
     db = SessionLocal()
     try:
@@ -47,6 +64,7 @@ def main() -> int:
             host_id=args.host_id,
             limit=args.limit,
             verify_remote=not args.no_verify_remote,
+            include_placeholders=include_placeholders,
         )
         print(json.dumps({"ok": True, **result.to_dict()}, indent=2))
         return 0 if not result.errors else 1
