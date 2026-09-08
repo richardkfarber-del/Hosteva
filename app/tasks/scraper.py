@@ -227,7 +227,8 @@ def run_agent_compliance_scraper(property_id: str, city: str, county: str, state
                     db.add(new_tax_task)
             
             # Update property zoning status based on STR permission rules
-            property_obj.zoning_status = "Compliant" if str_permitted != "No" else "Violation"
+            # BUG-PL-11: permitted ≠ Compliant green; checklist still required
+            property_obj.zoning_status = "Action Required" if str_permitted != "No" else "Violation"
             
             db.commit()
             
