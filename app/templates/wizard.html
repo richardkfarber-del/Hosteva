@@ -295,6 +295,84 @@
         }
     }
 
+    // US-015: Checklist Available → Sign Up / Open free checklist return intent
+    function buildChecklistReturnIntent(address) {
+        return `/wizard?address=${encodeURIComponent(address)}&intent=checklist`;
+    }
+
+    function buildRegisterUrlForChecklist(address) {
+        const next = buildChecklistReturnIntent(address);
+        // Keep address= for pending-property banner; next= for post-auth return (not pricing/Stripe)
+        return `/register?address=${encodeURIComponent(address)}&next=${encodeURIComponent(next)}`;
+    }
+
+    function buildLoginUrlForChecklist(address) {
+        const next = buildChecklistReturnIntent(address);
+        return `/login?next=${encodeURIComponent(next)}&address=${encodeURIComponent(address)}`;
+    }
+
+    function escapeHtmlAttr(value) {
+        return String(value || '')
+            .replace(/&/g, '&amp;')
+            .replace(/"/g, '&quot;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+    }
+
+    function renderCoveredChecklistCta(address, isLoggedIn) {
+        const honesty = 'Research only — not a legal determination.';
+        if (isLoggedIn) {
+            return `
+                <div id="checklistSignupCta" class="bg-white rounded-2xl p-5 sm:p-6 flex flex-col gap-3 relative border border-tertiary/20 mb-6 shadow-sm w-full min-w-0" data-cta-state="logged-in-covered">
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-tertiary-container/40 text-tertiary text-[11px] font-bold tracking-wide uppercase border border-tertiary/20">Checklist ready</span>
+                    </div>
+                    <p class="text-on-surface-variant text-sm font-medium leading-relaxed">${honesty}</p>
+                    <button type="button" id="openFreeChecklistBtn" class="w-full bg-primary hover:bg-primary-container text-on-primary font-bold py-3.5 px-6 rounded-xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2">
+                        <span>Open free checklist</span>
+                        <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                    </button>
+                </div>`;
+        }
+        const registerUrl = escapeHtmlAttr(buildRegisterUrlForChecklist(address));
+        const loginUrl = escapeHtmlAttr(buildLoginUrlForChecklist(address));
+        return `
+            <div id="checklistSignupCta" class="bg-white rounded-2xl p-5 sm:p-6 flex flex-col gap-3 relative border border-tertiary/20 mb-6 shadow-sm w-full min-w-0" data-cta-state="guest-covered">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-tertiary-container/40 text-tertiary text-[11px] font-bold tracking-wide uppercase border border-tertiary/20">Checklist ready</span>
+                </div>
+                <p class="text-on-surface-variant text-sm font-medium leading-relaxed">${honesty}</p>
+                <a id="checklistSignupPrimaryBtn" href="${registerUrl}" class="w-full bg-primary hover:bg-primary-container text-on-primary font-bold py-3.5 px-6 rounded-xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 text-center no-underline" onclick="sessionStorage.setItem('pending_property_address', document.getElementById('addressInput').value.trim()); this.querySelector('[data-cta-label]').textContent='Creating your path…'; this.classList.add('opacity-70','pointer-events-none');">
+                    <span data-cta-label>Create a free account to see your checklist</span>
+                    <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                </a>
+                <p class="text-on-surface-variant text-sm leading-relaxed">We'll save this address and open your free municipal checklist after you sign up. Takes a minute.</p>
+                <p class="text-sm text-on-surface-variant">Already have an account? <a id="checklistSignInLink" href="${loginUrl}" class="text-primary font-bold hover:underline" onclick="sessionStorage.setItem('pending_property_address', document.getElementById('addressInput').value.trim());">Sign in</a></p>
+            </div>`;
+    }
+
+    function renderUnderReviewBanner() {
+        return `
+                <div id="underReviewBanner" class="bg-amber-50 rounded-2xl p-5 sm:p-6 flex flex-col gap-3 relative border border-amber-200 mb-6 shadow-sm w-full min-w-0" data-cta-state="under-review">
+                    <div class="space-y-2 z-10 text-left min-w-0">
+                        <div class="flex items-center gap-2 text-amber-800 flex-wrap">
+                            <span class="material-symbols-outlined icon-filled shrink-0">hourglass_top</span>
+                            <h3 class="font-display font-bold text-lg break-words">Under Review</h3>
+                        </div>
+                        <p class="text-on-surface-variant text-sm font-medium leading-relaxed break-words whitespace-normal">We don't have Curated municipal rules for this address yet, so there's no checklist to open. We're not guessing — you'll see Under Review instead of a pass/fail traffic light.</p>
+                        <p class="text-on-surface-variant text-sm font-medium leading-relaxed">Research only — not a legal determination.</p>
+                    </div>
+                    <div class="z-10 shrink-0 flex flex-wrap gap-2 items-center">
+                        <span class="inline-flex items-center justify-center px-3 py-1 rounded-full bg-amber-100 text-amber-900 font-bold text-xs tracking-wide border border-amber-200">
+                            Fail-closed
+                        </span>
+                        <button type="button" id="tryAnotherAddressBtn" class="inline-flex items-center justify-center px-3 py-1.5 rounded-xl bg-white border border-amber-200 text-amber-900 font-semibold text-xs hover:bg-amber-50 transition-all">
+                            Try another Florida address
+                        </button>
+                    </div>
+                </div>`;
+    }
+
     async function runAudit() {
         const address = addressInput.value.trim();
         const addressError = document.getElementById('addressError');
@@ -344,23 +422,14 @@
             addressInput.value = address;
             sessionStorage.setItem('pending_property_address', address);
 
+            const isUserLoggedInEarly = !!token;
+            const isUnderReviewResult = !!(data.is_under_review || (!data.municipal_code && !(data.checklist && data.checklist.length)));
+            const isCoveredChecklist = !isUnderReviewResult && !!data.is_compliant;
+
             let bannerHtml = '';
-            if (data.is_under_review || (!data.municipal_code && !(data.checklist && data.checklist.length))) {
-                bannerHtml = `
-                <div class="bg-amber-50 rounded-2xl p-5 sm:p-6 flex flex-col gap-3 relative border border-amber-200 mb-6 shadow-sm w-full min-w-0">
-                    <div class="space-y-2 z-10 text-left min-w-0">
-                        <div class="flex items-center gap-2 text-amber-800 flex-wrap">
-                            <span class="material-symbols-outlined icon-filled shrink-0">hourglass_top</span>
-                            <h3 class="font-display font-bold text-lg break-words">Under Review</h3>
-                        </div>
-                        <p class="text-on-surface-variant text-sm font-medium leading-relaxed break-words whitespace-normal">We don’t have this address on our <strong>Curated</strong> Florida list yet. Covered checklist depth is for Curated regions (Central / Orlando–Kissimmee, Tampa Bay, Miami Beach &amp; SE Florida, PCB / Panhandle, the Keys, and the other cities/counties on Features). Markets like Ocala, Gainesville, or Jacksonville stay Under Review until we curate them. We won’t invent a traffic-light pass. Research seeds and HOA rows don’t change this Under Review result.</p>
-                    </div>
-                    <div class="z-10 shrink-0">
-                        <span class="inline-flex items-center justify-center px-3 py-1 rounded-full bg-amber-100 text-amber-900 font-bold text-xs tracking-wide border border-amber-200">
-                            Fail-closed
-                        </span>
-                    </div>
-                </div>`;
+            if (isUnderReviewResult) {
+                // US-015: Under Review — no Checklist Available / free-checklist CTA
+                bannerHtml = renderUnderReviewBanner();
             } else if (!data.is_compliant) {
                 bannerHtml = `
                 <div class="bg-error-container/30 rounded-2xl p-5 sm:p-6 flex flex-col gap-3 relative border border-error/20 mb-6 shadow-sm w-full min-w-0">
@@ -370,21 +439,30 @@
                             <h3 class="font-display font-bold text-lg break-words">Restrictions Likely</h3>
                         </div>
                         <p class="text-on-surface-variant text-sm font-medium leading-relaxed break-words whitespace-normal">Curated municipal or HOA rules indicate STR may be restricted or prohibited. Review checklist items below. Not legal advice.</p>
+                        <p class="text-on-surface-variant text-sm font-medium leading-relaxed">Research only — not a legal determination.</p>
                     </div>
                 </div>`;
             } else {
-                bannerHtml = `
-                <div class="bg-tertiary-container/10 rounded-2xl p-5 sm:p-6 flex flex-col gap-3 relative border border-tertiary/20 mb-6 shadow-sm w-full min-w-0">
-                    <div class="space-y-2 z-10 text-left min-w-0">
-                        <div class="flex items-center gap-2 text-tertiary flex-wrap">
-                            <span class="material-symbols-outlined icon-filled shrink-0">checklist</span>
-                            <h3 class="font-display font-bold text-lg break-words">Checklist Available</h3>
-                        </div>
-                        <p class="text-on-surface-variant text-sm font-medium leading-relaxed break-words whitespace-normal">This address matched a Curated Florida jurisdiction. Research only — not a legal determination.</p>
-                    </div>
-                </div>`;
+                // US-015: Curated Covered → Sign Up (guest) or Open free checklist (logged-in)
+                bannerHtml = renderCoveredChecklistCta(address, isUserLoggedInEarly);
             }
             verdictContainer.innerHTML = bannerHtml;
+
+            const tryAnotherBtn = document.getElementById('tryAnotherAddressBtn');
+            if (tryAnotherBtn) {
+                tryAnotherBtn.addEventListener('click', () => {
+                    addressInput.focus();
+                    addressInput.select();
+                    showResultsState('defaultState');
+                });
+            }
+            const openFreeBtn = document.getElementById('openFreeChecklistBtn');
+            if (openFreeBtn) {
+                openFreeBtn.addEventListener('click', () => {
+                    const target = document.getElementById('freeChecklistCard') || document.getElementById('categoryCardsStack');
+                    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                });
+            }
 
             // Always show address echo so UI never looks like "Awaiting address input"
             const addrEcho = document.createElement('p');
@@ -517,8 +595,9 @@
             }
 
             // Card 3: Checklist Card
-            const isUserLoggedIn = !!token;
+            const isUserLoggedIn = isUserLoggedInEarly;
             const checklistCard = document.createElement('div');
+            checklistCard.id = 'freeChecklistCard';
             
             if (isUserLoggedIn) {
                 checklistCard.className = 'bg-white rounded-2xl p-5 border border-outline-variant/15 hover:bg-surface-container-low/30 transition-all shadow-sm flex flex-col gap-4 text-left';
@@ -621,7 +700,12 @@
                     permitBtn.classList.add('hidden');
                 }
             } else {
-                conversionContainer.classList.remove('hidden');
+                // US-015: Covered uses primary Sign Up CTA above Municipal Code; Under Review never promises checklist
+                if (isCoveredChecklist || isUnderReviewResult) {
+                    conversionContainer.classList.add('hidden');
+                } else {
+                    conversionContainer.classList.remove('hidden');
+                }
                 permitBtn.classList.add('hidden');
             }
 
@@ -654,6 +738,22 @@
         let addressParam = urlParams.get('address');
         if (!addressParam) {
             addressParam = sessionStorage.getItem('pending_property_address');
+        }
+        const intentParam = urlParams.get('intent');
+        if (intentParam === 'checklist') {
+            const tokenPresent = !!(localStorage.getItem('token')
+                || localStorage.getItem('access_token')
+                || sessionStorage.getItem('token')
+                || sessionStorage.getItem('access_token'));
+            if (tokenPresent && !sessionStorage.getItem('checklist_welcome_toast_shown')) {
+                sessionStorage.setItem('checklist_welcome_toast_shown', '1');
+                const toast = document.createElement('div');
+                toast.id = 'checklistWelcomeToast';
+                toast.className = 'fixed bottom-6 left-1/2 -translate-x-1/2 z-50 max-w-md w-[90%] bg-primary text-on-primary text-sm font-semibold px-4 py-3 rounded-xl shadow-lg text-center';
+                toast.textContent = "You're in — here's your free checklist for this address.";
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 6000);
+            }
         }
         if (addressParam) {
             // URLSearchParams already decodes; avoid double-decode corruption

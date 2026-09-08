@@ -156,6 +156,12 @@
                             sessionStorage.setItem('pending_property_address', addressParam);
                         }
                         const planParam = urlParams.get('plan') || '';
+                        // US-015: honor relative next return intent (wizard checklist) — not pricing/Stripe
+                        const nextParam = urlParams.get('next') || '';
+                        if (nextParam && nextParam.startsWith('/') && !nextParam.startsWith('//')) {
+                            window.location.href = nextParam;
+                            return;
+                        }
 
                         let targetUrl = '/dashboard';
                         const queryParts = [];
@@ -169,9 +175,10 @@
                     } else {
                         const failParams = new URLSearchParams(window.location.search);
                         const addr = failParams.get('address') || sessionStorage.getItem('pending_property_address') || '';
-                        const nextDash = addr
-                            ? `/dashboard?initial_address=${encodeURIComponent(addr)}`
-                            : '/dashboard';
+                        const failNext = failParams.get('next') || '';
+                        const nextDash = (failNext && failNext.startsWith('/') && !failNext.startsWith('//'))
+                            ? failNext
+                            : (addr ? `/dashboard?initial_address=${encodeURIComponent(addr)}` : '/dashboard');
                         window.location.href = `/login?next=${encodeURIComponent(nextDash)}${addr ? `&address=${encodeURIComponent(addr)}` : ''}`;
                     }
                 } else {
@@ -206,8 +213,18 @@
             }
             const signin = document.getElementById('signin-link');
             if (signin) {
-                const nextDash = `/dashboard?initial_address=${encodeURIComponent(addressParam)}`;
+                const urlNext = urlParams.get('next') || '';
+                const nextDash = (urlNext && urlNext.startsWith('/') && !urlNext.startsWith('//'))
+                    ? urlNext
+                    : `/dashboard?initial_address=${encodeURIComponent(addressParam)}`;
                 signin.href = `/login?next=${encodeURIComponent(nextDash)}&address=${encodeURIComponent(addressParam)}`;
+            }
+        } else {
+            // US-015: preserve next on Sign in even without address
+            const urlNext = urlParams.get('next') || '';
+            const signin = document.getElementById('signin-link');
+            if (signin && urlNext && urlNext.startsWith('/') && !urlNext.startsWith('//')) {
+                signin.href = `/login?next=${encodeURIComponent(urlNext)}`;
             }
         }
     })();
