@@ -236,6 +236,28 @@ def main():
         except Exception as seed_init_err:
             print(f"Warning: Skipping auto-seeding step during database initialization: {seed_init_err}")
 
+
+        # US-018b / TE-010: optional one-shot duplicate cleanup (off by default).
+        # Prefer admin POST /api/v1/admin/properties/dedupe-duplicates or
+        # scripts/dedupe_duplicate_properties.py. Enable with RUN_DUP_CLEANUP_ON_INIT=true.
+        if os.getenv("RUN_DUP_CLEANUP_ON_INIT", "").strip().lower() in ("1", "true", "yes"):
+            try:
+                from app.database import SessionLocal
+                from app.services.duplicate_cleanup import cleanup_all_host_duplicates
+                print("RUN_DUP_CLEANUP_ON_INIT set — running US-018b host-scoped dedupe...")
+                _dup_db = SessionLocal()
+                try:
+                    _dup_result = cleanup_all_host_duplicates(_dup_db)
+                    print(
+                        f"US-018b cleanup: hosts={_dup_result.hosts_scanned} "
+                        f"groups={_dup_result.groups_merged} "
+                        f"removed={_dup_result.properties_removed}"
+                    )
+                finally:
+                    _dup_db.close()
+            except Exception as dup_err:
+                print(f"Warning: US-018b duplicate cleanup failed: {dup_err}")
+
     except Exception as e:
         print(f"Error during database initialization: {e}")
         import traceback
