@@ -34,17 +34,30 @@ def backfill_images(
         True,
         description="HEAD-check existing HTTPS image URLs (default true for backfill)",
     ),
+    include_placeholders: Optional[bool] = Query(
+        None,
+        description=(
+            "Retry fallback_house.jpg / empty rows (SV re-fetch → upload). "
+            "Default: true when PROPERTY_IMAGE_* storage is configured, else false."
+        ),
+    ),
     db: Session = Depends(get_db),
     _: bool = Depends(require_admin),
 ) -> Dict[str, Any]:
     """Rehydrate ephemeral `/static/property_images/*` (and broken HTTPS) via C→B.
 
+    When storage is configured, also retries placeholder rows so fail-closed
+    images can recover after R2/credentials are fixed.
     Uploads to PROPERTY_IMAGE_* object storage and rewrites image_url.
     Fail-closed to fallback_house.jpg + placeholder honesty when Maps fails.
     Idempotent for already-durable healthy URLs.
     """
     result = backfill_property_images(
-        db, host_id=host_id, limit=limit, verify_remote=verify_remote
+        db,
+        host_id=host_id,
+        limit=limit,
+        verify_remote=verify_remote,
+        include_placeholders=include_placeholders,
     )
     return {
         "ok": True,

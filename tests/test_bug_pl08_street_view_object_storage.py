@@ -349,7 +349,111 @@ def test_admin_backfill_endpoint(monkeypatch):
     assert body["healed"] >= 1
 
 
+def test_backfill_retries_placeholder_when_storage_configured():
+    """PL-08 follow-up: fail-closed placeholders must re-fetch when R2 is up."""
+    durable = "https://images.test.hosteva.example/property-images/placeholder-retry.jpg"
+    db = TestingSessionLocal()
+    prop = Property(
+        id=str(uuid.uuid4()),
+        user_id=HOST_ID,
+        address="600 Retry Pl",
+        city="Tampa",
+        state="FL",
+        zip_code="33602",
+        property_type="Single Family",
+        image_url=FALLBACK_PROPERTY_IMAGE_URL,
+    )
+    db.add(prop)
+    db.commit()
+    pid = prop.id
+    try:
+        assert storage_configured() is True
+        with patch(
+            "app.services.property_image_heal._refetch_street_view",
+            return_value=durable,
+        ) as mock_refetch:
+            result = backfill_property_images(db, host_id=HOST_ID)
+            mock_refetch.assert_called()
+        db.refresh(prop)
+        assert result.healed >= 1
+        assert prop.image_url == durable
+        assert not is_fallback_property_image(prop.image_url)
+    finally:
+        db.close()
+
+
+def test_backfill_skips_placeholder_when_storage_not_configured(monkeypatch):
+    """Without object storage, placeholders stay skipped (no Maps burn)."""
+    monkeypatch.delenv("PROPERTY_IMAGE_BUCKET", raising=False)
+    monkeypatch.delenv("PROPERTY_IMAGE_ACCESS_KEY_ID", raising=False)
+    monkeypatch.delenv("PROPERTY_IMAGE_SECRET_ACCESS_KEY", raising=False)
+    monkeypatch.delenv("PROPERTY_IMAGE_PUBLIC_BASE_URL", raising=False)
+    # Clear optional keys that still count toward configured()
+    monkeypatch.delenv("PROPERTY_IMAGE_ENDPOINT_URL", raising=False)
+
+    db = TestingSessionLocal()
+    prop = Property(
+        id=str(uuid.uuid4()),
+        user_id=HOST_ID,
+        address="700 Skip Ave",
+        city="Tampa",
+        state="FL",
+        zip_code="33602",
+        property_type="Single Family",
+        image_url=FALLBACK_PROPERTY_IMAGE_URL,
+    )
+    db.add(prop)
+    db.commit()
+    try:
+        assert storage_configured() is False
+        with patch(
+            "app.services.property_image_heal._refetch_street_view",
+            return_value="https://should-not-call.example/x.jpg",
+        ) as mock_refetch:
+            result = backfill_property_images(db, host_id=HOST_ID)
+            mock_refetch.assert_not_called()
+        db.refresh(prop)
+        assert result.skipped >= 1
+        assert prop.image_url == FALLBACK_PROPERTY_IMAGE_URL
+    finally:
+        db.close()
+
+
+def test_admin_backfill_include_placeholders_query(monkeypatch):
+    monkeypatch.setenv("RESEARCH_ADMIN_KEY", ADMIN_KEY)
+    monkeypatch.setenv("ADMIN_API_KEY", ADMIN_KEY)
+    durable = "https://images.test.hosteva.example/property-images/admin-ph.jpg"
+    db = TestingSessionLocal()
+    prop = Property(
+        id=str(uuid.uuid4()),
+        user_id=HOST_ID,
+        address="800 Admin Ph St",
+        city="Tampa",
+        state="FL",
+        zip_code="33602",
+        property_type="Single Family",
+        image_url=FALLBACK_PROPERTY_IMAGE_URL,
+    )
+    db.add(prop)
+    db.commit()
+    db.close()
+
+    with patch(
+        "app.services.property_image_heal._refetch_street_view",
+        return_value=durable,
+    ):
+        resp = client.post(
+            "/api/v1/admin/properties/backfill-images?include_placeholders=true",
+            headers={"X-Admin-Key": ADMIN_KEY},
+        )
+    assert resp.status_code == 200, resp.text
+    body = resp.json()
+    assert body["ok"] is True
+    assert body["healed"] >= 1
+
+
 def test_fallback_house_stays_in_app_static():
+
     assert Path("app/static/img/fallback_house.jpg").is_file()
 
 
