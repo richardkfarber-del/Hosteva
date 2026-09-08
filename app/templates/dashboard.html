@@ -511,9 +511,14 @@ tailwind.config = {
                                         <span class="single-prop-location">Malibu High-Lands, CA</span>
                                     </p>
                                 </div>
-                                <button class="bg-white text-on-surface font-semibold px-6 py-3 rounded-lg hover:bg-primary-container hover:text-white transition-all active:scale-95 single-prop-manage-btn">
-                                    Manage listing
-                                </button>
+                                <div class="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
+                                    <button type="button" class="bg-primary text-on-primary font-semibold px-6 py-3 rounded-lg hover:bg-primary-container transition-all active:scale-95 single-prop-checklist-btn" data-checklist-role="before-you-list" title="Before you list — free municipal checklist">
+                                        Before you list
+                                    </button>
+                                    <button class="bg-white text-on-surface font-semibold px-6 py-3 rounded-lg hover:bg-primary-container hover:text-white transition-all active:scale-95 single-prop-manage-btn">
+                                        Manage listing
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         <div class="p-8 flex flex-col md:flex-row gap-8 items-center bg-surface-container-low/30 backdrop-blur-sm">
@@ -703,8 +708,12 @@ tailwind.config = {
                         </div>
                     </div>
 
-                    <!-- compliance hooks inside the card -->
-                    <div class="flex justify-between items-center pt-2 gap-2 border-t border-slate-100">
+                    <!-- compliance hooks inside the card (BUG-PL-09: labeled free checklist path) -->
+                    <div class="flex flex-wrap justify-between items-center pt-2 gap-2 border-t border-slate-100" data-property-card-actions>
+                        <button type="button" class="text-xs font-bold text-primary hover:underline uppercase tracking-wider flex items-center gap-1 property-checklist-btn" data-checklist-role="before-you-list" title="Before you list — free municipal checklist">
+                            <span class="material-symbols-outlined text-xs">checklist</span>
+                            Before you list
+                        </button>
                         <button class="text-xs font-bold text-primary hover:underline uppercase tracking-wider flex items-center gap-1 property-manage-btn">
                             <span class="material-symbols-outlined text-xs">settings</span>
                             Manage
@@ -1439,6 +1448,125 @@ Processing Time: ${data.estimated_processing_time}${openUrl ? '\n\nOpened: ' + o
                 });
         }
 
+
+        // BUG-PL-09 — Free municipal checklist access from dashboard
+        function buildPropertyAuditAddress(p) {
+            const parts = [];
+            if (p && p.address) parts.push(p.address);
+            if (p && p.location) {
+                const loc = String(p.location).trim();
+                if (loc && !(p.address || '').toLowerCase().includes(loc.toLowerCase())) {
+                    parts.push(loc);
+                }
+            }
+            return parts.filter(Boolean).join(', ');
+        }
+
+        function buildFreeChecklistUrl(address) {
+            return `/wizard?address=${encodeURIComponent(address)}&intent=checklist`;
+        }
+
+        function isFreeChecklistUnderReview(data) {
+            // Only treat as Under Review when free-checklist API says so.
+            // Null payload still offers Before you list → wizard (wizard enforces UR honesty).
+            if (!data) return false;
+            if (data.is_under_review) return true;
+            if (data.label === 'Under Review') return true;
+            return false;
+        }
+
+        function escapeDashboardHtml(value) {
+            return String(value == null ? '' : value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function bindDashboardChecklistControl(btn, p, freePayload) {
+            if (!btn) return;
+            const address = buildPropertyAuditAddress(p);
+            const underReview = isFreeChecklistUnderReview(freePayload);
+            if (underReview) {
+                // US-015 honesty: no Checklist / Before you list / Open free checklist promise
+                btn.dataset.checklistRole = 'under-review-status';
+                btn.setAttribute('title', 'Under Review — no curated municipal checklist yet');
+                btn.innerHTML = '<span class="material-symbols-outlined text-xs">hourglass_top</span> View status';
+                btn.classList.remove('text-primary');
+                btn.classList.add('text-amber-800');
+                btn.onclick = (e) => {
+                    e.stopPropagation();
+                    window.location.href = freePayload && freePayload.open_url
+                        ? freePayload.open_url
+                        : `/wizard?address=${encodeURIComponent(address)}`;
+                };
+            } else {
+                btn.dataset.checklistRole = 'before-you-list';
+                btn.setAttribute('title', 'Before you list — free municipal checklist');
+                if (!btn.querySelector('.material-symbols-outlined')) {
+                    btn.innerHTML = '<span class="material-symbols-outlined text-xs">checklist</span> Before you list';
+                }
+                const openUrl = (freePayload && freePayload.open_url)
+                    || buildFreeChecklistUrl(address);
+                btn.onclick = (e) => {
+                    e.stopPropagation();
+                    window.location.href = openUrl;
+                };
+            }
+        }
+
+        function renderFreeChecklistUpgradePanel(p, freePayload) {
+            const address = buildPropertyAuditAddress(p);
+            const underReview = isFreeChecklistUnderReview(freePayload);
+            if (underReview) {
+                const statusUrl = (freePayload && freePayload.open_url)
+                    || `/wizard?address=${encodeURIComponent(address)}`;
+                const msg = (freePayload && freePayload.under_review_message)
+                    || "We don't have Curated municipal rules for this address yet, so there's no checklist to open. We're not guessing — you'll see Under Review instead of a pass/fail traffic light.";
+                return `
+                    <div class="text-left py-8 px-6 bg-amber-50 rounded-2xl border border-amber-200" data-free-checklist-panel="under-review">
+                        <div class="flex items-center gap-2 text-amber-900 mb-2">
+                            <span class="material-symbols-outlined">hourglass_top</span>
+                            <h3 class="text-lg font-bold">Under Review</h3>
+                        </div>
+                        <p class="text-on-surface-variant text-sm mb-3 leading-relaxed">${escapeDashboardHtml(msg)}</p>
+                        <p class="text-on-surface-variant text-sm mb-4">Research only — not a legal determination.</p>
+                        <a href="${escapeDashboardHtml(statusUrl)}" class="inline-flex items-center gap-1 px-5 py-2.5 bg-white border border-amber-200 text-amber-900 font-semibold rounded-xl hover:bg-amber-50" data-checklist-role="under-review-status">View audit status</a>
+                    </div>
+                `;
+            }
+            const openUrl = (freePayload && freePayload.open_url) || buildFreeChecklistUrl(address);
+            const items = (freePayload && Array.isArray(freePayload.checklist)) ? freePayload.checklist : [];
+            const itemsHtml = items.length
+                ? `<ul class="space-y-2 mb-5 text-left" data-free-checklist-items>
+                    ${items.slice(0, 8).map(item => `
+                        <li class="flex items-start gap-2 text-sm">
+                            <span class="material-symbols-outlined text-primary text-base shrink-0">check_box_outline_blank</span>
+                            <span class="text-on-surface font-medium">${escapeDashboardHtml(item.task_name || item.violation_notes || 'Checklist item')}</span>
+                        </li>`).join('')}
+                   </ul>`
+                : `<p class="text-sm text-on-surface-variant mb-4">Open your free municipal checklist to see tasks and obligations before listing.</p>`;
+            return `
+                <div class="text-left py-8 px-6 bg-surface-container-lowest rounded-2xl border border-surface-container" data-free-checklist-panel="covered">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="material-symbols-outlined text-primary">checklist</span>
+                        <h3 class="text-lg font-bold text-on-surface">Before you list</h3>
+                    </div>
+                    <p class="text-on-surface-variant text-sm mb-1">Your free municipal checklist — tasks and obligations before listing on an STR site.</p>
+                    <p class="text-on-surface-variant text-xs mb-4">Research only — not a legal determination.</p>
+                    ${itemsHtml}
+                    <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+                        <a href="${escapeDashboardHtml(openUrl)}" id="single-open-free-checklist" data-checklist-role="before-you-list" class="inline-flex justify-center items-center gap-2 px-6 py-2.5 bg-primary text-white font-bold rounded-xl hover:opacity-90 no-underline">
+                            Open free checklist
+                            <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                        </a>
+                        <button type="button" onclick="upgradeToComplianceEssentials()" class="px-6 py-2.5 border border-outline-variant text-on-surface font-semibold rounded-xl hover:bg-surface-container">Upgrade for interactive depth</button>
+                    </div>
+                    <p class="text-xs text-on-surface-variant mt-3">Essentials unlocks interactive task tracking. Free still includes this before-you-list checklist.</p>
+                </div>
+            `;
+        }
+
         async function fetchProperties(filterStatus = null) {
             const dashLink = document.getElementById('sidebar-dashboard-link');
             const compLink = document.getElementById('sidebar-compliance-link');
@@ -1629,7 +1757,7 @@ Processing Time: ${data.estimated_processing_time}${openUrl ? '\n\nOpened: ' + o
                     return { kind: 'attention', score: 0 };
                 };
 
-                // Fetch checklist items for all properties in parallel to compute dynamic compliance scores
+                // Fetch checklist items + free municipal checklist (BUG-PL-09) in parallel
                 const checklistPromises = properties.map((p, idx) => 
                     fetch(`/api/v1/compliance/checklist-items/${p.id}`, { headers })
                         .then(res => {
@@ -1642,7 +1770,15 @@ Processing Time: ${data.estimated_processing_time}${openUrl ? '\n\nOpened: ' + o
                         })
                         .catch(() => [])
                 );
-                const propertiesChecklists = await Promise.all(checklistPromises);
+                const freeChecklistPromises = properties.map((p) =>
+                    fetch(`/api/v1/compliance/free-checklist/${p.id}`, { headers })
+                        .then(res => res.ok ? res.json() : null)
+                        .catch(() => null)
+                );
+                const [propertiesChecklists, freeChecklists] = await Promise.all([
+                    Promise.all(checklistPromises),
+                    Promise.all(freeChecklistPromises),
+                ]);
                 
                 if (properties.length === 1) {
                     const template = document.getElementById('layout-single');
@@ -1652,24 +1788,24 @@ Processing Time: ${data.estimated_processing_time}${openUrl ? '\n\nOpened: ' + o
                     let checklistItems = propertiesChecklists[0] || [];
                     const checklistLockedSingle = !!(checklistItems && checklistItems.error === 'upgrade_required');
                     
+                    const freeChecklistPayload = freeChecklists[0] || null;
                     if (checklistLockedSingle) {
                         const taskContainer = clone.getElementById('dashboard-pending-tasks');
                         if (taskContainer) {
-                            taskContainer.innerHTML = `
-                                <div class="text-center py-10 bg-surface-container-lowest rounded-2xl border border-surface-container border-dashed">
-                                    <span class="material-symbols-outlined text-4xl text-on-surface-variant mb-2 opacity-50">lock</span>
-                                    <h3 class="text-lg font-bold text-on-surface mb-2">Compliance Tasks Locked</h3>
-                                    <p class="text-on-surface-variant max-w-xs mx-auto mb-4">Upgrade to Compliance Essentials to unlock the full interactive checklist and task depth.</p>
-                                    <button type="button" onclick="upgradeToComplianceEssentials()" class="px-6 py-2 bg-primary text-white font-bold rounded-xl hover:opacity-90">Upgrade to Essentials</button>
-                                </div>
-                            `;
+                            // BUG-PL-09: Free still sees free municipal checklist entry (not Essentials-only dead-end)
+                            taskContainer.innerHTML = renderFreeChecklistUpgradePanel(p, freeChecklistPayload);
                         }
                         const progress = clone.querySelector('.single-compliance-progress');
                         const compText = clone.querySelector('.single-compliance-text');
                         const compDesc = clone.querySelector('.single-compliance-desc');
                         if (progress) progress.setAttribute('stroke-dasharray', '0, 100');
-                        if (compText) compText.innerText = 'LOCKED';
-                        if (compDesc) compDesc.innerText = 'Upgrade to view';
+                        if (isFreeChecklistUnderReview(freeChecklistPayload)) {
+                            if (compText) compText.innerText = 'Under Review';
+                            if (compDesc) compDesc.innerText = 'No curated checklist yet';
+                        } else {
+                            if (compText) compText.innerText = 'Free checklist';
+                            if (compDesc) compDesc.innerText = 'Before you list — open free checklist';
+                        }
                         checklistItems = [];
                     }
                     
@@ -1889,6 +2025,9 @@ Processing Time: ${data.estimated_processing_time}${openUrl ? '\n\nOpened: ' + o
                             window.location.href = `/manage/${p.id}`;
                         });
                     }
+                    // BUG-PL-09: labeled Before you list / View status on single property
+                    const singleChecklistBtn = clone.querySelector('button.single-prop-checklist-btn');
+                    bindDashboardChecklistControl(singleChecklistBtn, p, freeChecklistPayload || freeChecklists[0] || null);
                     
                     dynamicContent.appendChild(clone);
                     return;
@@ -1979,6 +2118,12 @@ Processing Time: ${data.estimated_processing_time}${openUrl ? '\n\nOpened: ' + o
                             e.stopPropagation();
                             exportPDF(p.id);
                         });
+                        // BUG-PL-09: Checklist / Before you list (Covered) vs View status (Under Review)
+                        bindDashboardChecklistControl(
+                            cardClone.querySelector('.property-checklist-btn'),
+                            p,
+                            freeChecklists[idx] || null
+                        );
                         
                         grid.appendChild(cardClone);
                     });
