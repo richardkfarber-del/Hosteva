@@ -11,6 +11,29 @@ from app.routers.properties import (
 )
 
 
+DURABLE_SV = "https://images.test.hosteva.example/property-images/pl02.jpg"
+
+
+def _patch_object_store():
+    """PL-08: SV bytes go to object storage — mock upload for unit tests."""
+    return patch(
+        "app.services.property_image_storage.upload_property_image",
+        side_effect=lambda content, **kw: DURABLE_SV,
+    )
+
+
+def _ensure_storage_env(monkeypatch=None):
+    env = {
+        "PROPERTY_IMAGE_PROVIDER": "r2",
+        "PROPERTY_IMAGE_BUCKET": "hosteva-property-images-test",
+        "PROPERTY_IMAGE_ENDPOINT_URL": "https://example.r2.cloudflarestorage.com",
+        "PROPERTY_IMAGE_ACCESS_KEY_ID": "test-access-key-id",
+        "PROPERTY_IMAGE_SECRET_ACCESS_KEY": "test-secret-access-key",
+        "PROPERTY_IMAGE_PUBLIC_BASE_URL": "https://images.test.hosteva.example",
+    }
+    return env
+
+
 STABLE_RUN = "15758 Stable Run Drive, Spring Hill, FL 34610"
 FORMATTED = "15758 Stable Run Dr, Spring Hill, FL 34610, USA"
 LATLNG = "28.4741,-82.5301"
@@ -30,30 +53,54 @@ def test_is_fallback_helpers():
     assert is_fallback_property_image("") is True
     assert is_fallback_property_image(FALLBACK_PROPERTY_IMAGE_URL) is True
     assert is_fallback_property_image("/static/property_images/abc.jpg") is False
+    assert is_fallback_property_image("https://images.example/property-images/abc.jpg") is False
 
 
-@patch.dict(os.environ, {"GOOGLE_MAPS_API_KEY": "test-key"}, clear=False)
+@patch.dict(
+    os.environ,
+    {
+        "GOOGLE_MAPS_API_KEY": "test-key",
+        **{
+            "PROPERTY_IMAGE_PROVIDER": "r2",
+            "PROPERTY_IMAGE_BUCKET": "hosteva-property-images-test",
+            "PROPERTY_IMAGE_ENDPOINT_URL": "https://example.r2.cloudflarestorage.com",
+            "PROPERTY_IMAGE_ACCESS_KEY_ID": "test-access-key-id",
+            "PROPERTY_IMAGE_SECRET_ACCESS_KEY": "test-secret-access-key",
+            "PROPERTY_IMAGE_PUBLIC_BASE_URL": "https://images.test.hosteva.example",
+        },
+    },
+    clear=False,
+)
 @patch("app.routers.properties.requests.get")
 def test_raw_street_view_ok_no_geocode_needed(mock_get):
-    """Happy path: metadata OK on raw address → property_images, no geocode."""
+    """Happy path: metadata OK on raw address → durable object URL, no geocode."""
     meta = _mock_resp(200, {"status": "OK"}, text='{"status":"OK"}')
     img = _mock_resp(200, content=b"fake-jpeg-bytes")
     mock_get.side_effect = [meta, img]
 
-    with patch("app.routers.properties.geocode_address") as mock_geo:
+    with patch("app.routers.properties.geocode_address") as mock_geo, _patch_object_store():
         url = fetch_real_property_image(STABLE_RUN)
         mock_geo.assert_not_called()
 
-    assert url.startswith("/static/property_images/")
-    assert url.endswith(".jpg")
+    assert url.startswith("https://")
+    assert "property-images/" in url
     assert not is_fallback_property_image(url)
-    # cleanup saved file
-    disk = "app" + url  # /static/... -> app/static/...
-    if os.path.exists(disk):
-        os.remove(disk)
+    assert not url.startswith("/static/property_images/")
 
 
-@patch.dict(os.environ, {"GOOGLE_MAPS_API_KEY": "test-key"}, clear=False)
+@patch.dict(
+    os.environ,
+    {
+        "GOOGLE_MAPS_API_KEY": "test-key",
+        "PROPERTY_IMAGE_PROVIDER": "r2",
+        "PROPERTY_IMAGE_BUCKET": "hosteva-property-images-test",
+        "PROPERTY_IMAGE_ENDPOINT_URL": "https://example.r2.cloudflarestorage.com",
+        "PROPERTY_IMAGE_ACCESS_KEY_ID": "test-access-key-id",
+        "PROPERTY_IMAGE_SECRET_ACCESS_KEY": "test-secret-access-key",
+        "PROPERTY_IMAGE_PUBLIC_BASE_URL": "https://images.test.hosteva.example",
+    },
+    clear=False,
+)
 @patch("app.routers.properties.geocode_address")
 @patch("app.routers.properties.requests.get")
 def test_metadata_miss_retries_geocode_latlng_before_fallback(mock_get, mock_geo):
@@ -78,8 +125,9 @@ def test_metadata_miss_retries_geocode_latlng_before_fallback(mock_get, mock_geo
 
     mock_get.side_effect = [zero, places_empty, zero2, ok, img]
 
-    url = fetch_real_property_image(STABLE_RUN)
-    assert url.startswith("/static/property_images/")
+    with _patch_object_store():
+        url = fetch_real_property_image(STABLE_RUN)
+    assert url.startswith("https://")
     assert not is_fallback_property_image(url)
     mock_geo.assert_called_once_with(STABLE_RUN)
 
@@ -93,12 +141,20 @@ def test_metadata_miss_retries_geocode_latlng_before_fallback(mock_get, mock_geo
             locations.append(params.get("location"))
     assert LATLNG in locations
 
-    disk = "app" + url
-    if os.path.exists(disk):
-        os.remove(disk)
 
-
-@patch.dict(os.environ, {"GOOGLE_MAPS_API_KEY": "test-key"}, clear=False)
+@patch.dict(
+    os.environ,
+    {
+        "GOOGLE_MAPS_API_KEY": "test-key",
+        "PROPERTY_IMAGE_PROVIDER": "r2",
+        "PROPERTY_IMAGE_BUCKET": "hosteva-property-images-test",
+        "PROPERTY_IMAGE_ENDPOINT_URL": "https://example.r2.cloudflarestorage.com",
+        "PROPERTY_IMAGE_ACCESS_KEY_ID": "test-access-key-id",
+        "PROPERTY_IMAGE_SECRET_ACCESS_KEY": "test-secret-access-key",
+        "PROPERTY_IMAGE_PUBLIC_BASE_URL": "https://images.test.hosteva.example",
+    },
+    clear=False,
+)
 @patch("app.routers.properties.requests.get")
 def test_uses_passed_geocoded_without_second_geocode(mock_get):
     zero = _mock_resp(200, {"status": "ZERO_RESULTS"})
@@ -116,14 +172,12 @@ def test_uses_passed_geocoded_without_second_geocode(mock_get):
         "state": "FL",
         "address_components": [],
     }
-    with patch("app.routers.properties.geocode_address") as mock_geo:
+    with patch("app.routers.properties.geocode_address") as mock_geo, _patch_object_store():
         url = fetch_real_property_image(STABLE_RUN, geocoded=geo)
         mock_geo.assert_not_called()
 
-    assert url.startswith("/static/property_images/")
-    disk = "app" + url
-    if os.path.exists(disk):
-        os.remove(disk)
+    assert url.startswith("https://")
+    assert not is_fallback_property_image(url)
 
 
 @patch.dict(os.environ, {"GOOGLE_MAPS_API_KEY": "test-key"}, clear=False)

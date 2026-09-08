@@ -17,6 +17,7 @@ from app.api.v1.onboarding.validate import router as validate_router
 from app.api.v1.compliance import router as compliance_v1_router
 from app.api.v1.admin.research import router as research_admin_router
 from app.api.v1.admin.dedupe_properties import router as dedupe_admin_router
+from app.api.v1.admin.backfill_property_images import router as backfill_images_admin_router
 from app.api.v1.billing import router as billing_v1_router
 from app.api.v1.operations import router as operations_v1_router
 from app.api.v1.inbox import router as inbox_v1_router
@@ -163,6 +164,7 @@ app.include_router(validate_router)
 app.include_router(compliance_v1_router)
 app.include_router(research_admin_router)
 app.include_router(dedupe_admin_router)
+app.include_router(backfill_images_admin_router)
 app.include_router(billing_v1_router)
 app.include_router(operations_v1_router)
 app.include_router(inbox_v1_router)

@@ -154,6 +154,9 @@ icalendar==7.2.0
 wcwidth==0.7.0
     # via prompt-toolkit
 
+boto3==1.40.36
+botocore==1.40.36
+
 pandas
 openpyxl
 beautifulsoup4
