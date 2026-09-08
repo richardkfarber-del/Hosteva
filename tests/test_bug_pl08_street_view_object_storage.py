@@ -314,7 +314,10 @@ def test_list_lazy_heals_ephemeral_url():
     assert match[0]["image_is_placeholder"] is False
 
 
-def test_admin_backfill_endpoint():
+def test_admin_backfill_endpoint(monkeypatch):
+    # Pin both keys in-test so collection order / other modules cannot 401 us.
+    monkeypatch.setenv("RESEARCH_ADMIN_KEY", ADMIN_KEY)
+    monkeypatch.setenv("ADMIN_API_KEY", ADMIN_KEY)
     ephemeral = f"/static/property_images/{uuid.uuid4()}.jpg"
     durable = "https://images.test.hosteva.example/property-images/admin.jpg"
     db = TestingSessionLocal()
@@ -338,9 +341,9 @@ def test_admin_backfill_endpoint():
     ):
         resp = client.post(
             "/api/v1/admin/properties/backfill-images",
-            headers={"X-Admin-Key": "test-admin-pl08"},
+            headers={"X-Admin-Key": ADMIN_KEY},
         )
-    assert resp.status_code == 200
+    assert resp.status_code == 200, resp.text
     body = resp.json()
     assert body["ok"] is True
     assert body["healed"] >= 1
