@@ -52,6 +52,7 @@ def import_models():
     import app.models.oauth
     import app.models.password_reset
     import app.models.research_request
+    import app.models.before_you_list
     import app.integrations.ota_models
 
 # Register models to ensure mapping metadata is configured correctly
@@ -368,6 +369,33 @@ def read_manage_property(property_id: str, request: Request, db: Session = Depen
             "active_page": "dashboard"
         }
     )
+
+@app.get("/properties/{property_id}/before-you-list", name="before_you_list", include_in_schema=False)
+def read_before_you_list(property_id: str, request: Request):
+    """PL-12 dedicated Before You List checklist page (not wizard intent=checklist)."""
+    token = request.cookies.get("access_token")
+    if not token:
+        return RedirectResponse(url="/login", status_code=303)
+    try:
+        from app.core.security import SECRET_KEY, ALGORITHM
+        from jose import jwt
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            return RedirectResponse(url="/login", status_code=303)
+    except Exception:
+        return RedirectResponse(url="/login", status_code=303)
+
+    return templates.TemplateResponse(
+        request=request,
+        name="before_you_list.html",
+        context={
+            "request": request,
+            "property_id": property_id,
+            "active_page": "dashboard",
+        },
+    )
+
 
 @app.get("/dashboard/tasks/{task_id}", name="task_detail")
 def read_task_detail(task_id: str, request: Request, db: Session = Depends(get_db)):

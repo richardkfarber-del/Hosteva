@@ -14,6 +14,12 @@ from app.db_models import User, Ordinance
 from app.services.ocr_service import audit_compliance_document
 from app.routers.properties import geocode_address
 from app.schemas.compliance import AddressComplianceResponse
+from pydantic import BaseModel, Field
+
+class BeforeYouListItemPatch(BaseModel):
+    """PL-12 toggle payload for before-you-list item complete state."""
+    is_complete: bool = Field(..., description="Mark item complete or incomplete")
+
 import os
 import requests
 import json
@@ -310,11 +316,8 @@ def get_free_municipal_checklist(
         # Honesty: never surface a fake full municipal checklist for UR
         checklist = []
 
-    open_url = (
-        f"/wizard?address={quote(full_address, safe='')}&intent=checklist"
-        if not is_under_review
-        else f"/wizard?address={quote(full_address, safe='')}"
-    )
+    # PL-12: dedicated checklist page (not wizard intent=checklist dead-end)
+    open_url = f"/properties/{property_id}/before-you-list"
 
     return {
         "property_id": property_id,
@@ -337,11 +340,279 @@ def get_free_municipal_checklist(
         ),
         "open_url": open_url,
         "essentials_note": (
-            "Upgrade to Compliance Essentials for interactive checklist "
-            "task depth. Free still includes this municipal before-you-list view."
+            "Essentials unlocks document upload and deeper task tracking. "
+            "Free includes this interactive before-you-list checklist."
             if not is_under_review
             else None
         ),
+    }
+
+
+
+def _byl_item_key(task_name: str) -> str:
+    import re
+    raw = (task_name or "item").strip().lower()
+    key = re.sub(r"[^a-z0-9]+", "-", raw).strip("-")
+    return (key or "item")[:255]
+
+
+def _byl_description_for(task_name: str) -> str | None:
+    """Optional detail when we already know the requirement — never invent filler."""
+    name = task_name or ""
+    lower = name.lower()
+    if "pasco conditional use" in lower:
+        return "Obtain Pasco Conditional Use Permit before listing."
+    if "tdt" in lower or "tourist development" in lower or "transient occupancy" in lower:
+        return "Register for tourist / transient occupancy tax with the county."
+    if "dbpr" in lower:
+        return "Florida DBPR vacation rental / transient public lodging license."
+    if "sales tax" in lower or "dept of revenue" in lower:
+        return "Florida Dept of Revenue sales tax registration."
+    if "business tax" in lower or "btr" in lower:
+        return "Local business tax receipt where required."
+    if "permit" in lower:
+        return "Local short-term rental permit or registration."
+    if "hoa" in lower:
+        return "Confirm HOA short-term rental rules and any registration."
+    return None
+
+
+def _serialize_byl_item(item) -> Dict[str, Any]:
+    return {
+        "id": str(item.id),
+        "item_key": item.item_key,
+        "title": item.title,
+        "description": item.description,
+        "source_url": item.source_url,
+        "is_complete": bool(item.is_complete),
+        "sort_order": int(item.sort_order or 0),
+    }
+
+
+def _ensure_byl_items_from_checklist(db: Session, property_id: str, checklist: list) -> list:
+    """Upsert BeforeYouListItem rows from Curated/free-checklist research payload."""
+    from app.models.before_you_list import BeforeYouListItem
+
+    existing = (
+        db.query(BeforeYouListItem)
+        .filter(BeforeYouListItem.property_id == property_id)
+        .all()
+    )
+    by_key = {e.item_key: e for e in existing}
+    ordered = []
+    for idx, raw in enumerate(checklist or []):
+        if isinstance(raw, dict):
+            title = (raw.get("task_name") or raw.get("title") or "").strip()
+            source_url = raw.get("source_url") or None
+            description = raw.get("description") or None
+        else:
+            title = (getattr(raw, "task_name", None) or getattr(raw, "title", None) or "").strip()
+            source_url = getattr(raw, "source_url", None)
+            description = getattr(raw, "description", None)
+        if not title:
+            continue
+        key = _byl_item_key(title)
+        row = by_key.get(key)
+        if not row:
+            row = BeforeYouListItem(
+                property_id=property_id,
+                item_key=key,
+                title=title,
+                description=description or _byl_description_for(title),
+                source_url=source_url,
+                is_complete=False,
+                sort_order=idx,
+            )
+            db.add(row)
+            by_key[key] = row
+        else:
+            row.title = title
+            if source_url and not row.source_url:
+                row.source_url = source_url
+            if not row.description:
+                row.description = description or _byl_description_for(title)
+            row.sort_order = idx
+        ordered.append(row)
+    db.commit()
+    for row in ordered:
+        db.refresh(row)
+    return ordered
+
+
+@router.get("/before-you-list/{property_id}")
+def get_before_you_list_checklist(
+    property_id: str,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+) -> Dict[str, Any]:
+    """PL-12 interactive Before You List checklist (US-019 / TE-012).
+
+    US-006 carve-out: Free Covered hosts may read this surface. Essentials-only
+    ``/checklist-items`` stays gated. Under Review returns honesty only — no
+    fabricated interactive items or %.
+    """
+    from app.models.host import Host
+    from app.models.property import Property
+    from app.models.before_you_list import BeforeYouListItem
+
+    host = db.query(Host).filter(Host.username == current_user.get("username")).first()
+    if not host:
+        raise HTTPException(status_code=404, detail="Host profile not found")
+
+    prop = (
+        db.query(Property)
+        .filter(Property.id == property_id, Property.user_id == host.id)
+        .first()
+    )
+    if not prop:
+        raise HTTPException(status_code=404, detail="Property not found")
+
+    full_address = ", ".join(
+        p
+        for p in [
+            prop.address,
+            prop.city,
+            f"{prop.state or ''} {prop.zip_code or ''}".strip(),
+        ]
+        if p
+    )
+    street = prop.address or full_address
+
+    try:
+        result = get_compliance_by_address(address=full_address, db=db)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Compliance lookup failed: {exc}") from exc
+
+    if hasattr(result, "model_dump"):
+        payload = result.model_dump()
+    elif hasattr(result, "dict"):
+        payload = result.dict()
+    elif isinstance(result, dict):
+        payload = result
+    else:
+        payload = {
+            "is_under_review": bool(getattr(result, "is_under_review", False)),
+            "is_compliant": bool(getattr(result, "is_compliant", False)),
+            "status": getattr(result, "status", None),
+            "checklist": getattr(result, "checklist", None) or [],
+            "coverage_tier": getattr(result, "coverage_tier", None),
+            "status_reason": getattr(result, "status_reason", None),
+        }
+
+    is_under_review = bool(payload.get("is_under_review"))
+    if is_under_review:
+        # Honesty: wipe any stale interactive rows so we never invent cards/%
+        stale = (
+            db.query(BeforeYouListItem)
+            .filter(BeforeYouListItem.property_id == property_id)
+            .all()
+        )
+        for row in stale:
+            db.delete(row)
+        if stale:
+            db.commit()
+        return {
+            "property_id": property_id,
+            "address": full_address,
+            "street_address": street,
+            "is_under_review": True,
+            "mode": "honesty",
+            "items": [],
+            "compliance_score": None,
+            "label": "Before you list",
+            "headline": "No full checklist for this address yet",
+            "body": (
+                "This property is Under Review — we don't have Curated municipal "
+                "steps to check off here, so we won't invent a list. When this "
+                "address is Covered, you'll get an interactive checklist and a "
+                "live progress score."
+            ),
+            "secondary_cta": "Try another address",
+            "secondary_cta_url": "/dashboard",
+            "honesty": "Research only — not a legal determination.",
+        }
+
+    research_checklist = payload.get("checklist") or []
+    items = _ensure_byl_items_from_checklist(db, property_id, research_checklist)
+    score = recalculate_property_compliance_score(property_id, db)
+
+    return {
+        "property_id": property_id,
+        "address": full_address,
+        "street_address": street,
+        "is_under_review": False,
+        "mode": "interactive",
+        "items": [_serialize_byl_item(i) for i in items],
+        "compliance_score": score,
+        "label": "Before you list",
+        "title": f"Your checklist for {street}",
+        "subtitle": "Mark each step as you finish it. We'll keep a running score on your dashboard.",
+        "honesty": (
+            "Research only — not a legal determination. Confirm requirements "
+            "with the city or county before you list."
+        ),
+        "progress_label": "Compliance progress",
+        "empty_title": "We're still assembling this checklist",
+        "empty_body": (
+            "This address is Covered, but we don't have itemized steps to show yet. "
+            "Check back soon, or try the Free Audit again after we refresh rules."
+        ),
+    }
+
+
+@router.patch("/before-you-list/{property_id}/items/{item_id}")
+def patch_before_you_list_item(
+    property_id: str,
+    item_id: str,
+    body: BeforeYouListItemPatch,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+) -> Dict[str, Any]:
+    """Toggle Before You List item complete state (Free Covered + Essentials).
+
+    US-006 carve-out: does **not** require Essentials. Calls shared
+    ``recalculate_property_compliance_score`` after persist.
+    """
+    from app.models.host import Host
+    from app.models.property import Property
+    from app.models.before_you_list import BeforeYouListItem
+
+    host = db.query(Host).filter(Host.username == current_user.get("username")).first()
+    if not host:
+        raise HTTPException(status_code=404, detail="Host profile not found")
+
+    prop = (
+        db.query(Property)
+        .filter(Property.id == property_id, Property.user_id == host.id)
+        .first()
+    )
+    if not prop:
+        raise HTTPException(status_code=404, detail="Property not found")
+
+    item = (
+        db.query(BeforeYouListItem)
+        .filter(
+            BeforeYouListItem.id == item_id,
+            BeforeYouListItem.property_id == property_id,
+        )
+        .first()
+    )
+    if not item:
+        raise HTTPException(status_code=404, detail="Checklist item not found")
+
+    item.is_complete = bool(body.is_complete)
+    db.commit()
+    db.refresh(item)
+
+    score = recalculate_property_compliance_score(property_id, db)
+
+    return {
+        "property_id": property_id,
+        "item": _serialize_byl_item(item),
+        "compliance_score": score,
+        "toast": "Saved — progress updated." if item.is_complete else "Updated.",
     }
 
 
@@ -615,7 +886,25 @@ import os
 from fastapi import APIRouter, Depends, HTTPException, File, UploadFile, Form, BackgroundTasks, status
 
 def recalculate_property_compliance_score(property_id: str, db: Session) -> float:
+    """Shared compliance % for dashboard / before-you-list / Essentials tasks.
+
+    Prefer persisted Before You List items when present (PL-12 Free Covered
+    interactive checklist). Otherwise fall back to Essentials PropertyCompliance
+    rows (approved + is_compliant). Empty → 0.0 when BYL path used with no
+    completes; PropertyCompliance empty still returns 100.0 for legacy callers.
+    """
+    from app.models.before_you_list import BeforeYouListItem
     from app.models.compliance import PropertyCompliance
+
+    byl_items = (
+        db.query(BeforeYouListItem)
+        .filter(BeforeYouListItem.property_id == property_id)
+        .all()
+    )
+    if byl_items:
+        done = sum(1 for t in byl_items if t.is_complete)
+        return round((done / len(byl_items)) * 100.0, 1)
+
     tasks = db.query(PropertyCompliance).filter(PropertyCompliance.property_id == property_id).all()
     if not tasks:
         return 100.0

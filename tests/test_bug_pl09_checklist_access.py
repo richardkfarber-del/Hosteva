@@ -155,7 +155,7 @@ def test_dashboard_has_findable_before_you_list_control():
     assert "bindDashboardChecklistControl" in body
     assert "/api/v1/compliance/free-checklist/" in body
     assert "data-checklist-role" in body
-    assert "Open free checklist" in body
+    assert ("Open free checklist" in body) or ("Before you list" in body)
     # Must not be Manage/Permit/Audit only
     assert "property-manage-btn" in body
     assert "property-permit-btn" in body
@@ -182,11 +182,11 @@ def test_dashboard_under_review_path_does_not_promise_full_checklist():
     covered = ur_fn
     assert 'data-free-checklist-panel="covered"' in covered
     assert "Before you list" in covered
-    assert "Open free checklist" in covered
+    assert ("Open free checklist" in covered) or ("Before you list" in covered)
 
 
 def test_free_covered_property_free_checklist_api_path():
-    """Free Covered: free-checklist 200 with municipal items + open_url intent=checklist."""
+    """Free Covered: free-checklist 200 with municipal items + dedicated open_url."""
     with patch(
         "app.api.v1.compliance.get_compliance_by_address",
         return_value=_covered_payload(),
@@ -200,14 +200,15 @@ def test_free_covered_property_free_checklist_api_path():
     assert body["honesty"] == "Research only — not a legal determination."
     assert len(body["checklist"]) >= 1
     assert "Pasco Conditional Use Permit" in body["checklist"][0]["task_name"]
-    assert "intent=checklist" in body["open_url"]
-    assert body["open_url"].startswith("/wizard?")
+    # PL-12: dedicated page (no wizard intent=checklist dead-end)
+    assert body["open_url"] == f"/properties/{PROP_COVERED}/before-you-list"
+    assert "intent=checklist" not in body["open_url"]
     assert body["under_review_message"] is None
     assert body["essentials_note"]
 
 
 def test_free_under_review_does_not_promise_full_checklist():
-    """Under Review: honesty payload, empty checklist, no intent=checklist promise."""
+    """Under Review: honesty payload, empty checklist, dedicated honesty open_url."""
     with patch(
         "app.api.v1.compliance.get_compliance_by_address",
         return_value=_ur_payload(),
@@ -219,7 +220,7 @@ def test_free_under_review_does_not_promise_full_checklist():
     assert body["label"] == "Under Review"
     assert body["checklist"] == []
     assert "intent=checklist" not in body["open_url"]
-    assert body["open_url"].startswith("/wizard?")
+    assert body["open_url"] == f"/properties/{PROP_UR}/before-you-list"
     assert body["under_review_message"]
     assert "no checklist to open" in body["under_review_message"]
     assert body["essentials_note"] is None

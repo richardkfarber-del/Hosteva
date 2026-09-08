@@ -1462,13 +1462,19 @@ Processing Time: ${data.estimated_processing_time}${openUrl ? '\n\nOpened: ' + o
             return parts.filter(Boolean).join(', ');
         }
 
-        function buildFreeChecklistUrl(address) {
+        function buildBeforeYouListUrl(propertyId) {
+            // PL-12: dedicated checklist page (not wizard intent=checklist)
+            return `/properties/${propertyId}/before-you-list`;
+        }
+
+        function buildFreeChecklistUrl(address, propertyId) {
+            if (propertyId) return buildBeforeYouListUrl(propertyId);
             return `/wizard?address=${encodeURIComponent(address)}&intent=checklist`;
         }
 
         function isFreeChecklistUnderReview(data) {
-            // Only treat as Under Review when free-checklist API says so.
-            // Null payload still offers Before you list → wizard (wizard enforces UR honesty).
+            // Only treat as Under Review when free-checklist / before-you-list API says so.
+            // Null payload still offers Before you list → dedicated page when property id known.
             if (!data) return false;
             if (data.is_under_review) return true;
             if (data.label === 'Under Review') return true;
@@ -1496,18 +1502,17 @@ Processing Time: ${data.estimated_processing_time}${openUrl ? '\n\nOpened: ' + o
                 btn.classList.add('text-amber-800');
                 btn.onclick = (e) => {
                     e.stopPropagation();
-                    window.location.href = freePayload && freePayload.open_url
-                        ? freePayload.open_url
-                        : `/wizard?address=${encodeURIComponent(address)}`;
+                    window.location.href = (freePayload && freePayload.open_url)
+                        || buildBeforeYouListUrl(p.id);
                 };
             } else {
                 btn.dataset.checklistRole = 'before-you-list';
-                btn.setAttribute('title', 'Before you list — free municipal checklist');
+                btn.setAttribute('title', 'Before you list — open your step-by-step checklist');
                 if (!btn.querySelector('.material-symbols-outlined')) {
                     btn.innerHTML = '<span class="material-symbols-outlined text-xs">checklist</span> Before you list';
                 }
                 const openUrl = (freePayload && freePayload.open_url)
-                    || buildFreeChecklistUrl(address);
+                    || buildBeforeYouListUrl(p.id);
                 btn.onclick = (e) => {
                     e.stopPropagation();
                     window.location.href = openUrl;
@@ -1520,7 +1525,7 @@ Processing Time: ${data.estimated_processing_time}${openUrl ? '\n\nOpened: ' + o
             const underReview = isFreeChecklistUnderReview(freePayload);
             if (underReview) {
                 const statusUrl = (freePayload && freePayload.open_url)
-                    || `/wizard?address=${encodeURIComponent(address)}`;
+                    || buildBeforeYouListUrl(p.id);
                 const msg = (freePayload && freePayload.under_review_message)
                     || "We don't have Curated municipal rules for this address yet, so there's no checklist to open. We're not guessing — you'll see Under Review instead of a pass/fail traffic light.";
                 return `
@@ -1535,7 +1540,7 @@ Processing Time: ${data.estimated_processing_time}${openUrl ? '\n\nOpened: ' + o
                     </div>
                 `;
             }
-            const openUrl = (freePayload && freePayload.open_url) || buildFreeChecklistUrl(address);
+            const openUrl = (freePayload && freePayload.open_url) || buildBeforeYouListUrl(p.id);
             const items = (freePayload && Array.isArray(freePayload.checklist)) ? freePayload.checklist : [];
             const itemsHtml = items.length
                 ? `<ul class="space-y-2 mb-5 text-left" data-free-checklist-items>
@@ -1552,17 +1557,17 @@ Processing Time: ${data.estimated_processing_time}${openUrl ? '\n\nOpened: ' + o
                         <span class="material-symbols-outlined text-primary">checklist</span>
                         <h3 class="text-lg font-bold text-on-surface">Before you list</h3>
                     </div>
-                    <p class="text-on-surface-variant text-sm mb-1">Your free municipal checklist — tasks and obligations before listing on an STR site.</p>
+                    <p class="text-on-surface-variant text-sm mb-1">Open your step-by-step checklist</p>
                     <p class="text-on-surface-variant text-xs mb-4">Research only — not a legal determination.</p>
                     ${itemsHtml}
                     <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
                         <a href="${escapeDashboardHtml(openUrl)}" id="single-open-free-checklist" data-checklist-role="before-you-list" class="inline-flex justify-center items-center gap-2 px-6 py-2.5 bg-primary text-white font-bold rounded-xl hover:opacity-90 no-underline">
-                            Open free checklist
+                            Before you list
                             <span class="material-symbols-outlined text-sm">arrow_forward</span>
                         </a>
-                        <button type="button" onclick="upgradeToComplianceEssentials()" class="px-6 py-2.5 border border-outline-variant text-on-surface font-semibold rounded-xl hover:bg-surface-container">Upgrade for interactive depth</button>
+                        <button type="button" onclick="upgradeToComplianceEssentials()" class="px-6 py-2.5 border border-outline-variant text-on-surface font-semibold rounded-xl hover:bg-surface-container">Upgrade for document depth</button>
                     </div>
-                    <p class="text-xs text-on-surface-variant mt-3">Essentials unlocks interactive task tracking. Free still includes this before-you-list checklist.</p>
+                    <p class="text-xs text-on-surface-variant mt-3">Essentials unlocks document upload and deeper task tracking. Free includes this interactive before-you-list checklist.</p>
                 </div>
             `;
         }
@@ -1775,9 +1780,16 @@ Processing Time: ${data.estimated_processing_time}${openUrl ? '\n\nOpened: ' + o
                         .then(res => res.ok ? res.json() : null)
                         .catch(() => null)
                 );
-                const [propertiesChecklists, freeChecklists] = await Promise.all([
+                // PL-12: interactive before-you-list score for Free Covered (US-006 carve-out)
+                const beforeYouListPromises = properties.map((p) =>
+                    fetch(`/api/v1/compliance/before-you-list/${p.id}`, { headers })
+                        .then(res => res.ok ? res.json() : null)
+                        .catch(() => null)
+                );
+                const [propertiesChecklists, freeChecklists, beforeYouLists] = await Promise.all([
                     Promise.all(checklistPromises),
                     Promise.all(freeChecklistPromises),
+                    Promise.all(beforeYouListPromises),
                 ]);
                 
                 if (properties.length === 1) {
@@ -1789,24 +1801,35 @@ Processing Time: ${data.estimated_processing_time}${openUrl ? '\n\nOpened: ' + o
                     const checklistLockedSingle = !!(checklistItems && checklistItems.error === 'upgrade_required');
                     
                     const freeChecklistPayload = freeChecklists[0] || null;
+                    const bylPayloadSingle = beforeYouLists[0] || null;
                     if (checklistLockedSingle) {
                         const taskContainer = clone.getElementById('dashboard-pending-tasks');
                         if (taskContainer) {
-                            // BUG-PL-09: Free still sees free municipal checklist entry (not Essentials-only dead-end)
+                            // BUG-PL-09 / PL-12: Free Before you list → dedicated interactive page
                             taskContainer.innerHTML = renderFreeChecklistUpgradePanel(p, freeChecklistPayload);
                         }
                         const progress = clone.querySelector('.single-compliance-progress');
                         const compText = clone.querySelector('.single-compliance-text');
                         const compDesc = clone.querySelector('.single-compliance-desc');
-                        if (progress) progress.setAttribute('stroke-dasharray', '0, 100');
-                        if (isFreeChecklistUnderReview(freeChecklistPayload)) {
+                        if (isFreeChecklistUnderReview(freeChecklistPayload) || (bylPayloadSingle && bylPayloadSingle.is_under_review)) {
+                            if (progress) progress.setAttribute('stroke-dasharray', '0, 100');
                             if (compText) compText.innerText = 'Under Review';
-                            if (compDesc) compDesc.innerText = 'No curated checklist yet';
+                            if (compDesc) compDesc.innerText = 'Coverage still under review';
                         } else {
-                            if (compText) compText.innerText = 'Free checklist';
-                            if (compDesc) compDesc.innerText = 'Before you list — open free checklist';
+                            const bylScore = (bylPayloadSingle && typeof bylPayloadSingle.compliance_score === 'number')
+                                ? Math.round(bylPayloadSingle.compliance_score)
+                                : 0;
+                            if (progress) progress.setAttribute('stroke-dasharray', `${bylScore}, 100`);
+                            if (compText) compText.innerText = `${bylScore}%`;
+                            if (compDesc) compDesc.innerText = 'Before you list — open your step-by-step checklist';
+                            // Feed resolveDashboardBadge a synthetic checklist so % is not wiped to 0
+                            checklistItems = (bylPayloadSingle && Array.isArray(bylPayloadSingle.items))
+                                ? bylPayloadSingle.items.map(it => ({ is_compliant: !!it.is_complete }))
+                                : [];
                         }
-                        checklistItems = [];
+                        if (isFreeChecklistUnderReview(freeChecklistPayload) || (bylPayloadSingle && bylPayloadSingle.is_under_review)) {
+                            checklistItems = [];
+                        }
                     }
                     
                     // Welcome greeting name
@@ -1848,9 +1871,17 @@ Processing Time: ${data.estimated_processing_time}${openUrl ? '\n\nOpened: ' + o
                     const compText = clone.querySelector('.single-compliance-text');
                     const compDesc = clone.querySelector('.single-compliance-desc');
                     
-                    const badgeState = resolveDashboardBadge(p.zoning_status, checklistItems, checklistLockedSingle);
+                    const useBylScoreSingle = checklistLockedSingle && Array.isArray(checklistItems) && checklistItems.length > 0;
+                    const badgeState = resolveDashboardBadge(
+                        p.zoning_status,
+                        checklistItems,
+                        useBylScoreSingle ? false : checklistLockedSingle
+                    );
                     let complianceScore = badgeState.score;
                     let isAwaitingAudit = badgeState.kind === 'awaiting';
+                    if (useBylScoreSingle && bylPayloadSingle && typeof bylPayloadSingle.compliance_score === 'number') {
+                        complianceScore = Math.round(bylPayloadSingle.compliance_score);
+                    }
 
                     if (isAwaitingAudit) {
                         badge.className = 'bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1';
@@ -2076,12 +2107,22 @@ Processing Time: ${data.estimated_processing_time}${openUrl ? '\n\nOpened: ' + o
                             showPlaceholderLabel();
                         };
                         
-                        // BUG-PL-11: hydrate badge from compliance-honest zoning + checklist (no stale green)
+                        // BUG-PL-11 / PL-12: hydrate badge; Free Covered uses before-you-list %
                         const checklistLocked = !!(checklistItems && checklistItems.error === 'upgrade_required');
-                        const effectiveChecklist = checklistLocked ? [] : (Array.isArray(checklistItems) ? checklistItems : []);
-                        const badgeState = resolveDashboardBadge(p.zoning_status, effectiveChecklist, checklistLocked);
+                        const bylPayload = beforeYouLists[idx] || null;
+                        let effectiveChecklist = checklistLocked ? [] : (Array.isArray(checklistItems) ? checklistItems : []);
+                        let treatLocked = checklistLocked;
+                        if (checklistLocked && bylPayload && !bylPayload.is_under_review && Array.isArray(bylPayload.items) && bylPayload.items.length) {
+                            effectiveChecklist = bylPayload.items.map(it => ({ is_compliant: !!it.is_complete }));
+                            treatLocked = false;
+                        }
+                        const badgeState = resolveDashboardBadge(p.zoning_status, effectiveChecklist, treatLocked);
                         let complianceScore = badgeState.score;
                         let isAwaitingAudit = badgeState.kind === 'awaiting';
+                        if (checklistLocked && bylPayload && !bylPayload.is_under_review && typeof bylPayload.compliance_score === 'number') {
+                            complianceScore = Math.round(bylPayload.compliance_score);
+                            isAwaitingAudit = false;
+                        }
                         complianceScoresSum += complianceScore;
 
                         const badge = cardClone.querySelector('.property-card-badge');

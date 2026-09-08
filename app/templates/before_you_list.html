@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+
+{% block title %}Hosteva | Before you list{% endblock %}
+
+{% block header_title %}Before you list{% endblock %}
+
+{% block extra_head %}
+<style>
+    .byl-card.complete { opacity: 0.78; }
+    .byl-card input[type="checkbox"] { width: 1.25rem; height: 1.25rem; min-width: 44px; min-height: 44px; }
+    .byl-toast { transition: opacity 0.3s ease; }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="pb-16 max-w-3xl mx-auto px-4" id="byl-page" data-property-id="{{ property_id }}">
+    <a href="/dashboard" class="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline mb-6">
+        <span class="material-symbols-outlined text-base">arrow_back</span>
+        Back to dashboard
+    </a>
+
+    <div id="byl-loading" class="py-16 text-center text-on-surface-variant">
+        <span class="material-symbols-outlined animate-spin text-3xl text-primary">progress_activity</span>
+        <p class="mt-3 text-sm">Loading your checklist…</p>
+    </div>
+
+    <div id="byl-honesty" class="hidden">
+        <p class="text-xs font-bold uppercase tracking-wider text-primary mb-2">Before you list</p>
+        <h1 id="byl-honesty-headline" class="font-display text-2xl md:text-3xl font-extrabold text-on-surface mb-3"></h1>
+        <p id="byl-honesty-body" class="text-on-surface-variant leading-relaxed mb-4"></p>
+        <p class="text-sm text-on-surface-variant mb-6">Research only — not a legal determination.</p>
+        <a href="/dashboard" id="byl-honesty-cta" class="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white font-bold rounded-xl hover:opacity-90 no-underline">Try another address</a>
+    </div>
+
+    <div id="byl-interactive" class="hidden">
+        <p class="text-xs font-bold uppercase tracking-wider text-primary mb-2">Before you list</p>
+        <h1 id="byl-title" class="font-display text-2xl md:text-3xl font-extrabold text-on-surface mb-2"></h1>
+        <p id="byl-subtitle" class="text-on-surface-variant mb-2"></p>
+        <p id="byl-honesty-line" class="text-xs text-on-surface-variant mb-6"></p>
+
+        <div class="bg-surface-container-lowest rounded-2xl border border-surface-container p-5 mb-6">
+            <div class="flex items-center justify-between gap-3 mb-2">
+                <span class="text-sm font-bold text-on-surface">Compliance progress</span>
+                <span id="byl-score-value" class="text-sm font-bold text-primary">0% complete</span>
+            </div>
+            <div class="w-full h-2.5 bg-surface-container-high rounded-full overflow-hidden mb-2">
+                <div id="byl-score-bar" class="h-full bg-primary rounded-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+            <p id="byl-score-helper" class="text-xs text-on-surface-variant"></p>
+        </div>
+
+        <div id="byl-empty" class="hidden py-10 px-6 bg-surface-container-lowest rounded-2xl border border-surface-container text-left mb-6">
+            <h2 class="text-lg font-bold text-on-surface mb-2">We're still assembling this checklist</h2>
+            <p class="text-sm text-on-surface-variant leading-relaxed">This address is Covered, but we don't have itemized steps to show yet. Check back soon, or try the Free Audit again after we refresh rules.</p>
+        </div>
+
+        <div id="byl-items" class="space-y-3"></div>
+    </div>
+
+    <div id="byl-error" class="hidden py-10 text-center">
+        <p class="text-on-surface font-semibold mb-2">Couldn't load this checklist</p>
+        <p class="text-sm text-on-surface-variant mb-4">Try again in a moment, or return to the dashboard.</p>
+        <a href="/dashboard" class="text-primary font-bold hover:underline">Back to dashboard</a>
+    </div>
+
+    <div id="byl-toast" class="byl-toast fixed bottom-6 left-1/2 -translate-x-1/2 bg-on-surface text-white text-sm font-medium px-4 py-2.5 rounded-xl shadow-lg opacity-0 pointer-events-none z-50"></div>
+</main>
+
+<script>
+(function () {
+    const propertyId = document.getElementById('byl-page').dataset.propertyId;
+    const token = localStorage.getItem('access_token') || '';
+    const headers = token ? { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
+
+    function showToast(msg) {
+        const el = document.getElementById('byl-toast');
+        if (!el) return;
+        el.textContent = msg || '';
+        el.style.opacity = '1';
+        clearTimeout(showToast._t);
+        showToast._t = setTimeout(() => { el.style.opacity = '0'; }, 2200);
+    }
+
+    function setScore(score) {
+        const n = Math.round(Number(score) || 0);
+        const value = document.getElementById('byl-score-value');
+        const bar = document.getElementById('byl-score-bar');
+        const helper = document.getElementById('byl-score-helper');
+        if (value) value.textContent = `${n}% complete`;
+        if (bar) bar.style.width = `${Math.max(0, Math.min(100, n))}%`;
+        if (helper) {
+            if (n <= 0) helper.textContent = 'Start with any item below — your progress updates as you check things off.';
+            else if (n >= 100) helper.textContent = "You've checked every item we have for this address. Still double-check with the official sites before you go live.";
+            else helper.textContent = "Nice progress. Keep going until you're ready to list.";
+        }
+    }
+
+    function escapeHtml(s) {
+        return String(s || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
+    function renderItems(items) {
+        const root = document.getElementById('byl-items');
+        const empty = document.getElementById('byl-empty');
+        if (!items || !items.length) {
+            if (empty) empty.classList.remove('hidden');
+            if (root) root.innerHTML = '';
+            return;
+        }
+        if (empty) empty.classList.add('hidden');
+        root.innerHTML = items.map(item => {
+            const checked = item.is_complete ? 'checked' : '';
+            const completeClass = item.is_complete ? 'complete' : '';
+            const aria = item.is_complete ? 'Mark as not done' : 'Mark as done';
+            const link = item.source_url
+                ? `<a href="${escapeHtml(item.source_url)}" target="_blank" rel="noopener noreferrer" class="text-sm font-semibold text-primary hover:underline inline-flex items-center gap-1 mt-2">Official info <span class="material-symbols-outlined text-sm">open_in_new</span></a>`
+                : '';
+            const desc = item.description
+                ? `<p class="text-sm text-on-surface-variant mt-1 leading-relaxed">${escapeHtml(item.description)}</p>`
+                : '';
+            return `
+            <div class="byl-card ${completeClass} bg-surface-container-lowest rounded-2xl border border-surface-container p-4 flex gap-3 items-start" data-item-id="${escapeHtml(item.id)}">
+                <input type="checkbox" class="byl-toggle accent-primary mt-0.5 cursor-pointer" ${checked} title="${aria}" aria-label="${aria}" />
+                <div class="flex-1 min-w-0">
+                    <h3 class="font-semibold text-on-surface">${escapeHtml(item.title)}</h3>
+                    ${desc}
+                    ${link}
+                </div>
+            </div>`;
+        }).join('');
+
+        root.querySelectorAll('.byl-card').forEach(card => {
+            const input = card.querySelector('.byl-toggle');
+            input.addEventListener('change', async () => {
+                const itemId = card.dataset.itemId;
+                const isComplete = !!input.checked;
+                input.disabled = true;
+                try {
+                    const res = await fetch(`/api/v1/compliance/before-you-list/${propertyId}/items/${itemId}`, {
+                        method: 'PATCH',
+                        headers,
+                        body: JSON.stringify({ is_complete: isComplete }),
+                    });
+                    if (!res.ok) throw new Error('save failed');
+                    const data = await res.json();
+                    if (data.item) {
+                        card.classList.toggle('complete', !!data.item.is_complete);
+                        input.checked = !!data.item.is_complete;
+                        input.title = data.item.is_complete ? 'Mark as not done' : 'Mark as done';
+                        input.setAttribute('aria-label', input.title);
+                    }
+                    if (typeof data.compliance_score === 'number') setScore(data.compliance_score);
+                    showToast(data.toast || (isComplete ? 'Saved — progress updated.' : 'Updated.'));
+                } catch (e) {
+                    input.checked = !isComplete;
+                    showToast("Couldn't save that checkmark. Try again in a moment.");
+                } finally {
+                    input.disabled = false;
+                }
+            });
+        });
+    }
+
+    async function load() {
+        const loading = document.getElementById('byl-loading');
+        const honesty = document.getElementById('byl-honesty');
+        const interactive = document.getElementById('byl-interactive');
+        const err = document.getElementById('byl-error');
+        try {
+            const res = await fetch(`/api/v1/compliance/before-you-list/${propertyId}`, { headers });
+            if (!res.ok) throw new Error('load failed');
+            const data = await res.json();
+            loading.classList.add('hidden');
+            if (data.is_under_review || data.mode === 'honesty') {
+                honesty.classList.remove('hidden');
+                document.getElementById('byl-honesty-headline').textContent = data.headline || 'No full checklist for this address yet';
+                document.getElementById('byl-honesty-body').textContent = data.body || '';
+                const cta = document.getElementById('byl-honesty-cta');
+                if (cta) {
+                    cta.textContent = data.secondary_cta || 'Try another address';
+                    cta.href = data.secondary_cta_url || '/dashboard';
+                }
+                return;
+            }
+            interactive.classList.remove('hidden');
+            document.getElementById('byl-title').textContent = data.title || `Your checklist for ${data.street_address || ''}`;
+            document.getElementById('byl-subtitle').textContent = data.subtitle || 'Mark each step as you finish it. We\'ll keep a running score on your dashboard.';
+            document.getElementById('byl-honesty-line').textContent = data.honesty || 'Research only — not a legal determination. Confirm requirements with the city or county before you list.';
+            setScore(data.compliance_score || 0);
+            renderItems(data.items || []);
+        } catch (e) {
+            loading.classList.add('hidden');
+            err.classList.remove('hidden');
+        }
+    }
+
+    load();
+})();
+</script>
+{% endblock %}
