@@ -229,11 +229,30 @@ tailwind.config = {
                     <span class="material-symbols-outlined">close</span>
                 </button>
             </div>
+            <div id="dup-address-banner" class="hidden mx-6 mt-4 mb-0 p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-950 shadow-sm" role="alert">
+                <div class="flex gap-3 items-start">
+                    <span class="material-symbols-outlined text-amber-600 shrink-0">home</span>
+                    <div class="flex-1 min-w-0">
+                        <h4 class="font-headline font-bold text-sm text-amber-950" id="dup-address-banner-title">This address is already on your dashboard</h4>
+                        <p class="text-xs text-amber-900/90 mt-1 leading-relaxed" id="dup-address-banner-body">We didn't add it again. Open the property you already saved to keep working from there.</p>
+                        <div class="flex flex-wrap gap-2 mt-3">
+                            <a href="/dashboard" id="dup-address-open-existing"
+                               class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-bold hover:opacity-95 active:scale-95 transition-all">Open existing property</a>
+                            <button type="button" id="dup-address-dismiss"
+                                    class="inline-flex items-center px-3 py-1.5 rounded-lg border border-amber-300 text-amber-900 text-xs font-semibold hover:bg-amber-100 transition-colors">Got it</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <form id="add-property-form" class="p-6 space-y-4">
                 <div class="relative">
                     <label class="block text-sm font-bold text-gray-700 mb-1">Address</label>
                     <input type="text" id="add-property-address" name="address" required autocomplete="off" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-[8px] focus:ring-2 focus:ring-teal-600 focus:bg-white focus:border-transparent text-gray-800">
                     <div id="add-property-autocomplete-dropdown" class="absolute z-50 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg hidden max-h-60 overflow-y-auto"></div>
+                    <div id="dup-address-inline-error" class="hidden mt-2 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                        <p class="font-semibold">You already saved this address.</p>
+                        <p class="text-xs mt-0.5 text-amber-700">Open it from your dashboard instead of adding it twice.</p>
+                    </div>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
@@ -1016,6 +1035,16 @@ tailwind.config = {
             .finally(() => setLoading(false));
         }
 
+
+        document.getElementById('dup-address-dismiss')?.addEventListener('click', () => {
+            if (typeof window.clearDuplicateAddressError === 'function') {
+                window.clearDuplicateAddressError();
+            } else {
+                document.getElementById('dup-address-banner')?.classList.add('hidden');
+                document.getElementById('dup-address-inline-error')?.classList.add('hidden');
+            }
+        });
+
         function openAddPropertyModal() {
             document.getElementById('add-property-modal').classList.remove('hidden');
             const addrInput = document.getElementById('add-property-address');
@@ -1025,11 +1054,17 @@ tailwind.config = {
                 addrInput.disabled = false;
                 addrInput.readOnly = false;
             }
+            if (typeof window.clearDuplicateAddressError === 'function') {
+                window.clearDuplicateAddressError();
+            }
         }
 
         function closeAddPropertyModal() {
             document.getElementById('add-property-modal').classList.add('hidden');
             document.getElementById('add-property-form').reset();
+            if (typeof window.clearDuplicateAddressError === 'function') {
+                window.clearDuplicateAddressError();
+            }
         }
 
         function openFilterModal() {
@@ -1080,7 +1115,18 @@ tailwind.config = {
                     closeAddPropertyModal();
                     fetchProperties();
                 } else {
-                    alert('Failed to add property. Please try again.');
+                    let errBody = null;
+                    try { errBody = await response.json(); } catch (_) { errBody = null; }
+                    const detail = errBody && errBody.detail;
+                    if (response.status === 409 && detail && (detail.code === 'DUPLICATE_ADDRESS' || detail.existing_property_id)) {
+                        if (typeof window.showDuplicateAddressError === 'function') {
+                            window.showDuplicateAddressError(detail);
+                        } else {
+                            alert((detail && detail.title) || "This address is already on your dashboard");
+                        }
+                    } else {
+                        alert('Failed to add property. Please try again.');
+                    }
                 }
             } catch (err) {
                 console.error('Error adding property:', err);
@@ -1421,8 +1467,28 @@ Processing Time: ${data.estimated_processing_time}`);
                                 return await fetchProperties();
                             }
                             const detail = await createResp.json().catch(() => ({}));
-                            errEl.textContent = detail.detail || 'Could not add property. Try again or use Add Property.';
-                            errEl.classList.remove('hidden');
+                            const d = detail.detail;
+                            if (createResp.status === 409 && d && (d.code === 'DUPLICATE_ADDRESS' || d.existing_property_id)) {
+                                errEl.innerHTML = '';
+                                const title = document.createElement('p');
+                                title.className = 'font-semibold text-amber-900';
+                                title.textContent = d.title || "This address is already on your dashboard";
+                                const msg = document.createElement('p');
+                                msg.className = 'mt-1';
+                                msg.textContent = d.message || "We didn't add it again. Open the property you already saved to keep working from there.";
+                                const link = document.createElement('a');
+                                link.href = d.existing_property_url || (`/manage/${d.existing_property_id}`);
+                                link.className = 'inline-block mt-2 font-bold text-primary hover:underline';
+                                link.textContent = d.action_label || 'Open existing property';
+                                errEl.appendChild(title);
+                                errEl.appendChild(msg);
+                                errEl.appendChild(link);
+                                errEl.classList.remove('hidden');
+                                sessionStorage.removeItem('pending_property_address');
+                            } else {
+                                errEl.textContent = (typeof d === 'string' ? d : null) || 'Could not add property. Try again or use Add Property.';
+                                errEl.classList.remove('hidden');
+                            }
                             btn.disabled = false;
                             btn.textContent = 'Yes, add property';
                         } catch (createErr) {

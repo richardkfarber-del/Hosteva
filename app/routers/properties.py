@@ -557,7 +557,26 @@ def create_property(
     host = db.query(Host).filter(Host.username == current_user.get("username")).first()
     if not host:
         raise HTTPException(status_code=404, detail="Host profile not found")
-        
+
+    # US-018: host-scoped duplicate address guard (before any insert)
+    from app.services.duplicate_address import (
+        duplicate_address_detail,
+        find_host_duplicate_property,
+    )
+    existing = find_host_duplicate_property(
+        db,
+        host.id,
+        property_data.address,
+        property_data.city,
+        property_data.state,
+        property_data.zip_code or "",
+    )
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=duplicate_address_detail(existing),
+        )
+
     # Jurisdiction-Aware Geocoding first so Street View can retry normalized location (BUG-PL-02)
     # BUG-PL-07: geocode / image / audit must never 500 the create.
     full_address = f"{property_data.address}, {property_data.city}, {property_data.state} {property_data.zip_code}".strip()

@@ -88,6 +88,21 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             if (!createResp.ok) {
+                let errBody = null;
+                try { errBody = await createResp.json(); } catch (_) { errBody = null; }
+                const detail = errBody && errBody.detail;
+                if (createResp.status === 409 && detail && (detail.code === 'DUPLICATE_ADDRESS' || detail.existing_property_id)) {
+                    if (typeof window.showDuplicateAddressError === 'function') {
+                        window.showDuplicateAddressError(detail);
+                    } else {
+                        showDuplicateAddressBanner(detail);
+                    }
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = originalBtnText;
+                    }
+                    return;
+                }
                 throw new Error('Failed to create property profile.');
             }
 
@@ -229,6 +244,85 @@ function injectAnimationStyles() {
     styleEl.innerHTML = styles;
     document.head.appendChild(styleEl);
 }
+
+
+// US-018 — friendly duplicate-address banner (Wasp copy bank)
+function showDuplicateAddressBanner(detail) {
+    const d = detail || {};
+    const title = d.title || "This address is already on your dashboard";
+    const body = d.message || "We didn't add it again. Open the property you already saved to keep working from there.";
+    const actionLabel = d.action_label || "Open existing property";
+    const dismissLabel = d.dismiss_label || "Got it";
+    const inline = d.inline || "You already saved this address.";
+    const inlineHelper = d.inline_helper || "Open it from your dashboard instead of adding it twice.";
+    const openUrl = d.existing_property_url || (d.existing_property_id ? ("/manage/" + d.existing_property_id) : "/dashboard");
+
+    const titleEl = document.getElementById('dup-address-banner-title');
+    const bodyEl = document.getElementById('dup-address-banner-body');
+    const openEl = document.getElementById('dup-address-open-existing');
+    const dismissEl = document.getElementById('dup-address-dismiss');
+    const banner = document.getElementById('dup-address-banner');
+    const inlineEl = document.getElementById('dup-address-inline-error');
+
+    if (titleEl) titleEl.textContent = title;
+    if (bodyEl) bodyEl.textContent = body;
+    if (openEl) {
+        openEl.href = openUrl;
+        openEl.textContent = actionLabel;
+    }
+    if (dismissEl) {
+        dismissEl.textContent = dismissLabel;
+        dismissEl.onclick = function () {
+            if (typeof window.clearDuplicateAddressError === 'function') {
+                window.clearDuplicateAddressError();
+            }
+        };
+    }
+    if (banner) banner.classList.remove('hidden');
+    if (inlineEl) {
+        inlineEl.innerHTML = '<p class="font-semibold">' + inline + '</p>' +
+            '<p class="text-xs mt-0.5 text-amber-700">' + inlineHelper + '</p>';
+        inlineEl.classList.remove('hidden');
+    }
+
+    if (!banner) {
+        const existing = document.getElementById('dup-address-toast');
+        if (existing) existing.remove();
+        const toast = document.createElement('div');
+        toast.id = 'dup-address-toast';
+        toast.className = 'fixed bottom-6 right-6 z-[100] bg-slate-900 text-white p-6 rounded-2xl shadow-2xl flex items-start gap-4 border border-amber-500/30 max-w-md';
+        toast.style.animation = 'slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards';
+        toast.innerHTML =
+            '<span class="material-symbols-outlined text-amber-400 text-3xl shrink-0">home</span>' +
+            '<div class="flex-1">' +
+            '<h4 class="font-headline font-bold text-sm text-amber-300 mb-1"></h4>' +
+            '<p class="text-xs text-slate-300 leading-relaxed mb-3"></p>' +
+            '<a href="#" class="inline-flex text-xs font-bold text-teal-300 hover:underline"></a>' +
+            '</div>' +
+            '<button type="button" class="text-slate-400 hover:text-white dup-toast-close"><span class="material-symbols-outlined text-sm">close</span></button>';
+        toast.querySelector('h4').textContent = title;
+        toast.querySelector('p').textContent = body;
+        const a = toast.querySelector('a');
+        a.href = openUrl;
+        a.textContent = actionLabel;
+        toast.querySelector('.dup-toast-close').onclick = function () { toast.remove(); };
+        document.body.appendChild(toast);
+        if (typeof injectAnimationStyles === 'function') injectAnimationStyles();
+    }
+}
+
+window.showDuplicateAddressError = showDuplicateAddressBanner;
+window.clearDuplicateAddressError = function clearDuplicateAddressError() {
+    const banner = document.getElementById('dup-address-banner');
+    if (banner) banner.classList.add('hidden');
+    const inlineEl = document.getElementById('dup-address-inline-error');
+    if (inlineEl) {
+        inlineEl.classList.add('hidden');
+        inlineEl.innerHTML = '';
+    }
+    const toast = document.getElementById('dup-address-toast');
+    if (toast) toast.remove();
+};
 
 function getCookie(name) {
     const value = `; ${document.cookie}`;

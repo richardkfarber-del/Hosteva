@@ -32,6 +32,7 @@ python -m pytest tests/ app/tests/ -q --tb=short
 | `tests/test_ai_compliance_auditor.py` | Document audit success / name+address mismatch / expired date; checklist-items fetch | api | PR / main CI | CI on main is the gate | Auditor upload path |
 | `tests/test_audit_v1.py` | Celery OCR task success + pending-review on mismatch | unit | PR / main CI | CI on main is the gate | Task-level (mocked OCR) |
 | `tests/test_billing_v1.py` | Checkout unauthorized / kill-switch 503 / subscription+permit success; Stripe webhook subscription+permit complete | api | PR / main CI | CI on main is the gate | Enables `BILLING_ENABLED` locally; not live Stripe |
+| `tests/test_bug_012_stable_run_pasco.py` | BUG-012 Stable Run ZIP/county→Pasco Curated Covered; Hudson Pasco still Covered; true Hernando UR; no Hernando allowlist | api/unit | PR / main CI | CI on main is the gate | PL-STABLE-RUN BUG-012 |
 | `tests/test_bug_pl02_street_view.py` | Street View / Places fetch: geocode retry before stock; fallback helpers; dashboard “Street View unavailable” label | unit | PR / main CI | CI on main is the gate | BUG-PL-02; image *quality* still Widow |
 | `tests/test_bug_pl05_evaluate.py` | `POST .../evaluate` must not claim Compliant for Restricted / checklist / non-compliant zoning | api | PR / main CI | CI on main is the gate | BUG-PL-05 |
 | `tests/test_bug_pl07_create_500.py` | Property create must return 201 (not 500) when geocode / image / audit / municipal seed fail; corridor + MB cases | api | PR / main CI | CI on main is the gate | BUG-PL-07 |
@@ -49,16 +50,18 @@ python -m pytest tests/ app/tests/ -q --tb=short
 | `tests/test_phase1_launch.py` | ToS / Privacy / Features / About 200; waitlist submit; landing tiers+disclaimer; under-review flag; sidebar profile widget | api | PR / main CI | CI on main is the gate | Launch + legal pages; overlaps US-010 positioning |
 | `tests/test_phase_b_us002_us003_us004.py` | UNDER_REVIEW never `is_compliant`; MB covered; Bay/Broward checklist gov source URLs; wizard→register→dashboard address handoff markers | api | PR / main CI | CI on main is the gate | Phase B US-002/003/004 |
 | `tests/test_properties_v1.py` | `POST /api/properties/` unauthorized / success (image mocked) / validation error | api | PR / main CI | CI on main is the gate | Properties v1 create |
+| `tests/test_epic_rules_coverage.py` | Option B Curated allowlist gate (Ocala UR; Orlando/Kissimmee/Key West/Tampa/MB Covered); Complete seed; research queue; SP-012 Option B Features list + regional hero; PCB/Orlando pack seed; init_db wiring | api/unit | PR / main CI | CI on main is the gate | EPIC-RULES + Curated Option B GO |
 | `tests/test_seed_rules.py` | `seed_rules` parsers (days/occupancy/tax/date) + upsert behavior | unit | PR / main CI | CI on main is the gate | Spreadsheet seed script |
 | `tests/test_te001_auth_checkout.py` | TE-001: unauth checkout 401 (no session create); auth checkout uses real host id; kill-switch 503 before Stripe | api | PR / main CI | CI on main is the gate | TE-001; never `user_mock_123` |
 | `tests/test_us006_entitlement.py` | Free vs Essentials checklist/task gating; webhook sim activates Essentials on `/me`; simulate blocked in production | api | PR / main CI | CI on main is the gate | US-006 |
 | `tests/test_us010_positioning_pages.py` | `/features` + `/about` real pages; Florida-depth copy; no live “operations engine” claim; meta scrubbed of competitor names | dom-assert | PR / main CI | CI on main is the gate | US-010 / BUG-PL-04 companion |
 | `tests/test_us015_checklist_signup_cta.py` | US-015 Covered guest Sign Up CTA + helper + honesty; Under Review no checklist CTA; register `next` return intent; no pricing/allowlist | dom-assert | PR / main CI | CI on main is the gate | PL-CTA US-015 |
+| `tests/test_us018_dup_address_guard.py` | US-018 host-scoped dup address block (exact + trim/case); friendly Wasp 409 copy + Open existing; other host unblocked; no Option B/CTA/SV | api/dom-assert | PR / main CI | CI on main is the gate | PL-DUP US-018 |
 | `tests/test_user_me_guest_fix.py` | `/api/user/me` must not collapse Bearer hosts into Guest; shape parity; missing host ≠ Guest label | api | PR / main CI | CI on main is the gate | Guest identity bug |
 | `tests/test_validation_engine.py` | Agnostic validate: reject zoning / property type / stay duration; allowed → checklist generation | api | PR / main CI | CI on main is the gate | Validation engine |
 | `tests/test_validation_workflow.py` | Hillsborough nightly reject / weekly allowed+checklist; St. Petersburg warning+checklist; Pasco permit+checklist | api | PR / main CI | CI on main is the gate | County workflow fixtures |
 
-**Module count:** 30 (`2` under `app/tests/`, `28` under `tests/`).
+**Module count:** 33 (`2` under `app/tests/`, `31` under `tests/`).
 
 ---
 
