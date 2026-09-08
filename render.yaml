@@ -30,6 +30,17 @@ services:
       # - key: PASSWORD_RESET_TTL_MINUTES  (optional; default 60)
       # - key: STRIPE_PRICE_PERMIT_FILING
 
+      # BUG-PL-08 property images (R2 default / S3) — set in Render Dashboard; do not commit values:
+      # - key: PROPERTY_IMAGE_PROVIDER          # r2 (default) | s3
+      # - key: PROPERTY_IMAGE_BUCKET
+      # - key: PROPERTY_IMAGE_ENDPOINT_URL      # required for R2
+      # - key: PROPERTY_IMAGE_REGION            # auto (R2) or e.g. us-east-1
+      # - key: PROPERTY_IMAGE_ACCESS_KEY_ID     # secret-request card
+      # - key: PROPERTY_IMAGE_SECRET_ACCESS_KEY # secret-request card
+      # - key: PROPERTY_IMAGE_PUBLIC_BASE_URL   # durable HTTPS prefix for DB image_url
+      # - key: PROPERTY_IMAGE_KEY_PREFIX        # optional; default property-images/
+      # - key: PROPERTY_IMAGE_LAZY_VERIFY       # optional; HEAD-check HTTPS on list
+
 databases:
   - name: hosteva-db
     plan: free

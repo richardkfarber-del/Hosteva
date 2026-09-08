@@ -74,18 +74,32 @@ def is_fallback_property_image(url: str | None) -> bool:
     return "fallback_house.jpg" in url
 
 
-def _save_property_image_bytes(content: bytes) -> str:
-    import uuid
-    img_uuid = str(uuid.uuid4())
-    os.makedirs("app/static/property_images", exist_ok=True)
-    file_path = f"app/static/property_images/{img_uuid}.jpg"
-    with open(file_path, "wb") as f:
-        f.write(content)
-    return f"/static/property_images/{img_uuid}.jpg"
+def _save_property_image_bytes(content: bytes) -> str | None:
+    """Persist SV/Places JPG to object storage (BUG-PL-08 B).
+
+    Returns durable HTTPS URL, or None if storage is not configured / upload fails.
+    Does **not** write durable binaries to ephemeral `/static/property_images`.
+    fallback_house.jpg remains an app static asset.
+    """
+    from app.services.property_image_storage import storage_configured, upload_property_image
+
+    if not content:
+        return None
+    if not storage_configured():
+        logger.warning(
+            "BUG-PL-08: PROPERTY_IMAGE_* object storage not configured; "
+            "refusing ephemeral /static/property_images write"
+        )
+        return None
+    try:
+        return upload_property_image(content)
+    except Exception:
+        logger.exception("BUG-PL-08: object storage upload failed in _save_property_image_bytes")
+        return None
 
 
 def _try_street_view_image(location: str, api_key: str, logger) -> str | None:
-    """Return saved /static/property_images/*.jpg if Street View metadata is OK for location."""
+    """Return durable object-store URL if Street View metadata is OK for location."""
     if not location:
         return None
     try:
@@ -418,7 +432,23 @@ def get_properties(
                     pass
                 if (p.zoning_status or "").strip().lower() in ("compliant", "green"):
                     p.zoning_status = "Pending"
-        
+
+    # BUG-PL-08 C: lazy heal ephemeral / missing non-placeholder images → object store
+    try:
+        from app.services.property_image_heal import heal_property_image
+
+        for p in properties:
+            try:
+                heal_property_image(db, p, commit=True)
+            except Exception:
+                logger.exception("BUG-PL-08: heal failed for property %s", getattr(p, "id", "?"))
+                try:
+                    db.rollback()
+                except Exception:
+                    pass
+    except Exception:
+        logger.exception("BUG-PL-08: heal loop failed on properties list")
+
     result = [
         {
             "id": p.id,
