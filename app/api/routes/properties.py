@@ -122,7 +122,26 @@ def create_property(
     host = db.query(Host).filter(Host.username == current_user.get("username")).first()
     if not host:
         raise HTTPException(status_code=404, detail="Host profile not found")
-        
+
+    # US-018: host-scoped duplicate address guard (before any insert)
+    from app.services.duplicate_address import (
+        duplicate_address_detail,
+        find_host_duplicate_property,
+    )
+    existing = find_host_duplicate_property(
+        db,
+        host.id,
+        property_data.address.address,
+        property_data.address.city,
+        property_data.address.state,
+        property_data.address.zip_code or "",
+    )
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=duplicate_address_detail(existing),
+        )
+
     # 2. Geocode then fetch image (retry normalized location before stock — BUG-PL-02)
     full_address = f"{property_data.address.address}, {property_data.address.city}, {property_data.address.state} {property_data.address.zip_code}".strip()
     try:
