@@ -341,11 +341,12 @@ tailwind.config = {
             <p class="text-gray-500 text-sm mb-2"><span class="text-on-surface font-headline tracking-tight font-bold">Address:</span> <span id="search-address"></span></p>
             <p class="text-gray-500 text-sm mb-4"><span class="text-on-surface font-headline tracking-tight font-bold">Conditions:</span> <span id="search-reason"></span></p>
             <div id="permit-link-container" class="hidden">
-                <a id="permit-link" href="#" target="_blank" class="text-sm font-bold text-primary hover:underline flex items-center gap-1">
+                <a id="permit-link" href="" target="_blank" rel="noopener" class="text-sm font-bold text-primary hover:underline flex items-center gap-1">
                     <span class="material-symbols-outlined text-sm">open_in_new</span>
                     View Permit Requirements
                 </a>
             </div>
+            <p id="permit-inline-error" class="hidden text-sm text-red-600 mt-2" role="alert"></p>
         </div>
 
         <!-- Dynamic dashboard content container -->
@@ -1006,11 +1007,20 @@ tailwind.config = {
                 }
 
                 const permitLink = data.permit_application_url || data.permit_link;
-                if (permitLink) {
-                    document.getElementById('permit-link').href = permitLink;
-                    document.getElementById('permit-link-container').classList.remove('hidden');
+                const permitAnchor = document.getElementById('permit-link');
+                const permitContainer = document.getElementById('permit-link-container');
+                const permitErr = document.getElementById('permit-inline-error');
+                if (permitErr) {
+                    permitErr.classList.add('hidden');
+                    permitErr.textContent = '';
+                }
+                // BUG-PL-10: never leave a clickable dead href="#"
+                if (permitLink && permitLink !== '#') {
+                    permitAnchor.href = permitLink;
+                    permitContainer.classList.remove('hidden');
                 } else {
-                    document.getElementById('permit-link-container').classList.add('hidden');
+                    permitAnchor.removeAttribute('href');
+                    permitContainer.classList.add('hidden');
                 }
 
                 let discEl = document.getElementById('search-disclaimer');
@@ -1198,45 +1208,93 @@ tailwind.config = {
             }
         }
 
-        async function generatePermit(event, propertyId) {
+        function isPermitNotApplicable(property) {
+            // BUG-PL-10: Under Review / Pending research / explicit no-permit → N/A
+            const zs = String((property && property.zoning_status) || '').trim().toLowerCase();
+            if (zs === 'under review' || zs === 'under_review' || zs === 'pending' || zs.includes('under review')) {
+                return 'Permit N/A — jurisdiction is Under Review / Pending.';
+            }
+            const restrictions = (property && property.local_restrictions) || {};
+            if (restrictions.requires_permit === false) {
+                return 'Permit N/A — no STR permit required in this jurisdiction.';
+            }
+            const permits = (property && property.required_permits) || [];
+            const hint = String(
+                restrictions.permit_status || restrictions.disclaimer || restrictions.reason || ''
+            ).toLowerCase();
+            if (Array.isArray(permits) && permits.length === 0 &&
+                (hint.includes('no permit') || hint.includes('not required') || hint.includes('n/a'))) {
+                return 'Permit N/A — no STR permit required in this jurisdiction.';
+            }
+            return null;
+        }
+
+        function showPermitInlineError(message) {
+            const el = document.getElementById('permit-inline-error');
+            if (el) {
+                el.textContent = message;
+                el.classList.remove('hidden');
+            }
+            // Honest visible error (no silent dead #)
+            alert(message);
+        }
+
+        async function generatePermit(event, propertyId, propertyMeta) {
             if (event) event.stopPropagation();
-            
+
             const button = event.currentTarget;
             const originalText = button.innerHTML;
-            
+            const naReason = propertyMeta ? isPermitNotApplicable(propertyMeta) : null;
+            if (naReason || button.dataset.permitNa === '1') {
+                showPermitInlineError(naReason || button.getAttribute('title') || 'Permit is not applicable for this property.');
+                return;
+            }
+
             try {
                 button.disabled = true;
                 button.innerHTML = DOMPurify.sanitize('<span class="material-symbols-outlined text-sm animate-spin">progress_activity</span> Generating...');
-                
+
                 const response = await fetch('/api/permit-generator/generate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', ...headers },
                     body: JSON.stringify({ property_id: propertyId })
                 });
-                
+
+                let data = null;
+                try { data = await response.json(); } catch (_) { data = null; }
+
                 if (!response.ok) {
-                    throw new Error('Failed to generate permit application');
+                    const detail = (data && (data.detail || data.message)) || response.statusText || 'unknown error';
+                    const msg = typeof detail === 'string' ? detail : JSON.stringify(detail);
+                    throw new Error(msg);
                 }
-                
-                const data = await response.json();
-                
-                // Show success modal or download PDF
+
+                const docs = (data.required_documents || []).join('\n');
+                const openUrl = data.download_url || data.application_url || null;
+                if (openUrl && openUrl !== '#') {
+                    window.open(openUrl, '_blank', 'noopener');
+                }
+
                 alert(`Permit Application Generated!
 
 Application ID: ${data.application_id}
 County: ${data.county}
-Status: ${data.compliance_status}
+Status: ${data.status || (data.compliance_summary && data.compliance_summary.is_compliant)}
 
 Required Documents:
-${data.required_documents.join('\n')}
+${docs}
 
-Processing Time: ${data.estimated_processing_time}`);
-                
+Processing Time: ${data.estimated_processing_time}${openUrl ? '\n\nOpened: ' + openUrl : ''}`);
+
             } catch (error) {
                 console.error('Error generating permit:', error);
-                alert('Failed to generate permit application. Please try again.');
+                showPermitInlineError(
+                    'Failed to generate permit application: ' + (error && error.message ? error.message : 'Please try again.')
+                );
             } finally {
-                button.disabled = false;
+                if (button.dataset.permitNa !== '1') {
+                    button.disabled = false;
+                }
                 button.innerHTML = DOMPurify.sanitize(originalText);
             }
         }
@@ -1904,7 +1962,19 @@ Processing Time: ${data.estimated_processing_time}`);
                             e.stopPropagation();
                             window.location.href = `/manage/${p.id}`;
                         });
-                        cardClone.querySelector('.property-permit-btn').addEventListener('click', (e) => generatePermit(e, p.id));
+                        const permitBtn = cardClone.querySelector('.property-permit-btn');
+                        const permitNa = isPermitNotApplicable(p);
+                        if (permitNa) {
+                            // BUG-PL-10: do not leave a clickable dead PERMIT control
+                            permitBtn.disabled = true;
+                            permitBtn.dataset.permitNa = '1';
+                            permitBtn.setAttribute('title', permitNa);
+                            permitBtn.setAttribute('aria-disabled', 'true');
+                            permitBtn.classList.remove('text-primary', 'hover:underline');
+                            permitBtn.classList.add('text-gray-400', 'cursor-not-allowed', 'opacity-70');
+                            permitBtn.innerHTML = DOMPurify.sanitize('<span class="material-symbols-outlined text-xs">block</span> Permit N/A');
+                        }
+                        permitBtn.addEventListener('click', (e) => generatePermit(e, p.id, p));
                         cardClone.querySelector('.property-export-btn').addEventListener('click', (e) => {
                             e.stopPropagation();
                             exportPDF(p.id);

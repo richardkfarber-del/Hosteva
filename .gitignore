@@ -64,3 +64,6 @@ Final Phase/
 Hosteva Phase III/
 !Hosteva Phase III/
 !Hosteva Phase III/Hosteva Jurisdictional Rules DB (Complete).xlsx
+
+# Generated permit drafts (BUG-PL-10)
+app/static/generated_permits/*.html
