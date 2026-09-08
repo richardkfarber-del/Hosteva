@@ -22,6 +22,7 @@ def main():
         import app.models.oauth
         import app.models.password_reset
         import app.models.research_request
+        import app.models.before_you_list
         import app.integrations.ota_models
         
         # Enable PostgreSQL extensions if PostgreSQL

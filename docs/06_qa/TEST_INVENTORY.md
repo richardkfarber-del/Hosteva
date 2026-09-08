@@ -39,6 +39,7 @@ python -m pytest tests/ app/tests/ -q --tb=short
 | `tests/test_bug_pl07_create_500.py` | Property create must return 201 (not 500) when geocode / image / audit / municipal seed fail; corridor + MB cases | api | PR / main CI | CI on main is the gate | BUG-PL-07 |
 | `tests/test_bug_pl10_permit_dead_link.py` | BUG-PL-10: beds vs bedrooms no 500; Under Review / no-permit → 422; download URL not `#`; dashboard Permit N/A + inline error markers | api/dom-assert | PR / main CI | CI on main is the gate | PL-10 Permit dead link |
 | `tests/test_bug_pl09_checklist_access.py` | BUG-PL-09: Free Covered Before you list / free-checklist API; Under Review no full-checklist promise; Essentials still 403 on checklist-items; dashboard labeled checklist markers | api/dom-assert | PR / main CI | CI on main is the gate | PL-09 checklist access |
+| `tests/test_pl12_before_you_list_checklist.py` | PL-12 / US-019+TE-012: Free Covered before-you-list GET+PATCH persist+score; Free not 403 on BYL APIs; Free still 403 on checklist-items; Under Review honesty; Essentials Covered interactive; dedicated page markers | api/dom-assert | PR / main CI | CI on main is the gate | PL-12 Before You List |
 | `tests/test_bug_pl08_street_view_object_storage.py` | BUG-PL-08 B+C + follow-up: SV/Places → R2/S3; list lazy heal; admin backfill; fail-closed placeholder; **backfill retries placeholders when storage configured** (skip when not); mocked storage+fetch | api/unit | PR / main CI | CI on main is the gate | PL-08 Street View disk |
 | `tests/test_bug_us006_checklist_500.py` | Free checklist-items / tasks return **403 not 500**; relationship boom still 403; simulate flag path | api | PR / main CI | CI on main is the gate | BUG_US006 |
 | `tests/test_bug_us006_simulate_500.py` | `simulate-entitlement` returns 200 when `ALLOW_BILLING_SIMULATION=true`; `/me` + checklist after simulate | api | PR / main CI | CI on main is the gate | BUG_US006_SIMULATE_500 |
@@ -67,7 +68,7 @@ python -m pytest tests/ app/tests/ -q --tb=short
 | `tests/test_validation_engine.py` | Agnostic validate: reject zoning / property type / stay duration; allowed → checklist generation | api | PR / main CI | CI on main is the gate | Validation engine |
 | `tests/test_validation_workflow.py` | Hillsborough nightly reject / weekly allowed+checklist; St. Petersburg warning+checklist; Pasco permit+checklist | api | PR / main CI | CI on main is the gate | County workflow fixtures |
 
-**Module count:** 36 (`2` under `app/tests/`, `34` under `tests/`).
+**Module count:** 37 (`2` under `app/tests/`, `35` under `tests/`).
 
 ---
 
