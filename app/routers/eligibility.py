@@ -74,50 +74,29 @@ def autocomplete_address(input: str, sessiontoken: str = None):
         return {"predictions": [], "error": str(e)}
 
 
-def _lookup_municipal(db: Session, city: str, county: str, state_code: str):
-    """Align with compliance municipal aliasing (City of X / contains city)."""
-    municipal_code = None
-    state_ok = ((MunicipalCode.state.ilike(state_code)) | (MunicipalCode.state.is_(None)))
+def _lookup_municipal(
+    db: Session,
+    city: str,
+    county: str,
+    state_code: str,
+    *,
+    address: str | None = None,
+    postal_code: str | None = None,
+    address_components=None,
+):
+    """Align with compliance municipal aliasing; prefer curated county (BUG-012)."""
+    from app.services.jurisdiction_resolve import lookup_municipal_code
 
-    if city:
-        municipal_code = db.query(MunicipalCode).filter(
-            MunicipalCode.municipality_name.ilike(city),
-            MunicipalCode.jurisdiction_type.ilike("City"),
-            state_ok,
-        ).first()
-
-        # Packs may store "City of Miami Beach" while geocode returns "Miami Beach"
-        if not municipal_code:
-            municipal_code = db.query(MunicipalCode).filter(
-                MunicipalCode.municipality_name.ilike(f"City of {city}"),
-                MunicipalCode.jurisdiction_type.ilike("City"),
-                state_ok,
-            ).first()
-
-        if not municipal_code:
-            municipal_code = db.query(MunicipalCode).filter(
-                MunicipalCode.municipality_name.ilike(f"%{city}%"),
-                MunicipalCode.jurisdiction_type.ilike("City"),
-                state_ok,
-            ).first()
-
-        # Name matches City of X (or contains city) without requiring jurisdiction_type=City
-        if not municipal_code:
-            municipal_code = db.query(MunicipalCode).filter(
-                (MunicipalCode.municipality_name.ilike(f"City of {city}"))
-                | (MunicipalCode.municipality_name.ilike(f"%City of%{city}%")),
-                state_ok,
-            ).first()
-
-    if not municipal_code and county:
-        clean_county = county.replace(" County", "").strip()
-        municipal_code = db.query(MunicipalCode).filter(
-            (MunicipalCode.municipality_name.ilike(county))
-            | (MunicipalCode.municipality_name.ilike(clean_county)),
-            MunicipalCode.jurisdiction_type.ilike("County"),
-            state_ok,
-        ).first()
-
+    municipal_code, _, _, _, _ = lookup_municipal_code(
+        db,
+        city=city,
+        county=county,
+        state=state_code,
+        postal_code=postal_code,
+        address=address,
+        address_components=address_components,
+        allow_state_of_florida_fallback=False,
+    )
     return municipal_code
 
 
@@ -183,7 +162,27 @@ def check_eligibility(request: EligibilityRequest, db: Session = Depends(get_db)
         state_code = state.strip() if state else ""
 
         try:
-            municipal = _lookup_municipal(db, city, county, state_code)
+            from app.services.jurisdiction_resolve import correct_geocode_components
+
+            city, county, state, postal_code = correct_geocode_components(
+                city=city,
+                county=county,
+                state=state,
+                postal_code=postal_code,
+                address=request.address,
+                address_components=address_components,
+            )
+            state_code = state.strip() if state else ""
+            jurisdiction = f"{city}, {state}" if city and state else state or "Unknown"
+            municipal = _lookup_municipal(
+                db,
+                city,
+                county,
+                state_code,
+                address=request.address,
+                postal_code=postal_code,
+                address_components=address_components,
+            )
         except Exception:
             logger.exception("Municipal lookup failed; fail-closed to UNDER_REVIEW")
             return {
