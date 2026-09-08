@@ -16,7 +16,9 @@ os.environ.setdefault("INTERNAL_DATABASE_URL", "sqlite:///./test_bug_pl08.db")
 os.environ.setdefault("ENVIRONMENT", "test")
 os.environ.setdefault("BILLING_ENABLED", "false")
 os.environ.setdefault("JWT_SECRET_KEY", "test-secret-pl08")
-os.environ["ADMIN_API_KEY"] = "test-admin-pl08"
+ADMIN_KEY = "test-admin-pl08"
+# Do not set RESEARCH_ADMIN_KEY at import — it stomps sibling modules in CI collection.
+os.environ.setdefault("ADMIN_API_KEY", ADMIN_KEY)
 
 # Object storage env (fake values for configured() — uploads are mocked)
 os.environ["PROPERTY_IMAGE_PROVIDER"] = "r2"
