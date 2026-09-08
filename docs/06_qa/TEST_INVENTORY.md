@@ -36,6 +36,7 @@ python -m pytest tests/ app/tests/ -q --tb=short
 | `tests/test_bug_pl02_street_view.py` | Street View / Places fetch: geocode retry before stock; fallback helpers; dashboard “Street View unavailable” label | unit | PR / main CI | CI on main is the gate | BUG-PL-02; image *quality* still Widow |
 | `tests/test_bug_pl05_evaluate.py` | `POST .../evaluate` must not claim Compliant for Restricted / checklist / non-compliant zoning | api | PR / main CI | CI on main is the gate | BUG-PL-05 |
 | `tests/test_bug_pl07_create_500.py` | Property create must return 201 (not 500) when geocode / image / audit / municipal seed fail; corridor + MB cases | api | PR / main CI | CI on main is the gate | BUG-PL-07 |
+| `tests/test_bug_pl10_permit_dead_link.py` | BUG-PL-10: beds vs bedrooms no 500; Under Review / no-permit → 422; download URL not `#`; dashboard Permit N/A + inline error markers | api/dom-assert | PR / main CI | CI on main is the gate | PL-10 Permit dead link |
 | `tests/test_bug_us006_checklist_500.py` | Free checklist-items / tasks return **403 not 500**; relationship boom still 403; simulate flag path | api | PR / main CI | CI on main is the gate | BUG_US006 |
 | `tests/test_bug_us006_simulate_500.py` | `simulate-entitlement` returns 200 when `ALLOW_BILLING_SIMULATION=true`; `/me` + checklist after simulate | api | PR / main CI | CI on main is the gate | BUG_US006_SIMULATE_500 |
 | `tests/test_calendar_v1.py` | iCal sync registration + Celery sync task; calendar export success / invalid token | api | PR / main CI | CI on main is the gate | Calendar v1 |
@@ -62,7 +63,7 @@ python -m pytest tests/ app/tests/ -q --tb=short
 | `tests/test_validation_engine.py` | Agnostic validate: reject zoning / property type / stay duration; allowed → checklist generation | api | PR / main CI | CI on main is the gate | Validation engine |
 | `tests/test_validation_workflow.py` | Hillsborough nightly reject / weekly allowed+checklist; St. Petersburg warning+checklist; Pasco permit+checklist | api | PR / main CI | CI on main is the gate | County workflow fixtures |
 
-**Module count:** 34 (`2` under `app/tests/`, `32` under `tests/`).
+**Module count:** 35 (`2` under `app/tests/`, `33` under `tests/`).
 
 ---
 

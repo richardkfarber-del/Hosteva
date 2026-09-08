@@ -1,11 +1,11 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 
 
 class PermitApplicationRequest(BaseModel):
     property_id: str
-    
+
     class Config:
         json_schema_extra = {
             "example": {
@@ -25,7 +25,13 @@ class PermitApplicationResponse(BaseModel):
     compliance_summary: Dict[str, Any]
     estimated_processing_time: str
     next_steps: List[str]
-    
+    download_url: Optional[str] = None
+    application_url: Optional[str] = None
+    beds_used: Optional[int] = Field(
+        default=None,
+        description="Bedroom count used for generation (from beds preferred over bedrooms)",
+    )
+
     class Config:
         json_schema_extra = {
             "example": {
@@ -49,6 +55,9 @@ class PermitApplicationResponse(BaseModel):
                     "Review generated application",
                     "Upload required documents",
                     "Submit to county office"
-                ]
+                ],
+                "download_url": "/static/generated_permits/APP-2026-001234.html",
+                "application_url": "/static/generated_permits/APP-2026-001234.html",
+                "beds_used": 3
             }
         }
