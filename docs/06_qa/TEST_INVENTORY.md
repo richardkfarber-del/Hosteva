@@ -2,7 +2,7 @@
 
 **Ownership**
 
-**Updated:** 2026-09-05 (ET)
+**Updated:** 2026-09-08 (ET)
 
 - **Hulk** adds a row when shipping a bug fix (regression module or new coverage).
 - **Phil Coulson** keeps this inventory current (paths, guards, layers, links).
@@ -53,11 +53,12 @@ python -m pytest tests/ app/tests/ -q --tb=short
 | `tests/test_te001_auth_checkout.py` | TE-001: unauth checkout 401 (no session create); auth checkout uses real host id; kill-switch 503 before Stripe | api | PR / main CI | CI on main is the gate | TE-001; never `user_mock_123` |
 | `tests/test_us006_entitlement.py` | Free vs Essentials checklist/task gating; webhook sim activates Essentials on `/me`; simulate blocked in production | api | PR / main CI | CI on main is the gate | US-006 |
 | `tests/test_us010_positioning_pages.py` | `/features` + `/about` real pages; Florida-depth copy; no live “operations engine” claim; meta scrubbed of competitor names | dom-assert | PR / main CI | CI on main is the gate | US-010 / BUG-PL-04 companion |
+| `tests/test_us015_checklist_signup_cta.py` | US-015 Covered guest Sign Up CTA + helper + honesty; Under Review no checklist CTA; register `next` return intent; no pricing/allowlist | dom-assert | PR / main CI | CI on main is the gate | PL-CTA US-015 |
 | `tests/test_user_me_guest_fix.py` | `/api/user/me` must not collapse Bearer hosts into Guest; shape parity; missing host ≠ Guest label | api | PR / main CI | CI on main is the gate | Guest identity bug |
 | `tests/test_validation_engine.py` | Agnostic validate: reject zoning / property type / stay duration; allowed → checklist generation | api | PR / main CI | CI on main is the gate | Validation engine |
 | `tests/test_validation_workflow.py` | Hillsborough nightly reject / weekly allowed+checklist; St. Petersburg warning+checklist; Pasco permit+checklist | api | PR / main CI | CI on main is the gate | County workflow fixtures |
 
-**Module count:** 29 (`2` under `app/tests/`, `27` under `tests/`).
+**Module count:** 30 (`2` under `app/tests/`, `28` under `tests/`).
 
 ---
 
