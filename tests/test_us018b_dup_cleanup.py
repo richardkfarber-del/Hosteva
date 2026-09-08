@@ -14,7 +14,9 @@ os.environ.setdefault("INTERNAL_DATABASE_URL", "sqlite:///./test_us018b_dup.db")
 os.environ.setdefault("ENVIRONMENT", "test")
 os.environ.setdefault("BILLING_ENABLED", "false")
 os.environ.setdefault("JWT_SECRET_KEY", "test-secret-us018b-dup")
-os.environ["ADMIN_API_KEY"] = "test-admin-us018b"
+ADMIN_KEY = "test-admin-us018b"
+# Do not set RESEARCH_ADMIN_KEY at import — it stomps sibling modules in CI collection.
+os.environ.setdefault("ADMIN_API_KEY", ADMIN_KEY)
 
 import pytest
 from fastapi.testclient import TestClient
@@ -37,7 +39,9 @@ from app.services.duplicate_cleanup import (
 from app.services.duplicate_address import addresses_equivalent
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-CHANGELOG_WS = Path("/workspace/hosteva-review/docs/05_build/CHANGELOG.md")
+# Repo-relative docs only — CI has no /workspace/hosteva-review.
+CHANGELOG = REPO_ROOT / "docs" / "05_build" / "CHANGELOG.md"
+INVENTORY = REPO_ROOT / "docs" / "06_qa" / "TEST_INVENTORY.md"
 
 engine = create_engine(
     "sqlite://",
@@ -257,7 +261,9 @@ def test_admin_endpoint_requires_key():
     assert r.status_code in (401, 503)
 
 
-def test_admin_endpoint_runs_cleanup():
+def test_admin_endpoint_runs_cleanup(monkeypatch):
+    monkeypatch.setenv("RESEARCH_ADMIN_KEY", ADMIN_KEY)
+    monkeypatch.setenv("ADMIN_API_KEY", ADMIN_KEY)
     db = TestingSessionLocal()
     t0 = datetime(2026, 8, 1, tzinfo=timezone.utc)
     _prop(db, pid="adm1", host=HOST_A, address="Admin Dedupe Rd", created_at=t0)
@@ -267,7 +273,7 @@ def test_admin_endpoint_runs_cleanup():
 
     r = client.post(
         "/api/v1/admin/properties/dedupe-duplicates",
-        headers={"X-Admin-Key": "test-admin-us018b"},
+        headers={"X-Admin-Key": ADMIN_KEY},
         params={"host_id": HOST_A},
     )
     assert r.status_code == 200, r.text
@@ -292,12 +298,10 @@ def test_out_of_scope_no_pl08_pl09_option_b_changes():
 
 
 def test_changelog_documents_canonical_rule():
-    # Workspace CHANGELOG is SoT for review; also accept repo-local note if mirrored.
-    paths = [CHANGELOG_WS]
-    repo_inv = REPO_ROOT / "docs" / "06_qa" / "TEST_INVENTORY.md"
-    assert repo_inv.exists()
-    text = ""
-    for p in paths:
-        if p.exists():
-            text += p.read_text()
+    # CI-owned: assert repo TEST_INVENTORY (has US-018b/TE-010/richest).
+    # Optional repo CHANGELOG if mirrored; never box absolute paths.
+    assert INVENTORY.is_file()
+    text = INVENTORY.read_text()
+    if CHANGELOG.is_file():
+        text += CHANGELOG.read_text()
     assert "US-018b" in text or "TE-010" in text or "richest" in text.lower()
