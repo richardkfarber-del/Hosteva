@@ -29,6 +29,7 @@ def _empty_geocode_result() -> dict:
         "city": "",
         "county": "",
         "state": "",
+        "postal_code": "",
         "address_components": [],
         "formatted_address": "",
         "lat": None,
@@ -264,6 +265,7 @@ def geocode_address(address: str) -> dict:
                 city = ""
                 county = ""
                 state = ""
+                postal_code = ""
                 for c in components:
                     types = c.get("types", [])
                     if "locality" in types:
@@ -272,18 +274,21 @@ def geocode_address(address: str) -> dict:
                         county = c.get("long_name", "")
                     elif "administrative_area_level_1" in types:
                         state = c.get("short_name", "")
+                    elif "postal_code" in types:
+                        postal_code = c.get("long_name", "")
                 loc = (result0.get("geometry") or {}).get("location") or {}
                 formatted = _as_location_str(result0.get("formatted_address"))
                 lat = loc.get("lat")
                 lng = loc.get("lng")
                 print(
                     f"Geocoded result: city='{city}', county='{county}', state='{state}', "
-                    f"formatted={formatted!r}, lat={lat}, lng={lng}"
+                    f"postal='{postal_code}', formatted={formatted!r}, lat={lat}, lng={lng}"
                 )
                 return {
                     "city": city,
                     "county": county,
                     "state": state,
+                    "postal_code": postal_code,
                     "address_components": components,
                     "formatted_address": formatted,
                     "lat": lat,

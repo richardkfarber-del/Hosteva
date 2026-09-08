@@ -259,52 +259,23 @@ def get_compliance_by_address(address: str, db: Session = Depends(get_db)):
     city = geocoded.get("city")
     county = geocoded.get("county")
     state = geocoded.get("state")
-    
-    # 2. Query municipal_codes
-    municipal_code = None
-    state_code = state.strip() if state else ""
-    if len(state_code) > 2:
-        state_map = {
-            "florida": "FL", "california": "CA", "texas": "TX", "new york": "NY",
-            "colorado": "CO", "hawaii": "HI", "georgia": "GA", "north carolina": "NC",
-            "tennessee": "TN", "arizona": "AZ"
-        }
-        state_code = state_map.get(state_code.lower(), state_code)
+    postal_code = geocoded.get("postal_code") or ""
 
-    if city:
-        municipal_code = db.query(MunicipalCode).filter(
-            MunicipalCode.municipality_name.ilike(city),
-            MunicipalCode.jurisdiction_type.ilike("City"),
-            ((MunicipalCode.state.ilike(state_code)) | (MunicipalCode.state.is_(None)))
-        ).first()
-        # Alias: packs may store "City of Miami Beach" while geocode returns "Miami Beach"
-        if not municipal_code:
-            municipal_code = db.query(MunicipalCode).filter(
-                MunicipalCode.municipality_name.ilike(f"City of {city}"),
-                MunicipalCode.jurisdiction_type.ilike("City"),
-                ((MunicipalCode.state.ilike(state_code)) | (MunicipalCode.state.is_(None)))
-            ).first()
-        if not municipal_code:
-            municipal_code = db.query(MunicipalCode).filter(
-                MunicipalCode.municipality_name.ilike(city),
-                ((MunicipalCode.state.ilike(state_code)) | (MunicipalCode.state.is_(None)))
-            ).first()
-        
-    if not municipal_code and county:
-        clean_county = county.replace(" County", "").strip()
-        municipal_code = db.query(MunicipalCode).filter(
-            (MunicipalCode.municipality_name.ilike(county)) | 
-            (MunicipalCode.municipality_name.ilike(clean_county)),
-            MunicipalCode.jurisdiction_type.ilike("County"),
-            ((MunicipalCode.state.ilike(state_code)) | (MunicipalCode.state.is_(None)))
-        ).first()
-        
-    if not municipal_code and (state_code.upper() == "FL" or not state_code):
-        municipal_code = db.query(MunicipalCode).filter(
-            MunicipalCode.municipality_name.ilike("State of Florida"),
-            ((MunicipalCode.state.ilike("FL")) | (MunicipalCode.state.is_(None)))
-        ).first()
-        
+    # 2. Query municipal_codes — ZIP/county truth over CDP city mis-route (BUG-012)
+    from app.services.jurisdiction_resolve import lookup_municipal_code
+
+    municipal_code, city, county, state, postal_code = lookup_municipal_code(
+        db,
+        city=city,
+        county=county,
+        state=state,
+        postal_code=postal_code,
+        address=address,
+        address_components=geocoded.get("address_components"),
+        allow_state_of_florida_fallback=True,
+    )
+    state_code = state.strip() if state else ""
+
     # 3. Query hoa_rules
     hoa_rule = None
     if city or county:
