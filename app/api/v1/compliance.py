@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 import uuid
 import re
 from datetime import date, datetime
+from urllib.parse import quote
 from typing import Dict, Any, List
 
 from app.database import get_db
@@ -237,6 +238,112 @@ def get_checklist_items(property_id: str, db: Session = Depends(get_db), current
             "source_url": (mc.source_url if mc and mc.source_url else None),
         })
     return result
+
+
+@router.get("/free-checklist/{property_id}")
+def get_free_municipal_checklist(
+    property_id: str,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+) -> Dict[str, Any]:
+    """Free municipal "before you list" checklist for a saved property (BUG-PL-09).
+
+    Same Free-tier research checklist the wizard Sign Up CTA promised.
+    Does **not** require Essentials — interactive task depth stays on
+    ``/checklist-items`` (US-006). Under Review returns honesty, not a
+    fake Compliant / full checklist promise.
+    """
+    from app.models.host import Host
+    from app.models.property import Property
+
+    host = db.query(Host).filter(Host.username == current_user.get("username")).first()
+    if not host:
+        raise HTTPException(status_code=404, detail="Host profile not found")
+
+    prop = (
+        db.query(Property)
+        .filter(Property.id == property_id, Property.user_id == host.id)
+        .first()
+    )
+    if not prop:
+        raise HTTPException(status_code=404, detail="Property not found")
+
+    full_address = ", ".join(
+        p
+        for p in [
+            prop.address,
+            prop.city,
+            f"{prop.state or ''} {prop.zip_code or ''}".strip(),
+        ]
+        if p
+    )
+    if not full_address.strip():
+        raise HTTPException(status_code=400, detail="Property address is empty")
+
+    try:
+        result = get_compliance_by_address(address=full_address, db=db)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Compliance lookup failed: {exc}") from exc
+
+    # Support both response-model objects and plain dicts
+    if hasattr(result, "model_dump"):
+        payload = result.model_dump()
+    elif hasattr(result, "dict"):
+        payload = result.dict()
+    elif isinstance(result, dict):
+        payload = result
+    else:
+        payload = {
+            "is_under_review": bool(getattr(result, "is_under_review", False)),
+            "is_compliant": bool(getattr(result, "is_compliant", False)),
+            "status": getattr(result, "status", None),
+            "checklist": getattr(result, "checklist", None) or [],
+            "coverage_tier": getattr(result, "coverage_tier", None),
+            "status_reason": getattr(result, "status_reason", None),
+        }
+
+    is_under_review = bool(payload.get("is_under_review"))
+    checklist = payload.get("checklist") or []
+    if is_under_review:
+        # Honesty: never surface a fake full municipal checklist for UR
+        checklist = []
+
+    open_url = (
+        f"/wizard?address={quote(full_address, safe='')}&intent=checklist"
+        if not is_under_review
+        else f"/wizard?address={quote(full_address, safe='')}"
+    )
+
+    return {
+        "property_id": property_id,
+        "address": full_address,
+        "is_under_review": is_under_review,
+        "is_compliant": bool(payload.get("is_compliant")) and not is_under_review,
+        "status": payload.get("status"),
+        "coverage_tier": payload.get("coverage_tier"),
+        "status_reason": payload.get("status_reason"),
+        "checklist": checklist,
+        "depth": "free",
+        "label": "Before you list" if not is_under_review else "Under Review",
+        "honesty": "Research only — not a legal determination.",
+        "under_review_message": (
+            "We don't have Curated municipal rules for this address yet, "
+            "so there's no checklist to open. We're not guessing — you'll "
+            "see Under Review instead of a pass/fail traffic light."
+            if is_under_review
+            else None
+        ),
+        "open_url": open_url,
+        "essentials_note": (
+            "Upgrade to Compliance Essentials for interactive checklist "
+            "task depth. Free still includes this municipal before-you-list view."
+            if not is_under_review
+            else None
+        ),
+    }
+
 
 @router.get("", response_model=AddressComplianceResponse)
 @router.get("/address", response_model=AddressComplianceResponse)
