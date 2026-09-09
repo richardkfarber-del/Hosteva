@@ -366,6 +366,13 @@ def test_seed_tampa_bay_pcb_curated(db, monkeypatch):
         assert row.is_expert_verified is True, name
         assert (row.state or "FL").upper() == "FL"
 
+    pasco = db.query(MunicipalCode).filter(MunicipalCode.municipality_name == "Pasco County").first()
+    assert pasco.tax_registration_url == "https://pasco.county-taxes.com/tourist"
+    assert pasco.source_url == "https://www.pascocountyfl.gov/"
+    assert pasco.source_url != pasco.tax_registration_url
+    assert "dr15tdt" not in (pasco.source_url or "").lower()
+    assert "dr15tdt" not in (pasco.tax_registration_url or "").lower()
+
     # Broward may exist as FL seed but must not appear in Features Tampa Bay list
     features = Path(__file__).resolve().parents[1] / "app" / "templates" / "features.html"
     html = features.read_text()

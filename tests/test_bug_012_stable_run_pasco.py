@@ -62,6 +62,7 @@ def _seed_pasco_and_neighbors(db):
         permit_name="Pasco Conditional Use Permit",
         tax_rate=5.0,
         source_url="https://www.pascocountyfl.gov/",
+        tax_registration_url="https://pasco.county-taxes.com/tourist",
         is_expert_verified=True,
         is_ai_scraped=False,
     ))
@@ -209,6 +210,15 @@ def test_hudson_pasco_still_covered(mock_geocode, client):
     assert data["is_under_review"] is False
     assert data.get("coverage_tier") == "CURATED"
     assert data["municipal_code"]["municipality_name"] == "Pasco County"
+    assert data["municipal_code"]["source_url"] == "https://www.pascocountyfl.gov/"
+    assert data["municipal_code"]["tax_registration_url"] == "https://pasco.county-taxes.com/tourist"
+    tax_items = [i for i in data["checklist"] if "Tax Registration" in (i.get("task_name") or "")]
+    assert tax_items
+    assert tax_items[0]["source_url"] == "https://pasco.county-taxes.com/tourist"
+    permit_items = [i for i in data["checklist"] if "Permit" in (i.get("task_name") or "")]
+    assert permit_items
+    assert permit_items[0]["source_url"] == "https://www.pascocountyfl.gov/"
+    assert permit_items[0]["source_url"] != tax_items[0]["source_url"]
 
 
 @patch("app.api.v1.compliance.geocode_address")

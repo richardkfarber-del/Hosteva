@@ -27,6 +27,12 @@ from app.models.compliance import MunicipalCode
 # Broward may exist as FL seed but is NOT Tampa Bay marketing.
 # Runtime SoT is app.services.curated_coverage.FL_CURATED_ALLOWLIST (Option B).
 # This set is the corridor/pack names this seed script reinforces.
+# PL-13 / US-021: Pasco Tax Registration primary (Tourist Express). Not DR-15 PDF.
+PASCO_TAX_REGISTRATION_URL = "https://pasco.county-taxes.com/tourist"
+PASCO_TAX_INFO_URL = "https://www.pascotaxes.com/taxes/tdt/"  # info-only secondary; not primary
+PASCO_MUNICIPAL_SOURCE_URL = "https://www.pascocountyfl.gov/"
+DR15_TDT_PDF_URL = "https://floridarevenue.com/Forms_library/current/dr15tdt.pdf"
+
 CURATED_NAMES = {
     "Tampa",
     "St. Petersburg",
@@ -154,13 +160,18 @@ def seed_tampa_bay_rules():
                 "source_kind": "manual_pack",
             },
             {
+                # PL-13 / US-021 / TE-013: municipal ordinance ≠ tax registration.
+                # Oak Drive (10703 Oak Drive, Hudson, FL 34667) Tax Registration
+                # primary = Tourist Express. Do not use DR-15 PDF as tax or muni URL.
+                # Info-only secondary (not primary): https://www.pascotaxes.com/taxes/tdt/
                 "municipality_name": "Pasco County",
                 "ordinance_number": "PASCO-PERMIT-REQ",
                 "str_prohibited": False,
                 "requires_permit": True,
                 "permit_name": "Conditional Use Permit (CUP)",
                 "tax_rate": 4.0,
-                "source_url": "https://floridarevenue.com/Forms_library/current/dr15tdt.pdf",
+                "source_url": PASCO_MUNICIPAL_SOURCE_URL,
+                "tax_registration_url": PASCO_TAX_REGISTRATION_URL,
                 "stay_restriction_days": None,
                 "max_rentals_per_year": None,
                 "jurisdiction_type": "County",
@@ -271,6 +282,8 @@ def seed_tampa_bay_rules():
                 existing.requires_permit = rule["requires_permit"]
                 existing.permit_name = rule["permit_name"]
                 existing.source_url = rule["source_url"]
+                if "tax_registration_url" in rule:
+                    existing.tax_registration_url = rule.get("tax_registration_url")
                 if rule.get("jurisdiction_type"):
                     existing.jurisdiction_type = rule["jurisdiction_type"]
                 if rule.get("state"):
@@ -297,6 +310,7 @@ def seed_tampa_bay_rules():
                     requires_permit=rule["requires_permit"],
                     permit_name=rule["permit_name"],
                     source_url=rule["source_url"],
+                    tax_registration_url=rule.get("tax_registration_url"),
                     tax_rate=rule["tax_rate"],
                     jurisdiction_type=rule.get("jurisdiction_type"),
                     state=rule.get("state") or "FL",

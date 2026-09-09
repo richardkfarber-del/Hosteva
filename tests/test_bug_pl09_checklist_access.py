@@ -155,7 +155,8 @@ def test_dashboard_has_findable_before_you_list_control():
     assert "bindDashboardChecklistControl" in body
     assert "/api/v1/compliance/free-checklist/" in body
     assert "data-checklist-role" in body
-    assert ("Open free checklist" in body) or ("Before you list" in body)
+    assert "Before you list" in body
+    assert "Open free checklist" not in body
     # Must not be Manage/Permit/Audit only
     assert "property-manage-btn" in body
     assert "property-permit-btn" in body
@@ -182,7 +183,8 @@ def test_dashboard_under_review_path_does_not_promise_full_checklist():
     covered = ur_fn
     assert 'data-free-checklist-panel="covered"' in covered
     assert "Before you list" in covered
-    assert ("Open free checklist" in covered) or ("Before you list" in covered)
+    assert "Before you list" in covered
+    assert "Open free checklist" not in covered
 
 
 def test_free_covered_property_free_checklist_api_path():
