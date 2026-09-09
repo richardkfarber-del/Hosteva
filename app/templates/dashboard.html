@@ -1494,7 +1494,7 @@ Processing Time: ${data.estimated_processing_time}${openUrl ? '\n\nOpened: ' + o
             const address = buildPropertyAuditAddress(p);
             const underReview = isFreeChecklistUnderReview(freePayload);
             if (underReview) {
-                // US-015 honesty: no Checklist / Before you list / Open free checklist promise
+                // US-015 / US-020 honesty: no Checklist Available promise on Under Review
                 btn.dataset.checklistRole = 'under-review-status';
                 btn.setAttribute('title', 'Under Review — no curated municipal checklist yet');
                 btn.innerHTML = '<span class="material-symbols-outlined text-xs">hourglass_top</span> View status';

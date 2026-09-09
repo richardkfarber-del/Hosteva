@@ -295,7 +295,7 @@
         }
     }
 
-    // US-015: Checklist Available → Sign Up / Open free checklist return intent
+    // US-015 / US-020: Covered guests Sign Up; logged-in Covered stay on Eligibility Audit / Before you list
     function buildChecklistReturnIntent(address) {
         return `/wizard?address=${encodeURIComponent(address)}&intent=checklist`;
     }
@@ -322,16 +322,14 @@
     function renderCoveredChecklistCta(address, isLoggedIn) {
         const honesty = 'Research only — not a legal determination.';
         if (isLoggedIn) {
+            // US-020: no redundant free-checklist button — Eligibility Audit shows the list; dashboard uses Before you list
             return `
                 <div id="checklistSignupCta" class="bg-white rounded-2xl p-5 sm:p-6 flex flex-col gap-3 relative border border-tertiary/20 mb-6 shadow-sm w-full min-w-0" data-cta-state="logged-in-covered">
                     <div class="flex items-center gap-2 flex-wrap">
                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-tertiary-container/40 text-tertiary text-[11px] font-bold tracking-wide uppercase border border-tertiary/20">Checklist ready</span>
                     </div>
                     <p class="text-on-surface-variant text-sm font-medium leading-relaxed">${honesty}</p>
-                    <button type="button" id="openFreeChecklistBtn" class="w-full bg-primary hover:bg-primary-container text-on-primary font-bold py-3.5 px-6 rounded-xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2">
-                        <span>Open free checklist</span>
-                        <span class="material-symbols-outlined text-sm">arrow_forward</span>
-                    </button>
+                    <p class="text-on-surface-variant text-sm leading-relaxed">Review the municipal items on this Eligibility Audit. Track steps from <strong>Before you list</strong> on your dashboard.</p>
                 </div>`;
         }
         const registerUrl = escapeHtmlAttr(buildRegisterUrlForChecklist(address));
@@ -443,7 +441,7 @@
                     </div>
                 </div>`;
             } else {
-                // US-015: Curated Covered → Sign Up (guest) or Open free checklist (logged-in)
+                // US-015 / US-020: Curated Covered → Sign Up (guest); logged-in uses Eligibility Audit / Before you list
                 bannerHtml = renderCoveredChecklistCta(address, isUserLoggedInEarly);
             }
             verdictContainer.innerHTML = bannerHtml;
@@ -456,14 +454,6 @@
                     showResultsState('defaultState');
                 });
             }
-            const openFreeBtn = document.getElementById('openFreeChecklistBtn');
-            if (openFreeBtn) {
-                openFreeBtn.addEventListener('click', () => {
-                    const target = document.getElementById('freeChecklistCard') || document.getElementById('categoryCardsStack');
-                    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                });
-            }
-
             // Always show address echo so UI never looks like "Awaiting address input"
             const addrEcho = document.createElement('p');
             addrEcho.className = 'text-sm font-semibold text-on-surface mb-4';
@@ -485,6 +475,7 @@
                 const taxRate = mc.tax_rate;
                 const occupancy = mc.occupancy_limits;
                 const sourceUrl = mc.source_url;
+                const taxRegistrationUrl = mc.tax_registration_url;
 
                 let allowedText = isAllowed ? 'STR permitted under local ordinances.' : 'STR prohibited under local ordinances.';
                 let allowedClass = isAllowed ? 'text-tertiary' : 'text-error';
@@ -496,9 +487,13 @@
                 let occupancyText = occupancy ? `Occupancy limit: <strong>${occupancy}</strong>.` : 'No occupancy restrictions registered.';
 
                 let sourceLinkHtml = sourceUrl ? `
-                    <a href="${sourceUrl}" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline font-bold mt-2 inline-flex items-center gap-1">
+                    <a href="${sourceUrl}" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline font-bold mt-2 inline-flex items-center gap-1" data-link-role="municipal-source">
                         View Ordinance Reference <span class="material-symbols-outlined text-xs">open_in_new</span>
                     </a>` : `<span class="text-on-surface-variant text-xs italic mt-2 inline-block">Source pending</span>`;
+                let taxLinkHtml = taxRegistrationUrl ? `
+                    <a href="${taxRegistrationUrl}" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline font-bold mt-2 inline-flex items-center gap-1 ml-3" data-link-role="tax-registration">
+                        Tax Registration <span class="material-symbols-outlined text-xs">open_in_new</span>
+                    </a>` : '';
 
                 const municipalCard = document.createElement('div');
                 municipalCard.className = 'bg-white rounded-2xl p-5 border border-outline-variant/15 hover:bg-surface-container-low/30 transition-all shadow-sm flex items-start gap-4 text-left w-full min-w-0';
@@ -515,7 +510,7 @@
                             <p>${occupancyText}</p>
                             <p>${taxText}</p>
                         </div>
-                        ${sourceLinkHtml}
+                        <div class="flex flex-wrap items-center gap-x-1">${sourceLinkHtml}${taxLinkHtml}</div>
                     </div>
                 `;
                 cardsStack.appendChild(municipalCard);

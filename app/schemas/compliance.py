@@ -90,6 +90,7 @@ class MunicipalRuleResponse(BaseModel):
     occupancy_limits: Optional[str] = None
     tax_rate: Optional[float] = None
     source_url: Optional[str] = None
+    tax_registration_url: Optional[str] = None
     last_verified_date: Optional[date] = None
 
     class Config:

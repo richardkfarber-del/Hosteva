@@ -101,7 +101,8 @@ def main():
                 ("occupancy_limits", "VARCHAR(255)"),
                 ("tax_rate_registration_fee", "VARCHAR(255)"),
                 ("last_verified_date", "DATE"),
-                ("source_kind", "VARCHAR(50)")
+                ("source_kind", "VARCHAR(50)"),
+                ("tax_registration_url", "VARCHAR(500)"),
             ]:
                 if col_name not in columns:
                     with engine.connect() as conn:

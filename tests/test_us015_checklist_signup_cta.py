@@ -25,7 +25,7 @@ def test_wizard_covered_guest_cta_copy_and_register_next():
     assert "We'll save this address and open your free municipal checklist after you sign up. Takes a minute." in body
     assert "Research only — not a legal determination." in body
     assert "Already have an account?" in body
-    assert "Open free checklist" in body  # logged-in Free Covered
+    assert "Open free checklist" not in body  # US-020: no redundant free-checklist CTA
     assert "checklistSignupCta" in body
     assert "buildRegisterUrlForChecklist" in body
     assert "intent=checklist" in body

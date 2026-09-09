@@ -59,6 +59,8 @@ class MunicipalCode(Base):
     requires_permit = Column(Boolean, default=False, nullable=True)
     permit_name = Column(String(100), nullable=True, default=None)
     source_url = Column(String(255), nullable=True, default=None)
+    # PL-13 / TE-013: tax portal is not municipal ordinance source_url
+    tax_registration_url = Column(String(500), nullable=True, default=None)
     tax_rate = Column(Float, nullable=True, default=None)
     is_allowed = Column(Boolean, default=True, nullable=True)
     zoning_code = Column(String(50), nullable=True, default=None)

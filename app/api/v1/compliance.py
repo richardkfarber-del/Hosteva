@@ -241,7 +241,7 @@ def get_checklist_items(property_id: str, db: Session = Depends(get_db), current
             "violation_notes": item.violation_notes,
             "valid_period": str(item.valid_period),
             "task_name": item.task_name,
-            "source_url": (mc.source_url if mc and mc.source_url else None),
+            "source_url": municipal_vs_tax_source_url(mc, item.task_name),
         })
     return result
 
@@ -347,6 +347,30 @@ def get_free_municipal_checklist(
         ),
     }
 
+
+
+def _is_tax_registration_task(task_name: str) -> bool:
+    """PL-13: tax checklist/task names must not inherit municipal ordinance URLs."""
+    lower = (task_name or "").lower()
+    return (
+        "tax registration" in lower
+        or "tdt" in lower
+        or "tourist development" in lower
+        or "transient occupancy" in lower
+    )
+
+
+def municipal_vs_tax_source_url(municipal_code, task_name: str | None = None, *, kind: str | None = None):
+    """Return the official URL for a permit (municipal) vs tax registration task.
+
+    Municipal ``source_url`` is never forced onto tax items (TE-013).
+    """
+    if municipal_code is None:
+        return None
+    is_tax = kind == "tax" or (task_name is not None and _is_tax_registration_task(task_name))
+    if is_tax:
+        return getattr(municipal_code, "tax_registration_url", None) or None
+    return municipal_code.source_url or None
 
 
 def _byl_item_key(task_name: str) -> str:
@@ -679,20 +703,21 @@ def get_compliance_by_address(address: str, db: Session = Depends(get_db)):
         if municipal_code.str_prohibited or not municipal_code.is_allowed:
             is_compliant = False
             
-        muni_source = municipal_code.source_url or None
         if municipal_code.requires_permit:
+            permit_name = municipal_code.permit_name or f"Permit Required ({municipal_code.ordinance_number})"
             checklist.append({
-                "task_name": municipal_code.permit_name or f"Permit Required ({municipal_code.ordinance_number})",
+                "task_name": permit_name,
                 "status": "PENDING",
                 "is_compliant": False,
-                "source_url": muni_source,
+                "source_url": municipal_vs_tax_source_url(municipal_code, permit_name, kind="permit"),
             })
         if municipal_code.tax_rate is not None:
+            tax_name = f"Tax Registration ({municipal_code.tax_rate}% TDT)"
             checklist.append({
-                "task_name": f"Tax Registration ({municipal_code.tax_rate}% TDT)",
+                "task_name": tax_name,
                 "status": "PENDING",
                 "is_compliant": False,
-                "source_url": muni_source,
+                "source_url": municipal_vs_tax_source_url(municipal_code, tax_name, kind="tax"),
             })
             
     if hoa_rule:
@@ -875,7 +900,7 @@ def get_compliance_task(
         "uploaded_file_url": task.uploaded_file_url,
         "ocr_metadata_json": task.ocr_metadata_json,
         "verification_notes": task.verification_notes,
-        "source_url": (m_code.source_url if m_code and m_code.source_url else None),
+        "source_url": municipal_vs_tax_source_url(m_code, task_name),
     }
 
 
