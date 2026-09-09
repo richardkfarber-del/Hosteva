@@ -41,6 +41,7 @@ python -m pytest tests/ app/tests/ -q --tb=short
 | `tests/test_bug_pl09_checklist_access.py` | BUG-PL-09: Free Covered Before you list / free-checklist API; Under Review no full-checklist promise; Essentials still 403 on checklist-items; dashboard labeled checklist markers | api/dom-assert | PR / main CI | CI on main is the gate | PL-09 checklist access |
 | `tests/test_pl12_before_you_list_checklist.py` | PL-12 / US-019+TE-012: Free Covered before-you-list GET+PATCH persist+score; Free not 403 on BYL APIs; Free still 403 on checklist-items; Under Review honesty; Essentials Covered interactive; dedicated page markers | api/dom-assert | PR / main CI | CI on main is the gate | PL-12 Before You List |
 | `tests/test_pl13_checklist_cta_and_tax_url.py` | PL-13 / US-020+US-021+TE-013: no “Open free checklist”; guest Sign Up kept; Oak Drive tax → Tourist Express; municipal source_url not copied onto tax; allowlist untouched | api/dom-assert | PR / main CI | CI on main is the gate | PL-13 checklist CTA + tax URL |
+| `tests/test_tampa_bay_seed_pasco_upsert.py` | Tampa Bay seed vs existing Pasco `JURISDICTION-RULES`: no UniqueViolation; tax_registration_url lands; no CUP force on tax-only live row; pack continues | unit | PR / main CI | CI on main is the gate | Pasco Curated pack upsert |
 | `tests/test_bug_pl08_street_view_object_storage.py` | BUG-PL-08 B+C + follow-up: SV/Places → R2/S3; list lazy heal; admin backfill; fail-closed placeholder; **backfill retries placeholders when storage configured** (skip when not); mocked storage+fetch | api/unit | PR / main CI | CI on main is the gate | PL-08 Street View disk |
 | `tests/test_bug_us006_checklist_500.py` | Free checklist-items / tasks return **403 not 500**; relationship boom still 403; simulate flag path | api | PR / main CI | CI on main is the gate | BUG_US006 |
 | `tests/test_bug_us006_simulate_500.py` | `simulate-entitlement` returns 200 when `ALLOW_BILLING_SIMULATION=true`; `/me` + checklist after simulate | api | PR / main CI | CI on main is the gate | BUG_US006_SIMULATE_500 |
@@ -69,7 +70,7 @@ python -m pytest tests/ app/tests/ -q --tb=short
 | `tests/test_validation_engine.py` | Agnostic validate: reject zoning / property type / stay duration; allowed → checklist generation | api | PR / main CI | CI on main is the gate | Validation engine |
 | `tests/test_validation_workflow.py` | Hillsborough nightly reject / weekly allowed+checklist; St. Petersburg warning+checklist; Pasco permit+checklist | api | PR / main CI | CI on main is the gate | County workflow fixtures |
 
-**Module count:** 38 (`2` under `app/tests/`, `36` under `tests/`).
+**Module count:** 39 (`2` under `app/tests/`, `37` under `tests/`).
 
 ---
 
